@@ -2,9 +2,9 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪿</text></svg>" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪿</text></svg>\" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FALTALITY – Das exponentielle Papierfalt-Spiel</title>
+    <title id="meta-page-title">FALTALITY – Das exponentielle Papierfalt-Spiel</title>
     <!-- Google Fonts for Untitled Goose Game & Apple Keynote aesthetic -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,35 +20,36 @@
       <!-- Top Header: Title, Sky Tracker & Scoreboard -->
       <header class="top-header">
         <div class="logo-group">
-          <h1 class="logo-title">FALTALITY</h1>
-          <span class="logo-badge">iFold Edition</span>
+          <h1 id="logo-title" class="logo-title">FALTALITY</h1>
+          <span id="logo-badge" class="logo-badge">iFold Edition</span>
         </div>
 
         <!-- Live Birds in Sky Status -->
         <div class="sky-tracker ui-interactive" title="Aktuell über dem Garten fliegende Ziele (Klick zum Ziel wechseln)">
           <span class="tracker-icon">🪿</span>
           <div class="tracker-text">
-            <span class="tracker-label">AM HIMMEL AKTIV</span>
+            <span id="tracker-label" class="tracker-label">AM HIMMEL AKTIV</span>
             <span id="sky-birds-info" class="tracker-val">Gänse, Tauben & Möwen</span>
           </div>
         </div>
 
         <div class="scoreboard ui-interactive">
           <div class="score-card">
-            <span class="score-label">PUNKTE</span>
+            <span id="label-score" class="score-label">PUNKTE</span>
             <span id="score-val" class="score-number">0</span>
           </div>
           <div class="score-card">
-            <span class="score-label">VÖGEL ERWISCHT</span>
+            <span id="label-birds-hit" class="score-label">VÖGEL ERWISCHT</span>
             <span id="birds-hit-val" class="score-number">0</span>
           </div>
           <div class="score-card">
-            <span class="score-label">COMBO</span>
+            <span id="label-combo" class="score-label">COMBO</span>
             <span id="combo-val" class="score-number">x0</span>
           </div>
         </div>
 
         <div class="header-actions ui-interactive">
+          <button id="lang-btn" class="aim-toggle-btn" title="Sprache wechseln / Switch Language (DE / EN)">🇩🇪 DE</button>
           <button id="aim-toggle-btn" class="aim-toggle-btn active" title="Apple iAim Auto-Targeting umschalten (Taste A)">🎯 iAim: AN</button>
           <button id="cycle-target-btn" class="aim-toggle-btn" title="Nächstes Ziel anvisieren [Taste T]">🎯 Ziel [T]</button>
           <button id="keymap-btn" class="icon-btn" title="Tastenbelegung anzeigen [Taste K]">⌨️</button>
@@ -70,10 +71,10 @@
       <!-- Left Sidebar: Large Fold Tower Indicator -->
       <aside class="fold-tower ui-interactive" id="fold-tower" title="Aktuelle Faltungsstufe und Wucht">
         <div class="tower-header">
-          <span class="tower-tag">EXPONENTIAL-FALTMETER</span>
+          <span id="tower-tag" class="tower-tag">EXPONENTIAL-FALTMETER</span>
           <div class="tower-num-group">
             <span id="tower-folds-val" class="tower-huge-number">0</span>
-            <span class="tower-unit">Faltungen</span>
+            <span id="tower-unit" class="tower-unit">Faltungen</span>
           </div>
           <div class="tower-sub-stats">
             <span id="tower-layers-val" class="tower-pill">1 Lage</span>
@@ -86,50 +87,50 @@
           <div class="tower-tier" id="tier-singularity" data-tier="singularity">
             <span class="tier-icon">🛰️</span>
             <div class="tier-info">
-              <span class="tier-name">11+ Tim Cook Satellit</span>
-              <span class="tier-desc">Keynote Orbit & iSat</span>
+              <span id="tier-singularity-name" class="tier-name">11+ Tim Cook Satellit</span>
+              <span id="tier-singularity-desc" class="tier-desc">Keynote Orbit & iSat</span>
             </div>
           </div>
           <div class="tower-tier" id="tier-airliner" data-tier="airliner">
             <span class="tier-icon">✈️</span>
             <div class="tier-info">
-              <span class="tier-name">9–10 Airliner</span>
-              <span class="tier-desc">Koffer-Explosion</span>
+              <span id="tier-airliner-name" class="tier-name">9–10 Airliner</span>
+              <span id="tier-airliner-desc" class="tier-desc">Koffer-Explosion</span>
             </div>
           </div>
           <div class="tower-tier" id="tier-limit" data-tier="limit">
             <span class="tier-icon">⚡</span>
             <div class="tier-info">
-              <span class="tier-name">7–8 Limit</span>
-              <span class="tier-desc">Tisch vibriert</span>
+              <span id="tier-limit-name" class="tier-name">7–8 Limit</span>
+              <span id="tier-limit-desc" class="tier-desc">Tisch vibriert</span>
             </div>
           </div>
           <div class="tower-tier" id="tier-crater" data-tier="crater">
             <span class="tier-icon">💥</span>
             <div class="tier-info">
-              <span class="tier-name">5–6 Krater</span>
-              <span class="tier-desc">Meteor & Autoalarm</span>
+              <span id="tier-crater-name" class="tier-name">5–6 Krater</span>
+              <span id="tier-crater-desc" class="tier-desc">Meteor & Autoalarm</span>
             </div>
           </div>
           <div class="tower-tier" id="tier-crane" data-tier="crane">
             <span class="tier-icon">🦢</span>
             <div class="tier-info">
-              <span class="tier-name">3–4 Kranich</span>
-              <span class="tier-desc">Hoher Weitflug</span>
+              <span id="tier-crane-name" class="tier-name">3–4 Kranich</span>
+              <span id="tier-crane-desc" class="tier-desc">Hoher Weitflug</span>
             </div>
           </div>
           <div class="tower-tier" id="tier-pigeon" data-tier="pigeon">
             <span class="tier-icon">🕊️</span>
             <div class="tier-info">
-              <span class="tier-name">1–2 Taube</span>
-              <span class="tier-desc">Flachgleiter</span>
+              <span id="tier-pigeon-name" class="tier-name">1–2 Taube</span>
+              <span id="tier-pigeon-desc" class="tier-desc">Flachgleiter</span>
             </div>
           </div>
           <div class="tower-tier active" id="tier-sheet" data-tier="sheet">
             <span class="tier-icon">📄</span>
             <div class="tier-info">
-              <span class="tier-name">0 Ungefaltet</span>
-              <span class="tier-desc">Flatterblatt (~2m)</span>
+              <span id="tier-sheet-name" class="tier-name">0 Ungefaltet</span>
+              <span id="tier-sheet-desc" class="tier-desc">Flatterblatt (~3m)</span>
             </div>
           </div>
         </div>
@@ -141,32 +142,32 @@
         <div class="stats-panel">
           <div class="stats-header">
             <div class="stats-title-group">
-              <span class="stats-tag">BLATT #<span id="sheet-num">1</span> <span id="mode-badge" class="mode-badge">Faltmodus</span></span>
+              <span class="stats-tag"><span id="sheet-tag-prefix">BLATT #</span><span id="sheet-num">1</span> <span id="mode-badge" class="mode-badge">Faltmodus</span></span>
               <h2 id="fold-name" class="fold-name">Ungefaltetes Blatt</h2>
             </div>
             <div class="thickness-badge">
               <span id="thickness-val" class="thickness-number">0.1</span>
-              <span class="thickness-unit">mm Dicke</span>
+              <span id="thickness-unit" class="thickness-unit">mm Dicke</span>
             </div>
           </div>
 
           <!-- Exponential layers progress -->
           <div class="progress-bar-container">
             <div id="fold-progress" class="progress-bar-fill" style="width: 0%"></div>
-            <div class="limit-marker" style="left: 70%" title="Human Limit: 7 Faltungen">7: Menschl. Limit</div>
+            <div id="limit-marker" class="limit-marker" style="left: 70%" title="Human Limit: 7 Faltungen">7: Menschl. Limit</div>
           </div>
 
           <div class="stats-details">
             <div class="detail-item">
-              <span class="detail-label">Lagen ($2^N$):</span>
+              <span id="label-layers" class="detail-label">Lagen (2^N):</span>
               <span id="layers-val" class="detail-val">1</span>
             </div>
             <div class="detail-item">
-              <span class="detail-label">Reichweite:</span>
+              <span id="label-range" class="detail-label">Reichweite:</span>
               <span id="range-val" class="detail-val">~2 m</span>
             </div>
             <div class="detail-item comparison-item">
-              <span class="detail-label">Vergleich:</span>
+              <span id="label-comparison" class="detail-label">Vergleich:</span>
               <span id="comparison-val" class="detail-val">Flatterndes Notizblatt</span>
             </div>
           </div>
@@ -175,14 +176,14 @@
           <div class="escalation-card" id="escalation-card">
             <div class="escalation-badge">
               <span class="escalation-icon" id="escalation-icon">🕊️</span>
-              <span class="escalation-status" id="escalation-status">BEREIT FÜR SCHUSS:</span>
+              <span class="escalation-status" id="escalation-status">BEREIT ZUM START:</span>
             </div>
             <div class="escalation-content">
               <div class="escalation-now" id="escalation-now">
-                <strong>Flatterflug</strong>: Erreicht tieffliegende Origami-Tauben.
+                <strong>Flatterndes Blatt</strong>: Fliegt nur ~3 m und trudelt harmlos ins Gras.
               </div>
               <div class="escalation-next" id="escalation-next">
-                ⏩ <em>Nächste Faltung:</em> Mehr Reichweite & Höhe für Kraniche!
+                ⏩ <em>Falte auf 1:</em> Verdoppelt Reichweite auf ~16 m für tiefe Origami-Tauben!
               </div>
             </div>
           </div>
@@ -193,11 +194,11 @@
           <!-- Angle and Power quick sliders (Visible primarily during aiming) -->
           <div id="aim-sliders" class="slider-controls hidden">
             <div class="slider-group">
-              <label for="pitch-slider">Steigung [↑/↓]: <span id="pitch-val">38</span>°</label>
+              <label for="pitch-slider"><span id="label-pitch">Steigung [↑/↓]:</span> <span id="pitch-val">38</span>°</label>
               <input type="range" id="pitch-slider" min="15" max="80" value="38" />
             </div>
             <div class="slider-group">
-              <label for="power-slider">Wurfkraft: <span id="power-val">85</span>%</label>
+              <label for="power-slider"><span id="label-power">Wurfkraft:</span> <span id="power-val">85</span>%</label>
               <input type="range" id="power-slider" min="30" max="100" value="85" />
             </div>
           </div>
@@ -221,7 +222,7 @@
             </button>
 
             <button id="new-sheet-btn" class="btn btn-secondary" title="Frisches Blatt nehmen">
-              🔄 Reset [R]
+              <span id="new-sheet-text">🔄 Reset [R]</span>
             </button>
           </div>
         </div>
@@ -231,46 +232,46 @@
       <div id="keymap-modal" class="modal-backdrop hidden ui-interactive">
         <div class="modal-card keymap-card">
           <div class="modal-header">
-            <h2>⌨️ Tastenbelegung (Key Map)</h2>
+            <h2 id="keymap-modal-title">⌨️ Tastenbelegung (Key Map)</h2>
             <button id="keymap-close-btn" class="icon-btn">✕</button>
           </div>
           <div class="modal-content">
             <div class="keymap-grid">
               <div class="keymap-row">
                 <div class="keys"><kbd>F</kbd></div>
-                <div class="desc"><strong>Papier falten</strong> (Dicke & Reichweite verdoppeln) / Zurück zum Tisch</div>
+                <div id="keymap-desc-f" class="desc"><strong>Papier falten</strong> (Dicke & Reichweite verdoppeln) / Zurück zum Tisch</div>
               </div>
               <div class="keymap-row">
-                <div class="keys"><kbd>Leertaste</kbd></div>
-                <div class="desc"><strong>Zielmodus aktivieren</strong> bzw. <strong>Papier abschiessen</strong></div>
+                <div class="keys"><kbd>Space</kbd></div>
+                <div id="keymap-desc-space" class="desc"><strong>Zielmodus aktivieren</strong> bzw. <strong>Papier abschiessen</strong></div>
               </div>
               <div class="keymap-row">
-                <div class="keys"><kbd>T</kbd> / Klick</div>
-                <div class="desc"><strong>Ziel wechseln</strong> (Schaltet durch Tauben, Flugzeuge & Tim Cook Satellit)</div>
+                <div class="keys"><kbd>T</kbd> / Click</div>
+                <div id="keymap-desc-t" class="desc"><strong>Ziel wechseln</strong> (Schaltet durch Tauben, Flugzeuge & Tim Cook Satellit)</div>
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>↑</kbd> <kbd>↓</kbd></div>
-                <div class="desc"><strong>Steigung (Pitch)</strong> erhöhen / senken</div>
+                <div id="keymap-desc-pitch" class="desc"><strong>Steigung (Pitch)</strong> erhöhen / senken</div>
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>←</kbd> <kbd>→</kbd></div>
-                <div class="desc"><strong>Richtung (Yaw)</strong> nach links / rechts steuern</div>
+                <div id="keymap-desc-yaw" class="desc"><strong>Richtung (Yaw)</strong> nach links / rechts steuern</div>
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>A</kbd></div>
-                <div class="desc"><strong>Apple iAim</strong> Auto-Lock an-/ausschalten</div>
+                <div id="keymap-desc-a" class="desc"><strong>Apple iAim</strong> Auto-Lock an-/ausschalten</div>
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>K</kbd></div>
-                <div class="desc">Dieses <strong>Tastenbelegungs-Fenster</strong> öffnen / schließen</div>
+                <div id="keymap-desc-k" class="desc">Dieses <strong>Tastenbelegungs-Fenster</strong> öffnen / schließen</div>
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>R</kbd></div>
-                <div class="desc"><strong>Frisches Blatt Papier</strong> auf den Tisch legen (Reset)</div>
+                <div id="keymap-desc-r" class="desc"><strong>Frisches Blatt Papier</strong> auf den Tisch legen (Reset)</div>
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>Esc</kbd></div>
-                <div class="desc">Fenster & Overlays schließen</div>
+                <div id="keymap-desc-esc" class="desc">Fenster & Overlays schließen</div>
               </div>
             </div>
             <div class="keymap-footer">

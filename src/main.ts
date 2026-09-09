@@ -1,8 +1,13 @@
 import './style.css';
 import { FaltalityGame } from './game';
 import type { BirdData } from './models/birds';
+import { translations, detectLanguage } from './i18n';
+import type { SupportedLang } from './i18n';
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Current active language: default detected from domain/localstorage/browser
+  let currentLang: SupportedLang = detectLanguage();
+
   // 3D Canvas Container
   const container = document.getElementById('game-canvas') || document.getElementById('canvas-container');
   if (!container) {
@@ -12,60 +17,106 @@ window.addEventListener('DOMContentLoaded', () => {
   const game = new FaltalityGame(container);
 
   // UI Element References
-  const scoreVal = document.getElementById('score-val')!;
-  const birdsHitVal = document.getElementById('birds-hit-val')!;
-  const comboVal = document.getElementById('combo-val')!;
-  const sheetNum = document.getElementById('sheet-num')!;
+  const metaPageTitle = document.getElementById('meta-page-title');
+  const logoTitle = document.getElementById('logo-title')!;
+  const logoBadge = document.getElementById('logo-badge')!;
+
+  const trackerLabel = document.getElementById('tracker-label')!;
   const skyBirdsInfo = document.getElementById('sky-birds-info')!;
 
+  const labelScore = document.getElementById('label-score')!;
+  const scoreVal = document.getElementById('score-val')!;
+  const labelBirdsHit = document.getElementById('label-birds-hit')!;
+  const birdsHitVal = document.getElementById('birds-hit-val')!;
+  const labelCombo = document.getElementById('label-combo')!;
+  const comboVal = document.getElementById('combo-val')!;
+
+  const langBtn = document.getElementById('lang-btn');
+  const aimToggleBtn = document.getElementById('aim-toggle-btn')!;
+  const cycleTargetBtn = document.getElementById('cycle-target-btn');
+  const keymapBtn = document.getElementById('keymap-btn');
+  const soundBtn = document.getElementById('sound-btn');
+  const helpBtn = document.getElementById('help-btn');
+
+  // Left Fold Tower
+  const towerTag = document.getElementById('tower-tag')!;
+  const towerFoldsVal = document.getElementById('tower-folds-val');
+  const towerUnit = document.getElementById('tower-unit')!;
+  const towerLayersVal = document.getElementById('tower-layers-val');
+  const towerThicknessVal = document.getElementById('tower-thickness-val');
+
+  const tierSingularity = document.getElementById('tier-singularity');
+  const tierSingularityName = document.getElementById('tier-singularity-name')!;
+  const tierSingularityDesc = document.getElementById('tier-singularity-desc')!;
+
+  const tierAirliner = document.getElementById('tier-airliner');
+  const tierAirlinerName = document.getElementById('tier-airliner-name')!;
+  const tierAirlinerDesc = document.getElementById('tier-airliner-desc')!;
+
+  const tierLimit = document.getElementById('tier-limit');
+  const tierLimitName = document.getElementById('tier-limit-name')!;
+  const tierLimitDesc = document.getElementById('tier-limit-desc')!;
+
+  const tierCrater = document.getElementById('tier-crater');
+  const tierCraterName = document.getElementById('tier-crater-name')!;
+  const tierCraterDesc = document.getElementById('tier-crater-desc')!;
+
+  const tierCrane = document.getElementById('tier-crane');
+  const tierCraneName = document.getElementById('tier-crane-name')!;
+  const tierCraneDesc = document.getElementById('tier-crane-desc')!;
+
+  const tierPigeon = document.getElementById('tier-pigeon');
+  const tierPigeonName = document.getElementById('tier-pigeon-name')!;
+  const tierPigeonDesc = document.getElementById('tier-pigeon-desc')!;
+
+  const tierSheet = document.getElementById('tier-sheet');
+  const tierSheetName = document.getElementById('tier-sheet-name')!;
+  const tierSheetDesc = document.getElementById('tier-sheet-desc')!;
+
+  // Bottom Dashboard
+  const sheetTagPrefix = document.getElementById('sheet-tag-prefix')!;
+  const sheetNum = document.getElementById('sheet-num')!;
+  const modeBadge = document.getElementById('mode-badge')!;
   const foldName = document.getElementById('fold-name')!;
   const thicknessVal = document.getElementById('thickness-val')!;
+  const thicknessUnit = document.getElementById('thickness-unit')!;
   const foldProgress = document.getElementById('fold-progress')!;
+  const limitMarker = document.getElementById('limit-marker')!;
+
+  const labelLayers = document.getElementById('label-layers')!;
   const layersVal = document.getElementById('layers-val')!;
+  const labelRange = document.getElementById('label-range')!;
   const rangeVal = document.getElementById('range-val')!;
+  const labelComparison = document.getElementById('label-comparison')!;
   const comparisonVal = document.getElementById('comparison-val')!;
 
-  // Feature Preview / Escalation Card
+  // Escalation Card
   const escalationCard = document.getElementById('escalation-card')!;
   const escalationIcon = document.getElementById('escalation-icon')!;
   const escalationStatus = document.getElementById('escalation-status')!;
   const escalationNow = document.getElementById('escalation-now')!;
   const escalationNext = document.getElementById('escalation-next')!;
 
-  // Fold Tower Indicator References (Left Sidebar)
-  const towerFoldsVal = document.getElementById('tower-folds-val');
-  const towerLayersVal = document.getElementById('tower-layers-val');
-  const towerThicknessVal = document.getElementById('tower-thickness-val');
-  const tierSheet = document.getElementById('tier-sheet');
-  const tierPigeon = document.getElementById('tier-pigeon');
-  const tierCrane = document.getElementById('tier-crane');
-  const tierCrater = document.getElementById('tier-crater');
-  const tierLimit = document.getElementById('tier-limit');
-  const tierAirliner = document.getElementById('tier-airliner');
-  const tierSingularity = document.getElementById('tier-singularity');
+  // Actions Panel
+  const aimSliders = document.getElementById('aim-sliders')!;
+  const labelPitch = document.getElementById('label-pitch')!;
+  const pitchSlider = document.getElementById('pitch-slider') as HTMLInputElement;
+  const pitchVal = document.getElementById('pitch-val')!;
+  const labelPower = document.getElementById('label-power')!;
+  const powerSlider = document.getElementById('power-slider') as HTMLInputElement;
+  const powerVal = document.getElementById('power-val')!;
 
   const foldBtn = document.getElementById('fold-btn')!;
   const foldMainText = document.getElementById('fold-main-text')!;
   const foldSubtext = document.getElementById('fold-subtext')!;
-
   const actionBtn = document.getElementById('action-btn')!;
   const actionBtnIcon = document.getElementById('action-btn-icon')!;
   const actionMainText = document.getElementById('action-main-text')!;
   const actionSubtext = document.getElementById('action-subtext')!;
-  const modeBadge = document.getElementById('mode-badge')!;
-
-  const aimSliders = document.getElementById('aim-sliders')!;
-  const pitchSlider = document.getElementById('pitch-slider') as HTMLInputElement;
-  const pitchVal = document.getElementById('pitch-val')!;
-  const powerSlider = document.getElementById('power-slider') as HTMLInputElement;
-  const powerVal = document.getElementById('power-val')!;
-
-  const aimToggleBtn = document.getElementById('aim-toggle-btn')!;
-  const cycleTargetBtn = document.getElementById('cycle-target-btn');
   const newSheetBtn = document.getElementById('new-sheet-btn')!;
-  const soundBtn = document.getElementById('sound-btn');
-  const keymapBtn = document.getElementById('keymap-btn');
+  const newSheetText = document.getElementById('new-sheet-text')!;
 
+  // Banners & Overlays
   const faltalityBanner = document.getElementById('faltality-banner')!;
   const faltalityTitle = document.getElementById('faltality-title') || document.querySelector('.faltality-title')!;
   const faltalitySubtitle = document.getElementById('faltality-subtitle')!;
@@ -78,6 +129,29 @@ window.addEventListener('DOMContentLoaded', () => {
   const keymapModal = document.getElementById('keymap-modal');
   const keymapCloseBtn = document.getElementById('keymap-close-btn');
   const keymapOkBtn = document.getElementById('keymap-ok-btn');
+  const keymapModalTitle = document.getElementById('keymap-modal-title');
+  const keymapDescF = document.getElementById('keymap-desc-f');
+  const keymapDescSpace = document.getElementById('keymap-desc-space');
+  const keymapDescT = document.getElementById('keymap-desc-t');
+  const keymapDescPitch = document.getElementById('keymap-desc-pitch');
+  const keymapDescYaw = document.getElementById('keymap-desc-yaw');
+  const keymapDescA = document.getElementById('keymap-desc-a');
+  const keymapDescK = document.getElementById('keymap-desc-k');
+  const keymapDescR = document.getElementById('keymap-desc-r');
+  const keymapDescEsc = document.getElementById('keymap-desc-esc');
+
+  const setLanguage = (newLang: SupportedLang) => {
+    currentLang = newLang;
+    localStorage.setItem('faltality_lang', newLang);
+    document.documentElement.lang = newLang;
+    updateUI();
+  };
+
+  if (langBtn) {
+    langBtn.addEventListener('click', () => {
+      setLanguage(currentLang === 'de' ? 'en' : 'de');
+    });
+  }
 
   const toggleKeymap = (show?: boolean) => {
     if (!keymapModal) return;
@@ -91,18 +165,20 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   if (keymapBtn) keymapBtn.addEventListener('click', () => toggleKeymap());
+  if (helpBtn) helpBtn.addEventListener('click', () => toggleKeymap(true));
   if (keymapCloseBtn) keymapCloseBtn.addEventListener('click', () => toggleKeymap(false));
   if (keymapOkBtn) keymapOkBtn.addEventListener('click', () => toggleKeymap(false));
 
   // Toggle Auto-Aim
   const toggleAim = () => {
     const active = game.toggleAutoAim();
+    const t = translations[currentLang];
     if (active) {
       aimToggleBtn.classList.add('active');
-      aimToggleBtn.textContent = '🎯 iAim: AN';
+      aimToggleBtn.textContent = t.iAimOn;
     } else {
       aimToggleBtn.classList.remove('active');
-      aimToggleBtn.textContent = '🎯 iAim: AUS';
+      aimToggleBtn.textContent = t.iAimOff;
     }
   };
 
@@ -150,14 +226,33 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Update UI Stats & State
+  // Update UI Stats & State with current language translations
   const updateUI = () => {
-    const stats = game.paper.getStats();
+    const t = translations[currentLang];
+    const stats = game.paper.getStats(currentLang);
+
+    // Dynamic Title and Flag Indicator
+    if (metaPageTitle) metaPageTitle.textContent = t.metaTitle;
+    logoTitle.textContent = t.gameTitle;
+    logoBadge.textContent = t.gameSubtitle;
+    if (langBtn) {
+      langBtn.textContent = currentLang === 'de' ? '🇩🇪 DE' : '🇬🇧 EN';
+      langBtn.title = currentLang === 'de' ? 'Switch to English (Foldtality)' : 'Auf Deutsch umschalten (Faltality)';
+    }
+
+    // Top Header
+    trackerLabel.textContent = t.skyActive;
+    labelScore.textContent = t.score;
+    labelBirdsHit.textContent = t.birdsHit;
+    labelCombo.textContent = t.combo;
 
     scoreVal.textContent = game.state.score.toLocaleString();
     birdsHitVal.textContent = game.state.birdsHitCount.toString();
     comboVal.textContent = `x${game.state.currentCombo}`;
+    sheetTagPrefix.textContent = `${t.sheetTag(game.state.paperCount).split('#')[0]}#`;
     sheetNum.textContent = game.state.paperCount.toString();
+
+    aimToggleBtn.textContent = game.autoAim ? t.iAimOn : t.iAimOff;
 
     // Sky birds & aircraft count
     const livingBirds = game.birdManager.birds.filter((b: BirdData) => b.alive);
@@ -171,14 +266,18 @@ window.addEventListener('DOMContentLoaded', () => {
     // Show current targeted bird on HUD if aiming
     if (game.phase === 'aiming' && game.targetedBird) {
       const targetPrefix = game.targetedBird.type === 'satellite' ? '🛰️' : (game.targetedBird.type === 'airplane' ? '✈️' : '🎯');
-      skyBirdsInfo.textContent = `${targetPrefix} Lock: ${game.targetedBird.title} [Taste T für Wechsel]`;
+      skyBirdsInfo.textContent = `${targetPrefix} ${t.skyLocked(game.targetedBird.title)}`;
       if (cycleTargetBtn) {
-        cycleTargetBtn.textContent = `${targetPrefix} ${game.targetedBird.title.split(' ')[0]} [T]`;
+        cycleTargetBtn.textContent = t.cycleTargetShort(game.targetedBird.title.split(' ')[0]);
       }
     } else {
-      skyBirdsInfo.textContent = `${geese} Kraniche, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}${satellites > 0 ? `, 🛰️ ${satellites} Tim Cook Satellit` : ''}`;
+      if (currentLang === 'en') {
+        skyBirdsInfo.textContent = `${geese} Cranes, ${pigeons} Pigeons, ${seagulls} Seagulls${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}${satellites > 0 ? `, 🛰️ ${satellites} Tim Cook Satellite` : ''}`;
+      } else {
+        skyBirdsInfo.textContent = `${geese} Kraniche, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}${satellites > 0 ? `, 🛰️ ${satellites} Tim Cook Satellit` : ''}`;
+      }
       if (cycleTargetBtn) {
-        cycleTargetBtn.textContent = `🎯 Ziel wechseln [T]`;
+        cycleTargetBtn.textContent = t.cycleTarget;
       }
     }
 
@@ -189,15 +288,22 @@ window.addEventListener('DOMContentLoaded', () => {
     thicknessVal.textContent = stats.thicknessMm >= 1000 
       ? (stats.thicknessMm / 1000).toFixed(2) + ' m'
       : (stats.thicknessMm >= 10 ? (stats.thicknessMm / 10).toFixed(1) + ' cm' : stats.thicknessMm.toFixed(1));
+    thicknessUnit.textContent = `${stats.thicknessMm >= 1000 ? '' : (stats.thicknessMm >= 10 ? '' : 'mm ')}${t.thicknessUnit}`;
 
     const pct = Math.min(100, (stats.folds / 10) * 100);
     foldProgress.style.width = `${pct}%`;
+    limitMarker.textContent = t.limitMarker;
 
+    labelLayers.textContent = t.layersLabel;
     layersVal.textContent = stats.layers.toLocaleString();
+    labelRange.textContent = t.rangeLabel;
     rangeVal.textContent = `~${stats.maxDistanceM} m`;
+    labelComparison.textContent = t.comparisonLabel;
     comparisonVal.textContent = stats.comparison;
 
     // UPDATE LARGE FOLD TOWER INDICATOR (Left HUD)
+    towerTag.textContent = t.foldTowerTag;
+    towerUnit.textContent = t.foldsUnit;
     if (towerFoldsVal) {
       towerFoldsVal.textContent = stats.folds.toString();
       if (stats.folds > lastFoldsCount && lastFoldsCount !== -1) {
@@ -207,11 +313,27 @@ window.addEventListener('DOMContentLoaded', () => {
       lastFoldsCount = stats.folds;
     }
     if (towerLayersVal) {
-      towerLayersVal.textContent = `${stats.layers.toLocaleString()} ${stats.layers === 1 ? 'Lage' : 'Lagen'}`;
+      towerLayersVal.textContent = t.layerPill(stats.layers);
     }
     if (towerThicknessVal) {
       towerThicknessVal.textContent = formattedThickness;
     }
+
+    // Tier segment names and descriptions
+    tierSingularityName.textContent = t.tierSingularity.name;
+    tierSingularityDesc.textContent = t.tierSingularity.desc;
+    tierAirlinerName.textContent = t.tierAirliner.name;
+    tierAirlinerDesc.textContent = t.tierAirliner.desc;
+    tierLimitName.textContent = t.tierLimit.name;
+    tierLimitDesc.textContent = t.tierLimit.desc;
+    tierCraterName.textContent = t.tierCrater.name;
+    tierCraterDesc.textContent = t.tierCrater.desc;
+    tierCraneName.textContent = t.tierCrane.name;
+    tierCraneDesc.textContent = t.tierCrane.desc;
+    tierPigeonName.textContent = t.tierPigeon.name;
+    tierPigeonDesc.textContent = t.tierPigeon.desc;
+    tierSheetName.textContent = t.tierSheet.name;
+    tierSheetDesc.textContent = t.tierSheet.desc;
 
     // Update active tier badge in Fold Tower
     const tiers = [
@@ -223,12 +345,12 @@ window.addEventListener('DOMContentLoaded', () => {
       { el: tierAirliner, active: stats.folds >= 9 && stats.folds <= 10 },
       { el: tierSingularity, active: stats.folds >= 11 }
     ];
-    for (const t of tiers) {
-      if (!t.el) continue;
-      if (t.active) {
-        t.el.classList.add('active');
+    for (const seg of tiers) {
+      if (!seg.el) continue;
+      if (seg.active) {
+        seg.el.classList.add('active');
       } else {
-        t.el.classList.remove('active');
+        seg.el.classList.remove('active');
       }
     }
 
@@ -236,59 +358,76 @@ window.addEventListener('DOMContentLoaded', () => {
     escalationCard.className = 'escalation-card';
     if (stats.folds === 0) {
       escalationIcon.textContent = '📄';
-      escalationStatus.textContent = 'BEREIT ZUM START:';
-      escalationNow.innerHTML = '<strong>Flatterndes Blatt</strong>: Fliegt nur ~3 m und trudelt harmlos ins Gras.';
-      escalationNext.innerHTML = '⏩ <em>Falte auf 1:</em> Verdoppelt Reichweite auf ~16 m für tiefe Origami-Tauben!';
+      escalationStatus.textContent = t.escalationReady;
+      escalationNow.innerHTML = t.esc0Now;
+      escalationNext.innerHTML = t.esc0Next;
     } else if (stats.folds <= 2) {
       escalationIcon.textContent = '🕊️';
-      escalationStatus.textContent = 'AKTIV: TIEFFLIEGER-JAGD';
-      escalationNow.innerHTML = '<strong>Aerodynamischer Flachgleiter</strong>: Perfekte Höhe für tiefe Origami-Tauben.';
-      escalationNext.innerHTML = '⏩ <em>Falte auf 3:</em> Ausreichend Steigflug für japanische Origami-Kraniche!';
+      escalationStatus.textContent = t.escalationActiveLow;
+      escalationNow.innerHTML = t.esc1Now;
+      escalationNext.innerHTML = t.esc1Next;
     } else if (stats.folds <= 4) {
       escalationIcon.textContent = '🦢';
-      escalationStatus.textContent = 'AKTIV: KRANICH- & MÖWEN-REICHWEITE';
-      escalationNow.innerHTML = '<strong>Stabiler Weitstreckengleiter</strong>: Zieht hoch über den Garten zu Kranichen & Möwen.';
-      escalationNext.innerHTML = '⏩ <em>Ab Faltung 5:</em> 💥 <strong>Nachbars Autoalarm & Ohnmachts-Schafe!</strong>';
+      escalationStatus.textContent = t.escalationActiveMid;
+      escalationNow.innerHTML = t.esc3Now;
+      escalationNext.innerHTML = t.esc3Next;
     } else if (stats.folds <= 6) {
       escalationCard.classList.add('crater-stage');
       escalationIcon.textContent = '💥';
-      escalationStatus.textContent = 'NEU: METEORITEN-KRATER AKTIV!';
-      escalationNow.innerHTML = '<strong>Kinetische Masse</strong>: Fehlwürfe erzeugen Krater, Nachbars Auto heult auf & die Schafe fallen um!';
-      escalationNext.innerHTML = '⏩ <em>Ab Faltung 7:</em> Menschl. Limit überschritten & Tisch beginnt zu zittern!';
+      escalationStatus.textContent = t.escalationCraterTitle;
+      escalationNow.innerHTML = t.esc5Now;
+      escalationNext.innerHTML = t.esc5Next;
     } else if (stats.folds <= 8) {
       escalationCard.classList.add('crater-stage');
       escalationIcon.textContent = '🛸';
-      escalationStatus.textContent = 'NEU: TISCH-VIBRATION AKTIV!';
-      escalationNow.innerHTML = '<strong>Hyperschall-Geschoss</strong>: Tisch bebt. Reichweite reicht für die iFold Stealth Dart!';
-      escalationNext.innerHTML = '⏩ <em>Ab Faltung 9:</em> ✈️ <strong>Faltality Airlines FL-404</strong> in den Wolken abschießen!';
+      escalationStatus.textContent = t.escalationLimitTitle;
+      escalationNow.innerHTML = t.esc7Now;
+      escalationNext.innerHTML = t.esc7Next;
     } else if (stats.folds <= 10) {
       escalationCard.classList.add('plane-stage');
       escalationIcon.textContent = '✈️';
-      escalationStatus.textContent = 'NEU: AIRLINER-JAGD BEREIT!';
-      escalationNow.innerHTML = '<strong>Stratosphären-Punch</strong>: Kann Passagierflugzeug FL-404 treffen (Koffer-Regen & Schafe fallen um)!';
-      escalationNext.innerHTML = '⏩ <em>Ab Faltung 11+:</em> 🛰️ <strong>Tim Cook Keynote-Satellit erscheint im Orbit!</strong>';
+      escalationStatus.textContent = t.escalationPlaneTitle;
+      escalationNow.innerHTML = t.esc9Now;
+      escalationNext.innerHTML = t.esc9Next;
     } else {
       escalationCard.classList.add('singularity-stage');
       escalationIcon.textContent = '🛰️';
-      escalationStatus.textContent = 'ORBIT ERREICHT: TIM COOK SATELLIT AKTIV!';
-      escalationNow.innerHTML = '<strong>Exosphäre erreicht</strong>: Tim Cooks geheimer Keynote-Satellit kreist im Orbit!';
-      escalationNext.innerHTML = '🎯 <em>Abschuss:</em> Drücke [T] zum Anvisieren & ernte fliegende AirPods, iPhones & Poliertücher!';
+      escalationStatus.textContent = t.escalationOrbitTitle;
+      escalationNow.innerHTML = t.esc11Now;
+      escalationNext.innerHTML = t.esc11Next;
     }
+
+    labelPitch.textContent = t.pitchLabel;
+    labelPower.textContent = t.powerLabel;
+    newSheetText.textContent = t.btnReset;
 
     pitchSlider.value = Math.round(game.pitchDeg).toString();
     pitchVal.textContent = Math.round(game.pitchDeg).toString();
     powerSlider.value = Math.round(game.powerPercent).toString();
     powerVal.textContent = Math.round(game.powerPercent).toString();
 
+    // Keymap Modal Translations
+    if (keymapModalTitle) keymapModalTitle.textContent = t.keymapModalHeader;
+    if (keymapDescF) keymapDescF.innerHTML = t.keymapF;
+    if (keymapDescSpace) keymapDescSpace.innerHTML = t.keymapSpace;
+    if (keymapDescT) keymapDescT.innerHTML = t.keymapT;
+    if (keymapDescPitch) keymapDescPitch.innerHTML = t.keymapArrowsPitch;
+    if (keymapDescYaw) keymapDescYaw.innerHTML = t.keymapArrowsYaw;
+    if (keymapDescA) keymapDescA.innerHTML = t.keymapA;
+    if (keymapDescK) keymapDescK.innerHTML = t.keymapK;
+    if (keymapDescR) keymapDescR.innerHTML = t.keymapR;
+    if (keymapDescEsc) keymapDescEsc.innerHTML = t.keymapEsc;
+    if (keymapOkBtn) keymapOkBtn.textContent = t.keymapOk;
+
     // 2-Phase Dynamic Button Text & State
     if (game.phase === 'flying') {
       foldBtn.setAttribute('disabled', 'true');
       actionBtn.setAttribute('disabled', 'true');
-      foldMainText.textContent = 'FALTEN';
-      foldSubtext.textContent = 'Im Flug...';
-      actionMainText.textContent = 'FLUG...';
-      actionSubtext.textContent = 'Tracking';
-      modeBadge.textContent = 'Im Flug';
+      foldMainText.textContent = t.btnFoldMain;
+      foldSubtext.textContent = t.btnFoldFlyingSub;
+      actionMainText.textContent = t.btnFlyingMain;
+      actionSubtext.textContent = t.btnFlyingSub;
+      modeBadge.textContent = t.modeFlying;
       modeBadge.classList.add('aiming');
       aimSliders.classList.add('hidden');
     } else if (game.phase === 'aiming') {
@@ -296,14 +435,14 @@ window.addEventListener('DOMContentLoaded', () => {
       actionBtn.removeAttribute('disabled');
       actionBtn.classList.add('aiming-mode');
 
-      foldMainText.textContent = 'TISCH';
-      foldSubtext.textContent = '[Taste F] Weitersitzen & falten';
+      foldMainText.textContent = currentLang === 'de' ? 'TISCH' : 'TABLE';
+      foldSubtext.textContent = t.btnFoldAimingSub;
 
       actionBtnIcon.textContent = '🚀';
-      actionMainText.textContent = 'ABSCHIESSEN';
-      actionSubtext.textContent = '[Leertaste] Feuer frei!';
+      actionMainText.textContent = t.btnLaunchMain;
+      actionSubtext.textContent = t.btnLaunchSub;
 
-      modeBadge.textContent = 'Zielmodus';
+      modeBadge.textContent = t.modeAiming;
       modeBadge.classList.add('aiming');
       aimSliders.classList.remove('hidden');
     } else {
@@ -312,16 +451,16 @@ window.addEventListener('DOMContentLoaded', () => {
       actionBtn.removeAttribute('disabled');
       actionBtn.classList.remove('aiming-mode');
 
-      const nextThickness = (stats.thicknessMm * 2);
+      const nextThickness = stats.thicknessMm * 2;
       const nextStr = nextThickness >= 10 ? (nextThickness / 10).toFixed(1) + ' cm' : nextThickness.toFixed(1) + ' mm';
-      foldMainText.textContent = 'FALTEN';
-      foldSubtext.textContent = `[Taste F] Verdoppeln auf ${nextStr}`;
+      foldMainText.textContent = t.btnFoldMain;
+      foldSubtext.textContent = t.btnFoldSub(nextStr);
 
       actionBtnIcon.textContent = '🎯';
-      actionMainText.textContent = 'ZIELEN';
-      actionSubtext.textContent = '[Leertaste] Kamera hoch';
+      actionMainText.textContent = t.btnAimMain;
+      actionSubtext.textContent = t.btnAimSub;
 
-      modeBadge.textContent = 'Faltmodus';
+      modeBadge.textContent = t.modeFolding;
       modeBadge.classList.remove('aiming');
       aimSliders.classList.add('hidden');
     }
@@ -332,20 +471,21 @@ window.addEventListener('DOMContentLoaded', () => {
 
   game.onFaltality = (bird: BirdData, folds: number, scoreAward: number) => {
     updateUI();
+    const t = translations[currentLang];
 
     if (bird.type === 'satellite') {
-      faltalityTitle.textContent = '🍏 ONE MORE THING !';
-      faltalitySubtitle.innerHTML = `<strong>Tim Cooks Keynote-Satellit pulverisiert!</strong><br><span class="loot-subtext">✨ LOOT: AirPods Pro Cases • Gold iPhones • $19 Poliertücher</span>`;
-      faltalityPoints.textContent = `🛰️ +${scoreAward.toLocaleString()} PUNKTE!`;
+      faltalityTitle.textContent = t.bannerOneMoreThing;
+      faltalitySubtitle.innerHTML = t.subSatellite;
+      faltalityPoints.textContent = t.pointsSatellite(scoreAward);
       triggerAppleKeynoteLootShower();
     } else if (bird.type === 'airplane') {
-      faltalityTitle.textContent = 'F A L T A L I T Y !';
-      faltalitySubtitle.innerHTML = '🚨 FLUGVERSPÄTUNG DES TODES! Koffer regnen herab & Nachbars Schafe fallen um!';
-      faltalityPoints.textContent = `✈️ +${scoreAward.toLocaleString()} PUNKTE!`;
+      faltalityTitle.textContent = t.bannerFaltality;
+      faltalitySubtitle.innerHTML = t.subPlane;
+      faltalityPoints.textContent = t.pointsPlane(scoreAward);
     } else {
-      faltalityTitle.textContent = 'F A L T A L I T Y !';
-      faltalitySubtitle.innerHTML = `${bird.title} mit ${folds} Faltungen erwischt!`;
-      faltalityPoints.textContent = `+${scoreAward.toLocaleString()} PUNKTE!`;
+      faltalityTitle.textContent = t.bannerFaltality;
+      faltalitySubtitle.innerHTML = t.subNormal(bird.title, folds);
+      faltalityPoints.textContent = t.pointsNormal(scoreAward);
     }
 
     faltalityBanner.classList.remove('hidden');
@@ -358,9 +498,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
   game.onOverkillCrater = (folds: number) => {
     updateUI();
-    faltalityTitle.textContent = 'O V E R K I L L !';
-    faltalitySubtitle.innerHTML = `💥 BUMM! Nachbars Auto heult auf, Warnblinker an & die Schafe kippen um!`;
-    faltalityPoints.textContent = `MIT ${folds} FALTUNGEN!`;
+    const t = translations[currentLang];
+    faltalityTitle.textContent = t.bannerOverkill;
+    faltalitySubtitle.innerHTML = t.subCrater;
+    faltalityPoints.textContent = t.pointsCrater(folds);
     faltalityBanner.classList.remove('hidden');
 
     if (bannerTimeout) clearTimeout(bannerTimeout);

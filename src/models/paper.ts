@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { sound } from '../sound';
+import type { SupportedLang } from '../i18n';
 
 export interface FoldStats {
   folds: number;
@@ -60,20 +61,20 @@ export class PaperSheet {
     this.trajectoryLine.visible = false;
     this.scene.add(this.trajectoryLine);
 
-    this.scene.add(this.mesh);
     this.rebuildMesh();
   }
 
-  // Get current physical stats based on exponential folding
-  public getStats(): FoldStats {
+  // Calculate exponential statistics: 2^N layers, halving dimensions, exponential thickness
+  public getStats(lang: SupportedLang = 'de'): FoldStats {
     const folds = this.folds;
     const layers = Math.pow(2, folds);
-    const thicknessMm = 0.1 * layers;
+    const thicknessMm = 0.1 * layers; // Standard 80g paper: 0.1mm base
 
-    let w = 1.0;
-    let l = 0.7;
-    for (let f = 0; f < folds; f++) {
-      if (f % 2 === 0) {
+    // Starting dimensions: A4 ~ 210mm x 297mm (in 3D meters: 0.42m x 0.60m for nice table scale)
+    let w = 0.42;
+    let l = 0.60;
+    for (let i = 0; i < folds; i++) {
+      if (w > l) {
         w /= 2;
       } else {
         l /= 2;
@@ -84,69 +85,134 @@ export class PaperSheet {
 
     let maxDistanceM = 3;
     let maxAltitudeM = 1.5;
-    let comparison = 'Flatterndes Notizblatt (fällt kraftlos ins Gras)';
-    let foldName = 'Ungefaltetes Blatt';
+    let comparison = '';
+    let foldName = '';
 
-    if (folds === 0) {
-      maxDistanceM = 3;
-      maxAltitudeM = 1.5;
-      comparison = 'Flatterndes Notizblatt (fällt kraftlos ins Gras)';
-      foldName = 'Ungefaltetes Blatt';
-    } else if (folds === 1) {
-      maxDistanceM = 16;
-      maxAltitudeM = 8;
-      comparison = 'Doppelte Lage – flattert noch wild';
-      foldName = 'Erster Knick';
-    } else if (folds === 2) {
-      maxDistanceM = 32;
-      maxAltitudeM = 15;
-      comparison = 'Schulheft-Stabilität – erreicht Origami-Tauben';
-      foldName = 'Postkarten-Format';
-    } else if (folds === 3) {
-      maxDistanceM = 65;
-      maxAltitudeM = 28;
-      comparison = 'Dicke wie 1 Pappkarton – erreicht Tauben & Kraniche!';
-      foldName = 'Pocket Dart';
-    } else if (folds === 4) {
-      maxDistanceM = 120;
-      maxAltitudeM = 55;
-      comparison = 'Dicke wie ein Kreditkartenstapel – Gänse- & Möwen-Reichweite!';
-      foldName = 'Aerodynamischer Keil';
-    } else if (folds === 5) {
-      maxDistanceM = 220;
-      maxAltitudeM = 95;
-      comparison = 'Dicke wie das neue iPhone Fold – Krater & Autoalarm!';
-      foldName = 'iFold Mini';
-    } else if (folds === 6) {
-      maxDistanceM = 380;
-      maxAltitudeM = 160;
-      comparison = 'Extrem steif – Knochenbrecher-Level';
-      foldName = 'Origami Bullet';
-    } else if (folds === 7) {
-      maxDistanceM = 650;
-      maxAltitudeM = 280;
-      comparison = 'Mythos-Grenze: Das Limit menschlicher Hände!';
-      foldName = 'Human Peak Fold';
-    } else if (folds === 8) {
-      maxDistanceM = 1100;
-      maxAltitudeM = 450;
-      comparison = 'Hydraulische Presse erforderlich – zerschmettert Drohnen!';
-      foldName = 'Hydraulic Crusher';
-    } else if (folds === 9) {
-      maxDistanceM = 1800;
-      maxAltitudeM = 750;
-      comparison = 'Massiver Block aus Zellulose-Titan – Airliner-Reichweite!';
-      foldName = 'iFold Pro Max';
-    } else if (folds === 10) {
-      maxDistanceM = 2800;
-      maxAltitudeM = 1100;
-      comparison = 'Stratosphären-Projektil: Dichte wie Granit!';
-      foldName = 'Stratosphere Piercer';
+    if (lang === 'en') {
+      if (folds === 0) {
+        maxDistanceM = 3;
+        maxAltitudeM = 1.5;
+        comparison = 'Fluttering note sheet (drops limply into the grass)';
+        foldName = 'Unfolded Sheet';
+      } else if (folds === 1) {
+        maxDistanceM = 16;
+        maxAltitudeM = 8;
+        comparison = 'Double layer – still flutters wildly';
+        foldName = 'First Crease';
+      } else if (folds === 2) {
+        maxDistanceM = 32;
+        maxAltitudeM = 15;
+        comparison = 'Notebook stability – reaches low origami pigeons';
+        foldName = 'Postcard Fold';
+      } else if (folds === 3) {
+        maxDistanceM = 65;
+        maxAltitudeM = 28;
+        comparison = 'Cardboard thickness – hits cranes & pigeons!';
+        foldName = 'Pocket Dart';
+      } else if (folds === 4) {
+        maxDistanceM = 120;
+        maxAltitudeM = 55;
+        comparison = 'Credit card stack – goose & seagull range!';
+        foldName = 'Aerodynamic Wedge';
+      } else if (folds === 5) {
+        maxDistanceM = 220;
+        maxAltitudeM = 95;
+        comparison = 'iPhone Fold thickness – blasts craters & car alarms!';
+        foldName = 'iFold Mini';
+      } else if (folds === 6) {
+        maxDistanceM = 380;
+        maxAltitudeM = 160;
+        comparison = 'Extremely rigid – bone-crusher velocity';
+        foldName = 'Origami Bullet';
+      } else if (folds === 7) {
+        maxDistanceM = 650;
+        maxAltitudeM = 280;
+        comparison = 'Myth boundary: The limit of human hands!';
+        foldName = 'Human Peak Fold';
+      } else if (folds === 8) {
+        maxDistanceM = 1100;
+        maxAltitudeM = 450;
+        comparison = 'Hydraulic press required – crushes drones!';
+        foldName = 'Hydraulic Crusher';
+      } else if (folds === 9) {
+        maxDistanceM = 1800;
+        maxAltitudeM = 750;
+        comparison = 'Titanium-cellulose block – passenger airliner range!';
+        foldName = 'iFold Pro Max';
+      } else if (folds === 10) {
+        maxDistanceM = 2800;
+        maxAltitudeM = 1100;
+        comparison = 'Stratospheric projectile: Dense as granite!';
+        foldName = 'Stratosphere Piercer';
+      } else {
+        maxDistanceM = 4500;
+        maxAltitudeM = 1800;
+        comparison = 'ORBITAL SINGULARITY: Strikes Tim Cook’s Keynote Satellite!';
+        foldName = 'Black Hole of Paper';
+      }
     } else {
-      maxDistanceM = 4500;
-      maxAltitudeM = 1800;
-      comparison = 'ORBIT-SINGULARITÄT: Erreicht Tim Cooks Keynote-Satellit!';
-      foldName = 'Black Hole of Paper';
+      // German (Default)
+      if (folds === 0) {
+        maxDistanceM = 3;
+        maxAltitudeM = 1.5;
+        comparison = 'Flatterndes Notizblatt (fällt kraftlos ins Gras)';
+        foldName = 'Ungefaltetes Blatt';
+      } else if (folds === 1) {
+        maxDistanceM = 16;
+        maxAltitudeM = 8;
+        comparison = 'Doppelte Lage – flattert noch wild';
+        foldName = 'Erster Knick';
+      } else if (folds === 2) {
+        maxDistanceM = 32;
+        maxAltitudeM = 15;
+        comparison = 'Schulheft-Stabilität – erreicht Origami-Tauben';
+        foldName = 'Postkarten-Format';
+      } else if (folds === 3) {
+        maxDistanceM = 65;
+        maxAltitudeM = 28;
+        comparison = 'Dicke wie 1 Pappkarton – erreicht Tauben & Kraniche!';
+        foldName = 'Pocket Dart';
+      } else if (folds === 4) {
+        maxDistanceM = 120;
+        maxAltitudeM = 55;
+        comparison = 'Dicke wie ein Kreditkartenstapel – Gänse- & Möwen-Reichweite!';
+        foldName = 'Aerodynamischer Keil';
+      } else if (folds === 5) {
+        maxDistanceM = 220;
+        maxAltitudeM = 95;
+        comparison = 'Dicke wie das neue iPhone Fold – Krater & Autoalarm!';
+        foldName = 'iFold Mini';
+      } else if (folds === 6) {
+        maxDistanceM = 380;
+        maxAltitudeM = 160;
+        comparison = 'Extrem steif – Knochenbrecher-Level';
+        foldName = 'Origami Bullet';
+      } else if (folds === 7) {
+        maxDistanceM = 650;
+        maxAltitudeM = 280;
+        comparison = 'Mythos-Grenze: Das Limit menschlicher Hände!';
+        foldName = 'Human Peak Fold';
+      } else if (folds === 8) {
+        maxDistanceM = 1100;
+        maxAltitudeM = 450;
+        comparison = 'Hydraulische Presse erforderlich – zerschmettert Drohnen!';
+        foldName = 'Hydraulic Crusher';
+      } else if (folds === 9) {
+        maxDistanceM = 1800;
+        maxAltitudeM = 750;
+        comparison = 'Massiver Block aus Zellulose-Titan – Airliner-Reichweite!';
+        foldName = 'iFold Pro Max';
+      } else if (folds === 10) {
+        maxDistanceM = 2800;
+        maxAltitudeM = 1100;
+        comparison = 'Stratosphären-Projektil: Dichte wie Granit!';
+        foldName = 'Stratosphere Piercer';
+      } else {
+        maxDistanceM = 4500;
+        maxAltitudeM = 1800;
+        comparison = 'ORBIT-SINGULARITÄT: Erreicht Tim Cooks Keynote-Satellit!';
+        foldName = 'Black Hole of Paper';
+      }
     }
 
     return {
@@ -170,79 +236,80 @@ export class PaperSheet {
     }
 
     const stats = this.getStats();
-    const visualThickness = Math.max(0.005, (stats.thicknessMm / 1000) * 8.0);
+    const t = Math.max(0.003, (stats.thicknessMm / 1000) * 2.5); // Visual thickness scaled for 3D realism
     const w = stats.width;
     const l = stats.length;
 
-    const geo = new THREE.BoxGeometry(w, visualThickness, l);
-    this.paperBody = new THREE.Mesh(geo, this.paperMat);
-    this.paperBody.castShadow = true;
-    this.paperBody.receiveShadow = true;
-    this.mesh.add(this.paperBody);
+    // Geometric paper model based on fold stage
+    if (this.folds === 0) {
+      // Crisp flat fresh paper sheet lying flat on the wooden table
+      const geo = new THREE.BoxGeometry(w, 0.002, l);
+      this.paperBody = new THREE.Mesh(geo, this.paperMat);
+      this.paperBody.castShadow = true;
+      this.paperBody.receiveShadow = true;
+      this.mesh.add(this.paperBody);
+    } else if (this.folds < 4) {
+      // Folded sheet with creased bevel edge
+      const geo = new THREE.BoxGeometry(w, t, l);
+      this.paperBody = new THREE.Mesh(geo, this.paperMat);
+      this.paperBody.castShadow = true;
+      this.paperBody.receiveShadow = true;
+      this.mesh.add(this.paperBody);
 
-    const creaseGeo = new THREE.BoxGeometry(w * 0.98, visualThickness * 1.05, 0.015);
-    const crease = new THREE.Mesh(creaseGeo, this.foldEdgeMat);
-    this.mesh.add(crease);
-
-    if (this.folds >= 3) {
-      const tipGeo = new THREE.ConeGeometry(w * 0.45, l * 0.5, 4);
-      tipGeo.rotateX(Math.PI / 2);
-      tipGeo.translate(0, 0, l * 0.45);
-      const tip = new THREE.Mesh(tipGeo, this.paperMat);
-      tip.scale.set(1, visualThickness / (w * 0.45), 1);
-      this.mesh.add(tip);
+      // Subtle crease crease line along the center
+      const creaseGeo = new THREE.BoxGeometry(w * 1.01, t * 1.05, 0.005);
+      const crease = new THREE.Mesh(creaseGeo, this.foldEdgeMat);
+      this.mesh.add(crease);
+    } else if (this.folds < 8) {
+      // Dart / wedge-like origami dart projectile
+      const dartGroup = new THREE.Group();
+      const dartGeo = new THREE.ConeGeometry(w * 0.75, l, 4);
+      dartGeo.rotateX(Math.PI / 2);
+      this.paperBody = new THREE.Mesh(dartGeo, this.paperMat);
+      this.paperBody.scale.set(1, t * 8, 1);
+      this.paperBody.castShadow = true;
+      dartGroup.add(this.paperBody);
+      this.mesh.add(dartGroup);
+    } else {
+      // Ultra-dense cubic kinetic projectile (iFold Singular Block)
+      const cubeGeo = new THREE.BoxGeometry(w * 0.9, Math.min(t, 0.25), l * 0.9);
+      this.paperBody = new THREE.Mesh(cubeGeo, this.paperMat);
+      this.paperBody.castShadow = true;
+      this.mesh.add(this.paperBody);
     }
   }
 
-  // Animate a 3D fold
+  // Animated procedural paper folding animation
   public fold(onComplete?: () => void) {
     if (this.isFolding || this.isFlying) return;
     this.isFolding = true;
 
-    const currentFolds = this.folds;
-    sound.playFold(currentFolds + 1);
+    sound.playFold();
 
-    const stats = this.getStats();
-    const visualThickness = Math.max(0.005, (stats.thicknessMm / 1000) * 8.0);
-    const foldAlongX = currentFolds % 2 === 0;
-
-    const flapWidth = foldAlongX ? stats.width / 2 : stats.width;
-    const flapLength = foldAlongX ? stats.length : stats.length / 2;
-
-    const flapGroup = new THREE.Group();
-    flapGroup.position.set(0, visualThickness * 0.5, 0);
-
-    const flapGeo = new THREE.BoxGeometry(flapWidth, visualThickness * 0.9, flapLength);
-    if (foldAlongX) {
-      flapGeo.translate(flapWidth / 2, 0, 0);
-    } else {
-      flapGeo.translate(0, 0, flapLength / 2);
-    }
-    const flapMesh = new THREE.Mesh(flapGeo, this.paperMat);
-    flapGroup.add(flapMesh);
-    this.mesh.add(flapGroup);
-
-    let startTime: number | null = null;
-    const duration = 220; // snappier fold animation
+    const startPos = this.mesh.position.clone();
+    const startTime = performance.now();
+    const duration = 280; // Crisp, snappy folding feel
 
     const animateFold = (time: number) => {
-      if (!startTime) startTime = time;
       const elapsed = time - startTime;
       const progress = Math.min(1.0, elapsed / duration);
-      const eased = Math.sin((progress * Math.PI) / 2);
 
-      if (foldAlongX) {
-        flapGroup.rotation.z = -eased * Math.PI;
-      } else {
-        flapGroup.rotation.x = eased * Math.PI;
-      }
+      // Cute lift & squeeze hop
+      const hop = Math.sin(progress * Math.PI) * 0.12;
+      this.mesh.position.y = startPos.y + hop;
+
+      // Snappy fold rotation
+      this.mesh.rotation.y = progress * (Math.PI / 2);
+      this.mesh.rotation.x = Math.sin(progress * Math.PI) * 0.2;
 
       if (progress < 1.0) {
         requestAnimationFrame(animateFold);
       } else {
         this.folds++;
-        this.isFolding = false;
+        this.mesh.position.copy(this.initialTablePos);
+        this.mesh.rotation.set(0, 0, 0);
         this.rebuildMesh();
+        this.isFolding = false;
         if (onComplete) onComplete();
       }
     };
@@ -250,131 +317,138 @@ export class PaperSheet {
     requestAnimationFrame(animateFold);
   }
 
-  // Calculate launch velocity vector - high speed, snappy Moorhuhn projectile!
-  public calculateLaunchVelocity(pitchDeg: number, yawDeg: number, powerPercent: number): THREE.Vector3 {
+  // Update parabolic dotted trajectory guide line
+  public updateTrajectory(pitchDeg: number, yawDeg: number, powerPercent: number, hasTargetLock: boolean = false) {
     const stats = this.getStats();
-    // Fast & punchy: starting at 24 m/s and reaching >100 m/s with folds
-    const baseSpeed = 24.0 + stats.folds * 15.0;
-    const speed = baseSpeed * (powerPercent / 100);
+    const baseSpeed = 24.0 + stats.folds * 15.0; // Higher folds launch at immense hypersonic speed
+    const launchSpeed = baseSpeed * (powerPercent / 100);
 
     const pitchRad = THREE.MathUtils.degToRad(pitchDeg);
     const yawRad = THREE.MathUtils.degToRad(yawDeg);
 
-    const vx = -Math.sin(yawRad) * Math.cos(pitchRad) * speed;
-    const vy = Math.sin(pitchRad) * speed;
-    const vz = -Math.cos(yawRad) * Math.cos(pitchRad) * speed;
-
-    return new THREE.Vector3(vx, vy, vz);
-  }
-
-  // Update dotted trajectory line for visual aiming
-  public updateTrajectory(pitchDeg: number, yawDeg: number, powerPercent: number, isLocked: boolean = false) {
-    if (this.isFlying) {
-      this.trajectoryLine.visible = false;
-      return;
-    }
-
-    this.trajectoryLine.visible = true;
-    (this.trajectoryLine.material as THREE.LineDashedMaterial).color.setHex(isLocked ? 0x28cd41 : 0xff3b30);
+    // Initial velocity vector
+    const vx = -Math.sin(yawRad) * Math.cos(pitchRad) * launchSpeed;
+    const vy = Math.sin(pitchRad) * launchSpeed;
+    const vz = -Math.cos(yawRad) * Math.cos(pitchRad) * launchSpeed;
 
     const points: THREE.Vector3[] = [];
-    const initialVel = this.calculateLaunchVelocity(pitchDeg, yawDeg, powerPercent);
-    const pos = this.mesh.position.clone();
-    const vel = initialVel.clone();
-    const stats = this.getStats();
+    const gravity = 9.81;
+    const dt = 0.04;
+    const simPos = this.mesh.position.clone();
+    simPos.y = 1.4;
 
-    // Responsive drag
-    const dragCoeff = Math.max(0.003, 0.08 / Math.sqrt(stats.folds + 1));
-    const dt = 0.03;
+    const curV = new THREE.Vector3(vx, vy, vz);
 
-    points.push(pos.clone());
+    // Color code trajectory line: Green/Red depending on lock!
+    const lineMat = this.trajectoryLine.material as THREE.LineDashedMaterial;
+    if (hasTargetLock) {
+      lineMat.color.setHex(0x28cd41); // Green Lock
+    } else {
+      lineMat.color.setHex(0xff3b30); // Red manual aim
+    }
 
-    for (let step = 0; step < 75; step++) {
-      const speed = vel.length();
-      const dragForce = speed * speed * dragCoeff;
-      const drag = vel.clone().normalize().multiplyScalar(-dragForce);
+    const maxSteps = Math.min(80, Math.floor(stats.maxDistanceM * 1.5));
+    for (let i = 0; i < maxSteps; i++) {
+      points.push(simPos.clone());
+      simPos.addScaledVector(curV, dt);
+      curV.y -= gravity * dt;
 
-      vel.addScaledVector(drag, dt);
-      vel.y -= 9.81 * dt;
-      pos.addScaledVector(vel, dt);
-
-      points.push(pos.clone());
-      if (pos.y <= 0) break;
+      // Ground hit or table hit
+      if (simPos.y <= 0.05) {
+        points.push(simPos.clone());
+        break;
+      }
     }
 
     this.trajectoryLine.geometry.dispose();
     this.trajectoryLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
     this.trajectoryLine.computeLineDistances();
+    this.trajectoryLine.visible = true;
   }
 
-  // Launch the folded paper into the sky!
+  // Launch paper projectile into 3D world!
   public launch(pitchDeg: number, yawDeg: number, powerPercent: number) {
     if (this.isFlying || this.isFolding) return;
     this.isFlying = true;
     this.trajectoryLine.visible = false;
 
-    this.velocity = this.calculateLaunchVelocity(pitchDeg, yawDeg, powerPercent);
+    const stats = this.getStats();
+    const baseSpeed = 24.0 + stats.folds * 15.0;
+    const launchSpeed = baseSpeed * (powerPercent / 100);
+
+    const pitchRad = THREE.MathUtils.degToRad(pitchDeg);
+    const yawRad = THREE.MathUtils.degToRad(yawDeg);
+
+    this.velocity.set(
+      -Math.sin(yawRad) * Math.cos(pitchRad) * launchSpeed,
+      Math.sin(pitchRad) * launchSpeed,
+      -Math.cos(yawRad) * Math.cos(pitchRad) * launchSpeed
+    );
+
     sound.playLaunch(powerPercent / 100);
-
-    this.mesh.lookAt(this.mesh.position.clone().add(this.velocity));
   }
 
-  // Reset onto table with fresh new sheet
-  public resetNewSheet() {
-    this.isFlying = false;
-    this.isFolding = false;
-    this.folds = 0;
-    this.mesh.position.copy(this.initialTablePos);
-    this.mesh.rotation.set(0, 0, 0);
-    this.rebuildMesh();
-    sound.playNewPaper();
-  }
-
-  // Physics update during flight - crisp ballistics!
-  public updatePhysics(delta: number, homingTarget?: THREE.Vector3 | null): boolean {
+  // Step physics in the animation loop
+  public updatePhysics(delta: number, homingTarget: THREE.Vector3 | null = null): boolean {
     if (!this.isFlying) return false;
 
-    const stats = this.getStats();
-    const isFlappy = stats.folds < 2;
-    // Lower drag for fast, punchy flight
-    const dragCoeff = isFlappy ? 0.22 : Math.max(0.003, 0.08 / Math.sqrt(stats.folds + 1));
-
-    // Responsive Aerodynamic Homing (if Auto-Aim is active and folded at least twice)
-    if (homingTarget && stats.folds >= 2) {
+    // Gentle magnetic homing assist if locked on a bird!
+    if (homingTarget) {
       const dirToTarget = homingTarget.clone().sub(this.mesh.position).normalize();
       const currentSpeed = this.velocity.length();
-      this.velocity.lerp(dirToTarget.multiplyScalar(currentSpeed), 8.0 * delta);
+      // Steer velocity smoothly toward target
+      this.velocity.lerp(dirToTarget.multiplyScalar(currentSpeed), 4.5 * delta);
     }
 
-    const speed = this.velocity.length();
-    const dragForce = speed * speed * dragCoeff;
-    const drag = this.velocity.clone().normalize().multiplyScalar(-dragForce);
+    // Apply gravity
+    const gravity = 9.81;
+    this.velocity.y -= gravity * delta;
 
-    this.velocity.addScaledVector(drag, delta);
-    this.velocity.y -= 9.81 * delta;
+    // Apply slight aerodynamic air drag
+    const drag = 0.02;
+    this.velocity.multiplyScalar(1 - drag * delta);
 
-    if (isFlappy) {
-      this.mesh.rotation.z += 16 * delta;
-      this.mesh.rotation.x += Math.sin(Date.now() * 0.01) * 10 * delta;
-    } else {
-      if (this.velocity.lengthSq() > 0.1) {
-        this.mesh.lookAt(this.mesh.position.clone().add(this.velocity));
+    // Update position
+    this.mesh.position.addScaledVector(this.velocity, delta);
+
+    // Orient paper along its velocity vector
+    if (this.velocity.lengthSq() > 0.05) {
+      const lookAtPos = this.mesh.position.clone().add(this.velocity);
+      this.mesh.lookAt(lookAtPos);
+      // Dart spin for high folds
+      if (this.folds >= 4) {
+        this.mesh.rotation.z += 15.0 * delta;
       }
     }
 
-    this.mesh.position.addScaledVector(this.velocity, delta);
-
-    if (this.mesh.position.y <= 0.1) {
-      this.mesh.position.y = 0.1;
+    // Impact with grass ground
+    if (this.mesh.position.y <= 0.08) {
+      this.mesh.position.y = 0.08;
       this.isFlying = false;
-      return true;
+      this.velocity.set(0, 0, 0);
+      return true; // Flight ended!
     }
 
-    if (Math.abs(this.mesh.position.x) > 250 || Math.abs(this.mesh.position.z) > 250 || this.mesh.position.y > 500) {
+    // Far boundary check
+    if (this.mesh.position.length() > 300) {
       this.isFlying = false;
+      this.velocity.set(0, 0, 0);
       return true;
     }
 
     return false;
+  }
+
+  // Reset to fresh unfolded sheet of paper
+  public resetNewSheet() {
+    this.folds = 0;
+    this.isFlying = false;
+    this.isFolding = false;
+    this.velocity.set(0, 0, 0);
+    this.mesh.position.copy(this.initialTablePos);
+    this.mesh.rotation.set(0, 0, 0);
+    this.rebuildMesh();
+    this.trajectoryLine.visible = false;
+    sound.playNewPaper();
   }
 }
