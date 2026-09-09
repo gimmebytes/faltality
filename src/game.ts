@@ -22,7 +22,7 @@ export class FaltalityGame {
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
 
-  private environment: Environment;
+  public environment: Environment;
   public birdManager: BirdManager;
   public paper: PaperSheet;
 
@@ -410,6 +410,11 @@ export class FaltalityGame {
       this.state.bestCombo = this.state.currentCombo;
     }
 
+    // Comedic trigger: Airliners and Satellites scare the fainting sheep!
+    if (bird.type === 'airplane' || bird.type === 'satellite') {
+      this.environment.triggerFaintingSheep();
+    }
+
     sound.playFaltality();
     confetti({
       particleCount: 80,
@@ -432,6 +437,12 @@ export class FaltalityGame {
       this.screenShake = 0.6;
       sound.playGroundImpact();
       sound.playCarAlarm();
+
+      // TRIGGER LIVING NEIGHBORHOOD:
+      // Neighbor's car hazards flash & car bounces; fainting sheep keel over sideways!
+      this.environment.triggerCarAlarm();
+      this.environment.triggerFaintingSheep();
+
       if (this.onOverkillCrater) {
         this.onOverkillCrater(this.paper.folds);
       }

@@ -237,8 +237,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (stats.folds === 0) {
       escalationIcon.textContent = '📄';
       escalationStatus.textContent = 'BEREIT ZUM START:';
-      escalationNow.innerHTML = '<strong>Flatterndes Blatt</strong>: Fliegt nur ~2 m und trudelt harmlos ins Gras.';
-      escalationNext.innerHTML = '⏩ <em>Falte auf 1:</em> Verdoppelt Reichweite auf ~4 m für tiefe Origami-Tauben!';
+      escalationNow.innerHTML = '<strong>Flatterndes Blatt</strong>: Fliegt nur ~3 m und trudelt harmlos ins Gras.';
+      escalationNext.innerHTML = '⏩ <em>Falte auf 1:</em> Verdoppelt Reichweite auf ~16 m für tiefe Origami-Tauben!';
     } else if (stats.folds <= 2) {
       escalationIcon.textContent = '🕊️';
       escalationStatus.textContent = 'AKTIV: TIEFFLIEGER-JAGD';
@@ -248,12 +248,12 @@ window.addEventListener('DOMContentLoaded', () => {
       escalationIcon.textContent = '🦢';
       escalationStatus.textContent = 'AKTIV: KRANICH- & MÖWEN-REICHWEITE';
       escalationNow.innerHTML = '<strong>Stabiler Weitstreckengleiter</strong>: Zieht hoch über den Garten zu Kranichen & Möwen.';
-      escalationNext.innerHTML = '⏩ <em>Ab Faltung 5:</em> 💥 <strong>Meteoriten-Krater & Autoalarm</strong> bei Fehlschüssen!';
+      escalationNext.innerHTML = '⏩ <em>Ab Faltung 5:</em> 💥 <strong>Nachbars Autoalarm & Ohnmachts-Schafe!</strong>';
     } else if (stats.folds <= 6) {
       escalationCard.classList.add('crater-stage');
       escalationIcon.textContent = '💥';
       escalationStatus.textContent = 'NEU: METEORITEN-KRATER AKTIV!';
-      escalationNow.innerHTML = '<strong>Kinetische Masse</strong>: Fehlwürfe erzeugen Erdbeben, Krater & Autoalarm!';
+      escalationNow.innerHTML = '<strong>Kinetische Masse</strong>: Fehlwürfe erzeugen Krater, Nachbars Auto heult auf & die Schafe fallen um!';
       escalationNext.innerHTML = '⏩ <em>Ab Faltung 7:</em> Menschl. Limit überschritten & Tisch beginnt zu zittern!';
     } else if (stats.folds <= 8) {
       escalationCard.classList.add('crater-stage');
@@ -265,7 +265,7 @@ window.addEventListener('DOMContentLoaded', () => {
       escalationCard.classList.add('plane-stage');
       escalationIcon.textContent = '✈️';
       escalationStatus.textContent = 'NEU: AIRLINER-JAGD BEREIT!';
-      escalationNow.innerHTML = '<strong>Stratosphären-Punch</strong>: Kann Passagierflugzeug FL-404 treffen (Koffer-Regen)!';
+      escalationNow.innerHTML = '<strong>Stratosphären-Punch</strong>: Kann Passagierflugzeug FL-404 treffen (Koffer-Regen & Schafe fallen um)!';
       escalationNext.innerHTML = '⏩ <em>Ab Faltung 11+:</em> 🛰️ <strong>Tim Cook Keynote-Satellit erscheint im Orbit!</strong>';
     } else {
       escalationCard.classList.add('singularity-stage');
@@ -340,7 +340,7 @@ window.addEventListener('DOMContentLoaded', () => {
       triggerAppleKeynoteLootShower();
     } else if (bird.type === 'airplane') {
       faltalityTitle.textContent = 'F A L T A L I T Y !';
-      faltalitySubtitle.innerHTML = '🚨 FLUGVERSPÄTUNG DES TODES! Koffer & Duty-Free regnen herab!';
+      faltalitySubtitle.innerHTML = '🚨 FLUGVERSPÄTUNG DES TODES! Koffer regnen herab & Nachbars Schafe fallen um!';
       faltalityPoints.textContent = `✈️ +${scoreAward.toLocaleString()} PUNKTE!`;
     } else {
       faltalityTitle.textContent = 'F A L T A L I T Y !';
@@ -359,14 +359,14 @@ window.addEventListener('DOMContentLoaded', () => {
   game.onOverkillCrater = (folds: number) => {
     updateUI();
     faltalityTitle.textContent = 'O V E R K I L L !';
-    faltalitySubtitle.innerHTML = `💥 BUMM! Gartenzaun des Nachbarn vaporisiert! Autoalarm heult!`;
+    faltalitySubtitle.innerHTML = `💥 BUMM! Nachbars Auto heult auf, Warnblinker an & die Schafe kippen um!`;
     faltalityPoints.textContent = `MIT ${folds} FALTUNGEN!`;
     faltalityBanner.classList.remove('hidden');
 
     if (bannerTimeout) clearTimeout(bannerTimeout);
     bannerTimeout = window.setTimeout(() => {
       faltalityBanner.classList.add('hidden');
-    }, 3000);
+    }, 3200);
   };
 
   game.onFlightEnd = () => {

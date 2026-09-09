@@ -68,21 +68,16 @@ class SoundEngine {
     osc.stop(t + 1.3);
 
     // Accompanying crisp paper creasing noise
-    this.playPaperNoise(0.08, 0.3);
+    this.playPaperNoise(0.08, 0.25);
   }
 
-  public playFold(step: number) {
-    this.playPianoNote(step);
-  }
-
-  // Realistic paper rustle / crease sound using white noise
-  public playPaperNoise(duration: number = 0.1, intensity: number = 0.5) {
+  // Soft procedural white noise burst imitating paper creasing/swish
+  public playPaperNoise(duration: number = 0.1, volume: number = 0.2) {
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;
 
-    const t = this.ctx.currentTime;
-    const bufferSize = this.ctx.sampleRate * duration;
+    const bufferSize = Math.floor(this.ctx.sampleRate * duration);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
 
@@ -95,98 +90,82 @@ class SoundEngine {
 
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(2400, t);
-    filter.Q.setValueAtTime(2.0, t);
+    filter.frequency.setValueAtTime(2200, this.ctx.currentTime);
+    filter.Q.setValueAtTime(1.5, this.ctx.currentTime);
 
     const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(intensity * 0.4, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    gain.gain.setValueAtTime(volume, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
 
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
 
-    noise.start(t);
+    noise.start();
   }
 
-  // Whoosh sound when paper is hurled into the sky
-  public playLaunch(power: number = 0.8) {
+  // Crisp launch whoosh with power factor
+  public playLaunch(powerFactor: number = 0.8) {
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;
 
     const t = this.ctx.currentTime;
-    const duration = 0.35;
-    const bufferSize = this.ctx.sampleRate * duration;
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-
-    const noise = this.ctx.createBufferSource();
-    noise.buffer = buffer;
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(200, t);
-    filter.frequency.exponentialRampToValueAtTime(1800 + power * 1200, t + 0.15);
-    filter.frequency.exponentialRampToValueAtTime(100, t + duration);
-
+    const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(140, t);
+    osc.frequency.exponentialRampToValueAtTime(540, t + 0.18);
+
     gain.gain.setValueAtTime(0.01, t);
-    gain.gain.linearRampToValueAtTime(0.4, t + 0.08);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    gain.gain.linearRampToValueAtTime(0.4 * powerFactor, t + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
 
-    noise.connect(filter);
-    filter.connect(gain);
+    osc.connect(gain);
     gain.connect(this.ctx.destination);
 
-    noise.start(t);
+    osc.start(t);
+    osc.stop(t + 0.32);
+
+    this.playPaperNoise(0.25, 0.45 * powerFactor);
   }
 
-  // Untitled Goose Game style HONK!
-  public playHonk(pitchMod: number = 1.0) {
+  // Procedural Paper Fold / Crease sound
+  public playFold(_pitchFactor: number = 1) {
+    this.playPaperNoise(0.12, 0.35);
+  }
+
+  // Goose Honk when hit
+  public playHonk(pitch: number = 1.0) {
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;
 
     const t = this.ctx.currentTime;
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
+    const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    osc1.type = 'sawtooth';
-    osc2.type = 'square';
-
-    const baseFreq = 420 * pitchMod;
-    osc1.frequency.setValueAtTime(baseFreq, t);
-    osc1.frequency.linearRampToValueAtTime(baseFreq * 1.35, t + 0.06);
-    osc1.frequency.exponentialRampToValueAtTime(baseFreq * 0.9, t + 0.22);
-
-    osc2.frequency.setValueAtTime(baseFreq * 1.02, t);
-    osc2.frequency.linearRampToValueAtTime(baseFreq * 1.38, t + 0.06);
-    osc2.frequency.exponentialRampToValueAtTime(baseFreq * 0.92, t + 0.22);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(240 * pitch, t);
+    osc.frequency.linearRampToValueAtTime(320 * pitch, t + 0.08);
+    osc.frequency.linearRampToValueAtTime(190 * pitch, t + 0.35);
 
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(900 * pitchMod, t);
-    filter.Q.setValueAtTime(4.0, t);
+    filter.frequency.setValueAtTime(750, t);
+    filter.Q.setValueAtTime(2.0, t);
 
     gain.gain.setValueAtTime(0.01, t);
-    gain.gain.linearRampToValueAtTime(0.35, t + 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
+    gain.gain.linearRampToValueAtTime(0.45, t + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
 
-    osc1.connect(filter);
-    osc2.connect(filter);
+    osc.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
 
-    osc1.start(t);
-    osc2.start(t);
-    osc1.stop(t + 0.25);
-    osc2.stop(t + 0.25);
+    osc.start(t);
+    osc.stop(t + 0.4);
   }
 
   // Cute Pigeon gentle cooing
@@ -213,6 +192,55 @@ class SoundEngine {
 
     osc.start(t);
     osc.stop(t + 0.26);
+  }
+
+  // Hilarious Sheep Baa / Fainting Sheep "Määääh?!" sound
+  public playSheepBaa(fainting: boolean = false) {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const lfo = this.ctx.createOscillator();
+    const lfoGain = this.ctx.createGain();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    const baseFreq = fainting ? 290 : 250;
+    osc.frequency.setValueAtTime(baseFreq, t);
+    if (fainting) {
+      // Questioning comedic upward slide at end: "Määäh?!"
+      osc.frequency.linearRampToValueAtTime(baseFreq + 40, t + 0.35);
+      osc.frequency.linearRampToValueAtTime(baseFreq + 100, t + 0.7);
+    } else {
+      osc.frequency.linearRampToValueAtTime(baseFreq - 25, t + 0.45);
+    }
+
+    // Vibrato LFO for realistic wobbly baa
+    lfo.frequency.setValueAtTime(6.0, t);
+    lfoGain.gain.setValueAtTime(22, t);
+    lfo.connect(osc.frequency);
+
+    // Formant filter (nasal sheep throat)
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(920, t);
+    filter.Q.setValueAtTime(3.2, t);
+
+    const dur = fainting ? 0.85 : 0.5;
+    gain.gain.setValueAtTime(0.01, t);
+    gain.gain.linearRampToValueAtTime(0.35, t + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    lfo.start(t);
+    osc.start(t);
+    lfo.stop(t + dur);
+    osc.stop(t + dur);
   }
 
   // Hit / Impact sound when bird is struck
@@ -278,8 +306,8 @@ class SoundEngine {
     this.initCtx();
     if (!this.ctx) return;
 
-    const startT = this.ctx.currentTime + 0.3;
-    const beeps = 8;
+    const startT = this.ctx.currentTime + 0.1;
+    const beeps = 14; // Longer sustained car alarm!
     for (let i = 0; i < beeps; i++) {
       const t = startT + i * 0.18;
       const osc = this.ctx.createOscillator();
@@ -289,7 +317,7 @@ class SoundEngine {
       osc.frequency.setValueAtTime(i % 2 === 0 ? 880 : 660, t);
 
       gain.gain.setValueAtTime(0.01, t);
-      gain.gain.linearRampToValueAtTime(0.12, t + 0.02);
+      gain.gain.linearRampToValueAtTime(0.14, t + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
 
       osc.connect(gain);
