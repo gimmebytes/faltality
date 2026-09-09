@@ -60,9 +60,12 @@ export interface Translations {
   btnFocusPaperTitle: string;
   btnMaterialPaper: string;
   btnMaterialFoil: string;
+  btnMaterialLocked: string;
+  btnMaterialLockedTitle: (ptsRemaining: number) => string;
   btnMaterialTitle: string;
   foilActiveTag: string;
   paperActiveTag: string;
+  foilUnlockNotification: string;
 
   // Sliders
   pitchLabel: string;
@@ -132,7 +135,7 @@ export const translations: Record<SupportedLang, Translations> = {
     gameSubtitle: 'PRODUKTIVES PAPIERFALTEN',
     metaTitle: 'FALTALITY – Das exponentielle Papierfalt-Spektakel',
     skyActive: 'AKTIV:',
-    skyBirdsDefault: '🕊️ Tauben, 🦢 Kraniche, 🦆 Enten',
+    skyBirdsDefault: '🕊️ Tauben, 🦤 Kraniche, 🦆 Enten',
     skyLocked: (targetName: string) => `🎯 Ziel erfasst: ${targetName}`,
     score: 'PUNKTE',
     birdsHit: 'GETROFFEN',
@@ -158,10 +161,10 @@ export const translations: Record<SupportedLang, Translations> = {
 
     btnFoldMain: 'Falten',
     btnFoldSub: (thicknessStr) => `[Taste F] Verdoppeln auf ${thicknessStr}`,
-    btnFoldAimingSub: '[Taste F] Weitersitzen & falten',
+    btnFoldAimingSub: '[Taste F] Zurück zum Tisch',
     btnFoldFlyingSub: 'Im Flug...',
     btnAimMain: 'Zielen',
-    btnAimSub: '[Leertaste] Kamera hoch',
+    btnAimSub: '[Leertaste] Nach oben schauen',
     btnLaunchMain: 'Werfen',
     btnLaunchSub: '[Leertaste] Feuer frei!',
     btnFlyingMain: 'Im Flug...',
@@ -172,9 +175,12 @@ export const translations: Record<SupportedLang, Translations> = {
     btnFocusPaperTitle: 'Sicht auf Papier zentrieren [Taste C]',
     btnMaterialPaper: 'Papier',
     btnMaterialFoil: 'Alufolie',
+    btnMaterialLocked: 'Alufolie (ab 500)',
+    btnMaterialLockedTitle: (ptsRemaining) => `🔒 Alufolie ab 500 Punkten freischaltbar (noch ${ptsRemaining} Pkt. nötig)`,
     btnMaterialTitle: 'Material wechseln: Papier / Alufolie [Taste U]',
     foilActiveTag: '🌯 ALU-FOLIE (2x SCORE)',
     paperActiveTag: '📄 PAPIER',
+    foilUnlockNotification: '✨ ALUFOLIE FREIGESCHALTET! Drücke [U] für Alufolie (2x Punkte-Multiplikator!)',
 
     pitchLabel: 'Steigung [↑/↓]:',
     powerLabel: 'Wurfkraft:',
@@ -209,7 +215,7 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapA: '<strong>Apple iAim</strong> Auto-Lock an-/ausschalten',
     keymapK: 'Dieses <strong>Tastenbelegungs-Fenster</strong> öffnen / schließen',
     keymapC: '<strong>Blick auf Papier zentrieren</strong> (Kamera-Reset zurück zum Tisch)',
-    keymapU: '<strong>Material wechseln</strong> (Zwischen Papier & Alufolie umschalten)',
+    keymapU: '<strong>Material wechseln</strong> (Papier / Alufolie ab 500 Punkten freischaltbar)',
     keymapR: '<strong>Frisches Blatt Papier</strong> auf den Tisch legen (Reset)',
     keymapEsc: 'Fenster & Overlays schließen',
     keymapOk: 'Verstanden, weiterspielen!',
@@ -240,7 +246,7 @@ export const translations: Record<SupportedLang, Translations> = {
       },
       {
         id: 'tier-2',
-        icon: '🦢',
+        icon: '🦤',
         folds: '3–4 Faltungen (8–16 Lagen)',
         name: 'Pocket Dart & Aerodynamischer Keil',
         range: '65–120 Meter Reichweite',
@@ -262,21 +268,21 @@ export const translations: Record<SupportedLang, Translations> = {
         id: 'tier-4',
         icon: '⚡',
         folds: '7–8 Faltungen (128–256 Lagen)',
-        name: 'Human Peak Fold & Hydraulic Crusher',
+        name: 'Hydraulischer Brecher & Limit-Faltung',
         range: '650–1.100 Meter Reichweite',
-        thickness: '1.3–2.6 cm (Dicke eines Buchs)',
-        effect: '⚡ DAS LIMIT: Das physikalische Limit menschlicher Hände ist überschritten! Der Holztisch bebt durch die kinetische Verdichtung.',
-        target: 'Durchschlägt selbst die extrem flinke iFold Stealth Dart Drohne!'
+        thickness: '1.3–2.6 cm (Taschenbuch-Dicke)',
+        effect: '⚡ DAS MYTHISCHE LIMIT: Menschliche Hände können Papier nicht öfter falten. Der Holztisch vibriert bedrohlich unter der kinetischen Kompression!',
+        target: 'Durchdringt selbst die wendige iFold Stealth Dart Drohne!'
       },
       {
         id: 'tier-5',
         icon: '✈️',
         folds: '9–10 Faltungen (512–1.024 Lagen)',
-        name: 'iFold Pro Max & Stratosphere Piercer',
+        name: 'iFold Pro Max & Stratosphären-Geschoss',
         range: '1.800–2.800 Meter Reichweite',
-        thickness: '5.1–10.2 cm (Dicht wie Granit)',
-        effect: '✈️ STRATOSPHÄREN-DURCHBRUCH: Durchstößt die Wolkendecke! Trifft Passagierflug FL-404. Koffer regnen herab & Nachbars Schafe fallen in Ohnmacht!',
-        target: 'Passagier-Linienflug „Faltality Airlines FL-404“'
+        thickness: '5.1–10.2 cm (Massiv wie Granit)',
+        effect: '✈️ STRATOSPHÄRISCHER DURCHBRUCH: Durchstößt die Wolkendecke! Trifft Linienflug FL-404. Gepäckstücke regnen herab & Nachbars Schafe fallen in Schockstarre!',
+        target: 'Passagierjet „Foldtality Airlines FL-404“'
       },
       {
         id: 'tier-6',
@@ -284,8 +290,8 @@ export const translations: Record<SupportedLang, Translations> = {
         folds: '11+ Faltungen (2.048+ Lagen)',
         name: 'Schwarzes Loch aus Papier (Singularität)',
         range: '4.500+ Meter Reichweite',
-        thickness: '20+ cm massiver Titan-Zelluloseblock',
-        effect: '🍎 ONE MORE THING: Verlässt die Erdanziehung und zerschmettert Tim Cooks geheimen Keynote-Satelliten! Raining AirPods Pro Cases, goldene iPhones & 19$-Poliertücher!',
+        thickness: '20+ cm reiner Titan-Zellstoff-Block',
+        effect: '🍎 ONE MORE THING: Durchbricht das Gravitationsfeld der Erde und vaporisiert Tim Cooks geheimen Keynote-Satelliten! Es regnet AirPods Pro, goldene iPhones & 19$-Poliertücher!',
         target: 'Tim Cooks orbitaler Apple Keynote Satellit!'
       }
     ],
@@ -307,7 +313,7 @@ export const translations: Record<SupportedLang, Translations> = {
     gameSubtitle: 'PRODUCTIVE PAPER FOLDING',
     metaTitle: 'FOLDTALITY – The Exponential Paper Folding Experience',
     skyActive: 'ACTIVE:',
-    skyBirdsDefault: '🕊️ Pigeons, 🦢 Cranes, 🦆 Ducks',
+    skyBirdsDefault: '🕊️ Pigeons, 🦤 Cranes, 🦆 Ducks',
     skyLocked: (targetName: string) => `🎯 Target Locked: ${targetName}`,
     score: 'SCORE',
     birdsHit: 'HITS',
@@ -347,9 +353,12 @@ export const translations: Record<SupportedLang, Translations> = {
     btnFocusPaperTitle: 'Center view on paper [Key C]',
     btnMaterialPaper: 'Paper',
     btnMaterialFoil: 'Alu Foil',
+    btnMaterialLocked: 'Foil (at 500)',
+    btnMaterialLockedTitle: (ptsRemaining) => `🔒 Unlock tin foil at 500 points (${ptsRemaining} pts needed)`,
     btnMaterialTitle: 'Toggle material: Paper / Tin Foil [Key U]',
     foilActiveTag: '🌯 TIN FOIL (2x SCORE)',
     paperActiveTag: '📄 PAPER',
+    foilUnlockNotification: '✨ TIN FOIL UNLOCKED! Press [U] for Tin Foil (2x score multiplier!)',
 
     pitchLabel: 'Pitch [↑/↓]:',
     powerLabel: 'Power:',
@@ -384,7 +393,7 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapA: 'Toggle <strong>Apple iAim</strong> Auto-Lock',
     keymapK: 'Open / close this <strong>Controls Modal</strong>',
     keymapC: '<strong>Center view on paper</strong> (Camera reset back to table)',
-    keymapU: '<strong>Toggle Material</strong> (Switch between Paper & Tin Foil)',
+    keymapU: '<strong>Toggle Material</strong> (Paper / Tin Foil unlockable at 500 points)',
     keymapR: 'Place a <strong>Fresh Sheet of Paper</strong> on table (Reset)',
     keymapEsc: 'Close dialogs & overlays',
     keymapOk: 'Got it, let’s fold!',
@@ -415,7 +424,7 @@ export const translations: Record<SupportedLang, Translations> = {
       },
       {
         id: 'tier-2',
-        icon: '🦢',
+        icon: '🦤',
         folds: '3–4 Folds (8–16 Layers)',
         name: 'Pocket Dart & Aerodynamic Wedge',
         range: '65–120 meters range',

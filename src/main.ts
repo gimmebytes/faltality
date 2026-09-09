@@ -475,19 +475,30 @@ window.addEventListener('DOMContentLoaded', () => {
     if (camResetBtn) camResetBtn.title = t.btnFocusPaperTitle;
     if (keymapDescC) keymapDescC.innerHTML = t.keymapC;
 
-    // Material state
-    if (game.paper.materialType === "foil") {
-      materialBtn?.classList.add("foil-active");
-      if (materialIcon) materialIcon.textContent = "🌯";
-      if (materialText) materialText.textContent = t.btnMaterialFoil;
-      towerTag.textContent = t.foilActiveTag;
-    } else {
+    // Material state (Locked until score threshold)
+    const foilUnlocked = game.isFoilUnlocked();
+    if (!foilUnlocked) {
       materialBtn?.classList.remove("foil-active");
-      if (materialIcon) materialIcon.textContent = "📄";
-      if (materialText) materialText.textContent = t.btnMaterialPaper;
-      towerTag.textContent = t.paperActiveTag;
+      materialBtn?.classList.add("foil-locked");
+      if (materialIcon) materialIcon.textContent = "🔒";
+      if (materialText) materialText.textContent = t.btnMaterialLocked;
+      const ptsRemaining = Math.max(0, FaltalityGame.FOIL_UNLOCK_SCORE - game.state.score);
+      if (materialBtn) materialBtn.title = t.btnMaterialLockedTitle(ptsRemaining);
+    } else {
+      materialBtn?.classList.remove("foil-locked");
+      if (game.paper.materialType === "foil") {
+        materialBtn?.classList.add("foil-active");
+        if (materialIcon) materialIcon.textContent = "🌯";
+        if (materialText) materialText.textContent = t.btnMaterialFoil;
+        towerTag.textContent = t.foilActiveTag;
+      } else {
+        materialBtn?.classList.remove("foil-active");
+        if (materialIcon) materialIcon.textContent = "📄";
+        if (materialText) materialText.textContent = t.btnMaterialPaper;
+        towerTag.textContent = t.paperActiveTag;
+      }
+      if (materialBtn) materialBtn.title = t.btnMaterialTitle;
     }
-    if (materialBtn) materialBtn.title = t.btnMaterialTitle;
     if (keymapDescU) keymapDescU.innerHTML = t.keymapU;
 
     pitchSlider.value = Math.round(game.pitchDeg).toString();
@@ -603,6 +614,20 @@ window.addEventListener('DOMContentLoaded', () => {
     updateUI();
   };
 
+  game.onFoilUnlocked = () => {
+    sound.playFoilCrinkle(1);
+    const t = translations[currentLang];
+    faltalityTitle.textContent = "🌯 UNLOCKED!";
+    faltalitySubtitle.innerHTML = t.foilUnlockNotification;
+    faltalityPoints.textContent = "+2x MULTIPLIER";
+    faltalityBanner.classList.remove('hidden');
+    if (bannerTimeout) clearTimeout(bannerTimeout);
+    bannerTimeout = window.setTimeout(() => {
+      faltalityBanner.classList.add('hidden');
+    }, 4500);
+    updateUI();
+  };
+
   // Button Listeners
   foldBtn.addEventListener('click', () => {
     if (game.phase === 'aiming') {
@@ -633,6 +658,12 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   materialBtn?.addEventListener('click', () => {
+    if (!game.isFoilUnlocked()) {
+      sound.playPaperNoise(0.08, 0.25);
+      materialBtn.classList.add('shake');
+      setTimeout(() => materialBtn.classList.remove('shake'), 400);
+      return;
+    }
     game.toggleMaterial();
     updateUI();
   });
@@ -687,6 +718,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (e.code === 'KeyU') {
       e.preventDefault();
+      if (!game.isFoilUnlocked()) {
+        sound.playPaperNoise(0.08, 0.25);
+        materialBtn?.classList.add('shake');
+        setTimeout(() => materialBtn?.classList.remove('shake'), 400);
+        return;
+      }
       game.toggleMaterial();
       updateUI();
       return;

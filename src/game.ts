@@ -63,6 +63,7 @@ export class FaltalityGame {
   private timeScale: number = 1.0;
   private slowMoTimer: number = 0;
   private isResettingCam: boolean = false;
+  private hitTargetThisFlight: boolean = false;
 
   public state: GameState = {
     score: 0,
@@ -79,6 +80,14 @@ export class FaltalityGame {
   public foldYawOffset: number = 0;
   public foldPitchOffset: number = 0;
   public isManualAiming: boolean = false;
+
+  // Foil Unlock score requirement
+  public static readonly FOIL_UNLOCK_SCORE = 500;
+  public onFoilUnlocked?: () => void;
+
+  public isFoilUnlocked(): boolean {
+    return this.state.score >= FaltalityGame.FOIL_UNLOCK_SCORE;
+  }
 
   public onStatsChanged?: () => void;
   public onFaltality?: (bird: BirdData, folds: number, scoreAward: number) => void;
@@ -107,7 +116,7 @@ export class FaltalityGame {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.15;
     this.container.appendChild(this.renderer.domElement);
@@ -115,6 +124,7 @@ export class FaltalityGame {
     this.setupLighting();
 
     this.environment = new Environment(this.scene);
+    this.environment.setFoilUnlocked(this.isFoilUnlocked());
     this.birdManager = new BirdManager(this.scene);
     this.birdManager.initFlocks();
     this.paper = new PaperSheet(this.scene);
@@ -378,6 +388,7 @@ export class FaltalityGame {
 
   public toggleMaterial(): "paper" | "foil" {
     if (this.phase === "flying" || this.paper.isFolding) return this.paper.materialType;
+    if (!this.isFoilUnlocked()) return this.paper.materialType;
     this.paper.materialType = this.paper.materialType === "paper" ? "foil" : "paper";
     this.paper.rebuildMesh();
     if (this.paper.materialType === "foil") {
@@ -420,10 +431,14 @@ export class FaltalityGame {
 
   public resetNewSheet() {
     this.state.paperCount++;
+    if (!this.isFoilUnlocked()) {
+      this.paper.materialType = 'paper';
+    }
     this.paper.resetNewSheet();
     this.birdManager.despawnSatellite();
     this.targetedBird = null;
     this.isChaosSpectating = false;
+    this.hitTargetThisFlight = false;
     this.enterFoldingMode();
     if (this.onStatsChanged) this.onStatsChanged();
   }
@@ -436,6 +451,7 @@ export class FaltalityGame {
       return;
     }
 
+    this.hitTargetThisFlight = false;
     this.isChaosSpectating = false;
     this.phase = 'flying';
     this.screenShake = 0.15; // Crisp shooter kick!
@@ -446,6 +462,7 @@ export class FaltalityGame {
   }
 
   private triggerFaltality(bird: BirdData) {
+    this.hitTargetThisFlight = true;
     this.timeScale = 0.25;
     this.slowMoTimer = 1.2;
     this.screenShake = 0.45; // Satisfying hit impact!
@@ -458,11 +475,17 @@ export class FaltalityGame {
       sound.playFoilClang();
     }
 
+    const wasFoilUnlocked = this.isFoilUnlocked();
     this.state.score += pointsAwarded;
     this.state.birdsHitCount++;
     this.state.currentCombo++;
     if (this.state.currentCombo > this.state.bestCombo) {
       this.state.bestCombo = this.state.currentCombo;
+    }
+
+    if (!wasFoilUnlocked && this.isFoilUnlocked()) {
+      this.environment.setFoilUnlocked(true);
+      if (this.onFoilUnlocked) this.onFoilUnlocked();
     }
 
     // Comedic trigger: Airliners and Satellites scare the fainting sheep!
@@ -488,10 +511,14 @@ export class FaltalityGame {
     if (this.isResettingCam) return;
     this.isResettingCam = true;
 
-    const hasChaos = this.paper.folds >= 5 || this.isChaosSpectating;
+    // Reset combo if player missed
+    if (!this.hitTargetThisFlight) {
+      this.state.currentCombo = 0;
+    }
 
-    // Overkill crater effect for overfolded missed throws
-    if (this.paper.folds >= 5) {
+    // Overkill crater effect ONLY for overfolded missed throws (paper slamming into lawn/neighbor fence)
+    const isOverkillMiss = this.paper.folds >= 5 && !this.hitTargetThisFlight;
+    if (isOverkillMiss) {
       this.screenShake = 0.6;
       sound.playGroundImpact();
       sound.playCarAlarm();
@@ -511,10 +538,13 @@ export class FaltalityGame {
 
     // WIDE GARDEN CINEMATIC TIMEOUT:
     // If chaos occurred (car alarm or sheep fainting), pull camera back for 3.8s so player can watch!
-    const resetDelay = hasChaos ? 3800 : 600;
+    const resetDelay = this.isChaosSpectating ? 3800 : 600;
 
     setTimeout(() => {
       this.state.paperCount++;
+      if (!this.isFoilUnlocked()) {
+        this.paper.materialType = 'paper';
+      }
       this.paper.resetNewSheet();
       this.birdManager.despawnSatellite();
       this.targetedBird = null;

@@ -28,6 +28,10 @@ export class Environment {
   private sheepFlock: OrigamiSheep[] = [];
   private sheepBaaTimer: number = 4.0;
 
+  // Kitchen Aluminium Foil Roll Box on table (unlocked at score threshold)
+  private foilBox: THREE.Mesh | null = null;
+  private foilLip: THREE.Mesh | null = null;
+
   constructor(scene: THREE.Scene) {
     this.scene = scene;
     this.buildGarden();
@@ -115,14 +119,16 @@ export class Environment {
     mug.castShadow = true;
     tableGroup.add(mug);
 
-    // Kitchen Aluminium Foil Roll Box on table
+    // Kitchen Aluminium Foil Roll Box on table (initially locked, visible when threshold met)
     const foilBoxGeo = new THREE.BoxGeometry(0.55, 0.08, 0.08);
     const foilBoxMat = new THREE.MeshLambertMaterial({ color: 0x2c3e50, flatShading: true });
     const foilBox = new THREE.Mesh(foilBoxGeo, foilBoxMat);
     foilBox.position.set(-0.68, 1.245, -0.45);
     foilBox.rotation.y = 0.2;
     foilBox.castShadow = true;
+    foilBox.visible = false;
     tableGroup.add(foilBox);
+    this.foilBox = foilBox;
 
     // Gleaming silver foil strip peeking out of the dispenser
     const foilLipGeo = new THREE.PlaneGeometry(0.52, 0.06);
@@ -136,7 +142,9 @@ export class Environment {
     const foilLip = new THREE.Mesh(foilLipGeo, foilLipMat);
     foilLip.position.set(-0.68, 1.288, -0.41);
     foilLip.rotation.y = 0.2;
+    foilLip.visible = false;
     tableGroup.add(foilLip);
+    this.foilLip = foilLip;
 
     this.scene.add(tableGroup);
 
@@ -377,6 +385,12 @@ export class Environment {
     });
 
     this.scene.add(pastureGroup);
+  }
+
+  // Reveal or hide aluminium foil dispenser box on table based on unlock state
+  public setFoilUnlocked(unlocked: boolean) {
+    if (this.foilBox) this.foilBox.visible = unlocked;
+    if (this.foilLip) this.foilLip.visible = unlocked;
   }
 
   // Trigger neighbor chaos: Car alarm wails, blinkers flash, fence rattles!
