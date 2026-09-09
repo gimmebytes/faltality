@@ -7,7 +7,7 @@ class SoundEngine {
 
   constructor() {}
 
-  private initCtx() {
+  public initCtx() {
     if (!this.ctx && typeof window !== 'undefined') {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioCtx();
@@ -211,7 +211,7 @@ class SoundEngine {
     const baseFreq = fainting ? 290 : 250;
     osc.frequency.setValueAtTime(baseFreq, t);
     if (fainting) {
-      // Questioning comedic upward slide at end: "Määäh?!"
+      // Questioning comedic upward slide at end: "Määääh?!"
       osc.frequency.linearRampToValueAtTime(baseFreq + 40, t + 0.35);
       osc.frequency.linearRampToValueAtTime(baseFreq + 100, t + 0.7);
     } else {
@@ -384,6 +384,54 @@ class SoundEngine {
       osc.start(startT);
       osc.stop(startT + 2.3);
     });
+  }
+
+  // 80s/90s Brutal Retro Arcade Synthwave Impact Fanfare for Game Start
+  public playRetroStart() {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    // Power Chord in D minor / synthwave aesthetic: D2, A2, D3, F3, A3, D4
+    const freqs = [73.42, 110.0, 146.83, 174.61, 220.0, 293.66];
+    freqs.forEach((freq, i) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      const filter = this.ctx!.createBiquadFilter();
+
+      osc.type = i % 2 === 0 ? 'sawtooth' : 'square';
+      osc.frequency.setValueAtTime(freq, t);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(3200, t);
+      filter.frequency.exponentialRampToValueAtTime(450, t + 1.2);
+      filter.Q.setValueAtTime(4.0, t);
+
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.linearRampToValueAtTime(0.25 / (freqs.length * 0.5), t + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx!.destination);
+
+      osc.start(t);
+      osc.stop(t + 1.9);
+    });
+
+    // Sub bass hit
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(120, t);
+    subOsc.frequency.exponentialRampToValueAtTime(35, t + 0.5);
+    subGain.gain.setValueAtTime(0.5, t);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    subOsc.connect(subGain);
+    subGain.connect(this.ctx.destination);
+    subOsc.start(t);
+    subOsc.stop(t + 0.6);
   }
 
   // Big FALTALITY fanfare (Mortal Kombat vibe meets jaunty garden piano)

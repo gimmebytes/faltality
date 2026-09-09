@@ -2,6 +2,17 @@
 
 export type SupportedLang = 'de' | 'en';
 
+export interface FaltPediaTier {
+  id: string;
+  icon: string;
+  folds: string;
+  name: string;
+  range: string;
+  thickness: string;
+  effect: string;
+  target: string;
+}
+
 export interface Translations {
   gameTitle: string;
   gameSubtitle: string;
@@ -16,7 +27,6 @@ export interface Translations {
   iAimOff: string;
   cycleTarget: string;
   cycleTargetShort: (name: string) => string;
-  helpTitle: string;
   keymapTitle: string;
   soundToggle: string;
   
@@ -24,6 +34,7 @@ export interface Translations {
   foldTowerTag: string;
   foldsUnit: string;
   layerPill: (layers: number) => string;
+  openFaltpediaPill: string;
   tierSingularity: { name: string; desc: string };
   tierAirliner: { name: string; desc: string };
   tierLimit: { name: string; desc: string };
@@ -31,17 +42,6 @@ export interface Translations {
   tierCrane: { name: string; desc: string };
   tierPigeon: { name: string; desc: string };
   tierSheet: { name: string; desc: string };
-
-  // Bottom Dashboard
-  sheetTag: (num: number) => string;
-  modeFolding: string;
-  modeAiming: string;
-  modeFlying: string;
-  thicknessUnit: string;
-  limitMarker: string;
-  layersLabel: string;
-  rangeLabel: string;
-  comparisonLabel: string;
 
   // Buttons
   btnFoldMain: string;
@@ -60,6 +60,29 @@ export interface Translations {
   pitchLabel: string;
   powerLabel: string;
 
+  // Retro 80s/90s Intro Screen
+  introSubtitle: string;
+  introPressEnter: string;
+  introStartBtn: string;
+  introHintF: string;
+  introHintSpace: string;
+  introHintT: string;
+  introHintArrows: string;
+
+  // Hamburger Menu
+  menuTitle: string;
+  menuClose: string;
+  menuLangLabel: string;
+  menuFaltpediaBtn: string;
+  menuAimLabel: string;
+  menuCycleTargetBtn: string;
+  menuSoundLabel: string;
+  menuSoundOn: string;
+  menuSoundOff: string;
+  menuKeymapBtn: string;
+  menuReplayIntroBtn: string;
+  menuSkyStatusLabel: string;
+
   // Keymap Modal
   keymapModalHeader: string;
   keymapF: string;
@@ -73,29 +96,11 @@ export interface Translations {
   keymapEsc: string;
   keymapOk: string;
 
-  // Escalation Card
-  escalationReady: string;
-  escalationActiveLow: string;
-  escalationActiveMid: string;
-  escalationCraterTitle: string;
-  escalationLimitTitle: string;
-  escalationPlaneTitle: string;
-  escalationOrbitTitle: string;
-
-  esc0Now: string;
-  esc0Next: string;
-  esc1Now: string;
-  esc1Next: string;
-  esc3Now: string;
-  esc3Next: string;
-  esc5Now: string;
-  esc5Next: string;
-  esc7Now: string;
-  esc7Next: string;
-  esc9Now: string;
-  esc9Next: string;
-  esc11Now: string;
-  esc11Next: string;
+  // Falt-Pedia Modal
+  pediaTitle: string;
+  pediaSubtitle: string;
+  pediaCloseBtn: string;
+  pediaTiers: FaltPediaTier[];
 
   // Banners & Faltality / Foldtality
   bannerFaltality: string;
@@ -120,19 +125,19 @@ export const translations: Record<SupportedLang, Translations> = {
     skyBirdsDefault: 'Kraniche, Tauben & Möwen',
     skyLocked: (name) => `Lock: ${name} [Taste T für Wechsel]`,
     score: 'PUNKTE',
-    birdsHit: 'VÖGEL ERWISCHT',
+    birdsHit: 'VÖGEL',
     combo: 'COMBO',
     iAimOn: '🎯 iAim: AN',
     iAimOff: '🎯 iAim: AUS',
     cycleTarget: '🎯 Ziel [T]',
     cycleTargetShort: (name) => `🎯 ${name} [T]`,
-    helpTitle: "Wie funktioniert's?",
-    keymapTitle: 'Tastenbelegung anzeigen [Taste K]',
+    keymapTitle: 'Tastenbelegung [Taste K]',
     soundToggle: 'Ton umschalten',
 
     foldTowerTag: 'EXPONENTIAL-FALTMETER',
     foldsUnit: 'Faltungen',
     layerPill: (layers) => `${layers.toLocaleString()} ${layers === 1 ? 'Lage' : 'Lagen'}`,
+    openFaltpediaPill: '📖 FALT-PEDIA',
     tierSingularity: { name: '11+ Tim Cook Satellit', desc: 'Keynote Orbit & iSat' },
     tierAirliner: { name: '9–10 Airliner', desc: 'Koffer-Explosion' },
     tierLimit: { name: '7–8 Limit', desc: 'Tisch vibriert' },
@@ -140,16 +145,6 @@ export const translations: Record<SupportedLang, Translations> = {
     tierCrane: { name: '3–4 Kranich', desc: 'Hoher Weitflug' },
     tierPigeon: { name: '1–2 Taube', desc: 'Flachgleiter' },
     tierSheet: { name: '0 Ungefaltet', desc: 'Flatterblatt (~3m)' },
-
-    sheetTag: (num) => `BLATT #${num}`,
-    modeFolding: 'Faltmodus',
-    modeAiming: 'Zielmodus',
-    modeFlying: 'Im Flug',
-    thicknessUnit: 'Dicke',
-    limitMarker: '7: Menschl. Limit',
-    layersLabel: 'Lagen (2^N):',
-    rangeLabel: 'Reichweite:',
-    comparisonLabel: 'Vergleich:',
 
     btnFoldMain: 'FALTEN',
     btnFoldSub: (thicknessStr) => `[Taste F] Verdoppeln auf ${thicknessStr}`,
@@ -166,6 +161,27 @@ export const translations: Record<SupportedLang, Translations> = {
     pitchLabel: 'Steigung [↑/↓]:',
     powerLabel: 'Wurfkraft:',
 
+    introSubtitle: '★ DAS EXPONENTIELLE PAPIERFALT-SPEKTAKEL ★',
+    introPressEnter: '▶ DRÜCKE [ENTER] ODER [LEERTASTE] ZUM STARTEN ◀',
+    introStartBtn: 'SPIEL STARTEN',
+    introHintF: '<kbd>F</kbd> Papier falten (Verdoppeln)',
+    introHintSpace: '<kbd>Leertaste</kbd> Zielen & Werfen',
+    introHintT: '<kbd>T</kbd> Ziel wechseln (Lock-On)',
+    introHintArrows: '<kbd>Pfeiltasten</kbd> Kamera & Winkel',
+
+    menuTitle: 'MENÜ',
+    menuClose: '✕',
+    menuLangLabel: '🌐 Sprache wechseln / Language:',
+    menuFaltpediaBtn: '📖 FALT-PEDIA Enzyklopädie öffnen',
+    menuAimLabel: '🎯 Apple iAim Auto-Targeting:',
+    menuCycleTargetBtn: '🎯 Nächstes Ziel anvisieren [Taste T]',
+    menuSoundLabel: '🔊 Sound & Musik:',
+    menuSoundOn: '🔊 Ton: AN',
+    menuSoundOff: '🔇 Ton: AUS',
+    menuKeymapBtn: '⌨️ Tastenbelegung (Key Map) [K]',
+    menuReplayIntroBtn: '🎬 Intro-Animation erneut abspielen',
+    menuSkyStatusLabel: '🪿 Aktuell über dem Garten aktiv:',
+
     keymapModalHeader: '⌨️ Tastenbelegung (Key Map)',
     keymapF: '<strong>Papier falten</strong> (Dicke & Reichweite verdoppeln) / Zurück zum Tisch',
     keymapSpace: '<strong>Zielmodus aktivieren</strong> bzw. <strong>Papier abschiessen</strong>',
@@ -178,28 +194,81 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapEsc: 'Fenster & Overlays schließen',
     keymapOk: 'Verstanden, weiterspielen!',
 
-    escalationReady: 'BEREIT ZUM START:',
-    escalationActiveLow: 'AKTIV: TIEFFLIEGER-JAGD',
-    escalationActiveMid: 'AKTIV: KRANICH- & MÖWEN-REICHWEITE',
-    escalationCraterTitle: 'NEU: METEORITEN-KRATER AKTIV!',
-    escalationLimitTitle: 'NEU: TISCH-VIBRATION AKTIV!',
-    escalationPlaneTitle: 'NEU: AIRLINER-JAGD BEREIT!',
-    escalationOrbitTitle: 'ORBIT ERREICHT: TIM COOK SATELLIT AKTIV!',
-
-    esc0Now: '<strong>Flatterndes Blatt</strong>: Fliegt nur ~3 m und trudelt harmlos ins Gras.',
-    esc0Next: '⏩ <em>Falte auf 1:</em> Verdoppelt Reichweite auf ~16 m für tiefe Origami-Tauben!',
-    esc1Now: '<strong>Aerodynamischer Flachgleiter</strong>: Perfekte Höhe für tiefe Origami-Tauben.',
-    esc1Next: '⏩ <em>Falte auf 3:</em> Ausreichend Steigflug für japanische Origami-Kraniche!',
-    esc3Now: '<strong>Stabiler Weitstreckengleiter</strong>: Zieht hoch über den Garten zu Kranichen & Möwen.',
-    esc3Next: '⏩ <em>Ab Faltung 5:</em> 💥 <strong>Nachbars Autoalarm & Ohnmachts-Schafe!</strong>',
-    esc5Now: '<strong>Kinetische Masse</strong>: Fehlwürfe erzeugen Krater, Nachbars Auto heult auf & die Schafe fallen um!',
-    esc5Next: '⏩ <em>Ab Faltung 7:</em> Menschl. Limit überschritten & Tisch beginnt zu zittern!',
-    esc7Now: '<strong>Hyperschall-Geschoss</strong>: Tisch bebt. Reichweite reicht für die iFold Stealth Dart!',
-    esc7Next: '⏩ <em>Ab Faltung 9:</em> ✈️ <strong>Faltality Airlines FL-404</strong> in den Wolken abschießen!',
-    esc9Now: '<strong>Stratosphären-Punch</strong>: Kann Passagierflugzeug FL-404 treffen (Koffer-Regen & Schafe fallen um)!',
-    esc9Next: '⏩ <em>Ab Faltung 11+:</em> 🛰️ <strong>Tim Cook Keynote-Satellit erscheint im Orbit!</strong>',
-    esc11Now: '<strong>Exosphäre erreicht</strong>: Tim Cooks geheimer Keynote-Satellit kreist im Orbit!',
-    esc11Next: '🎯 <em>Abschuss:</em> Drücke [T] zum Anvisieren & ernte fliegende AirPods, iPhones & Poliertücher!',
+    pediaTitle: '📖 FALT-PEDIA',
+    pediaSubtitle: 'Das Handbuch der kinetischen Papier-Physik & Zerstörungskraft',
+    pediaCloseBtn: 'Schließen',
+    pediaTiers: [
+      {
+        id: 'tier-0',
+        icon: '📄',
+        folds: '0 Faltungen (1 Lage)',
+        name: 'Ungefaltetes Notizblatt',
+        range: '~3 Meter Reichweite',
+        thickness: '0.1 mm Dicke',
+        effect: 'Trudelt kraftlos und federleicht ins Gras. Keine kinetische Wucht.',
+        target: 'Keine Vögel erreichbar – bitte zuerst falten!'
+      },
+      {
+        id: 'tier-1',
+        icon: '🕊️',
+        folds: '1–2 Faltungen (2–4 Lagen)',
+        name: 'Aerodynamischer Flachgleiter',
+        range: '16–32 Meter Reichweite',
+        thickness: '0.2–0.4 mm (Schulheft-Dicke)',
+        effect: 'Flacher Gleitflug über den Zaun.',
+        target: 'Erreicht tieffliegende Origami-Tauben im Garten.'
+      },
+      {
+        id: 'tier-2',
+        icon: '🦢',
+        folds: '3–4 Faltungen (8–16 Lagen)',
+        name: 'Pocket Dart & Aerodynamischer Keil',
+        range: '65–120 Meter Reichweite',
+        thickness: '0.8–1.6 mm (Kreditkartenstapel)',
+        effect: 'Stabiler ballistischer Bogenflug hoch in die Baumkronen.',
+        target: 'Perfekt für majestätische japanische Origami-Kraniche & Möwen.'
+      },
+      {
+        id: 'tier-3',
+        icon: '💥',
+        folds: '5–6 Faltungen (32–64 Lagen)',
+        name: 'iFold Mini & Origami Bullet',
+        range: '220–380 Meter Reichweite',
+        thickness: '3.2–6.4 mm (Neues iPhone Fold)',
+        effect: '💥 CHAOS-ZONE: Fehlwürfe erzeugen Meteoriten-Krater! Nachbars Autoalarm heult auf, Warnblinker blinken und die Ohnmachts-Schafe fallen steif um!',
+        target: 'Zerschmettert Vögel & schlägt Krater in den Vorgarten.'
+      },
+      {
+        id: 'tier-4',
+        icon: '⚡',
+        folds: '7–8 Faltungen (128–256 Lagen)',
+        name: 'Human Peak Fold & Hydraulic Crusher',
+        range: '650–1.100 Meter Reichweite',
+        thickness: '1.3–2.6 cm (Dicke eines Buchs)',
+        effect: '⚡ DAS LIMIT: Das physikalische Limit menschlicher Hände ist überschritten! Der Holztisch bebt durch die kinetische Verdichtung.',
+        target: 'Durchschlägt selbst die extrem flinke iFold Stealth Dart Drohne!'
+      },
+      {
+        id: 'tier-5',
+        icon: '✈️',
+        folds: '9–10 Faltungen (512–1.024 Lagen)',
+        name: 'iFold Pro Max & Stratosphere Piercer',
+        range: '1.800–2.800 Meter Reichweite',
+        thickness: '5.1–10.2 cm (Granitblock-Dichte)',
+        effect: '✈️ STRATOSPHÄREN-DURCHBRUCH: Durchstößt die Wolkendecke! Trifft das Passagierflugzeug FL-404. Es regnet Koffer und die Schafe fallen vor Schreck um!',
+        target: 'Passagierflugzeug „Faltality Airlines FL-404“'
+      },
+      {
+        id: 'tier-6',
+        icon: '🛰️',
+        folds: '11+ Faltungen (2.048+ Lagen)',
+        name: 'Black Hole of Paper (Singularität)',
+        range: '4.500+ Meter Reichweite',
+        thickness: '20+ cm reines Titan-Zellulose-Geschoss',
+        effect: '🍏 ONE MORE THING: Durchbricht die Erdanziehung und pulverisiert Tim Cooks geheimen Keynote-Satelliten! Regen aus AirPods Pro, iPhones & 19$-Poliertüchern!',
+        target: 'Tim Cooks orbitaler Apple Keynote-Satellit!'
+      }
+    ],
 
     bannerFaltality: 'F A L T A L I T Y !',
     bannerOneMoreThing: '🍏 ONE MORE THING !',
@@ -222,19 +291,19 @@ export const translations: Record<SupportedLang, Translations> = {
     skyBirdsDefault: 'Cranes, Pigeons & Seagulls',
     skyLocked: (name) => `Locked: ${name} [Press T to Cycle]`,
     score: 'SCORE',
-    birdsHit: 'BIRDS HIT',
+    birdsHit: 'BIRDS',
     combo: 'COMBO',
     iAimOn: '🎯 iAim: ON',
     iAimOff: '🎯 iAim: OFF',
     cycleTarget: '🎯 Target [T]',
     cycleTargetShort: (name) => `🎯 ${name} [T]`,
-    helpTitle: 'How to play?',
-    keymapTitle: 'Show Controls [Key K]',
+    keymapTitle: 'Controls [Key K]',
     soundToggle: 'Toggle Sound',
 
     foldTowerTag: 'EXPONENTIAL FOLD-METER',
     foldsUnit: 'Folds',
     layerPill: (layers) => `${layers.toLocaleString()} ${layers === 1 ? 'Layer' : 'Layers'}`,
+    openFaltpediaPill: '📖 FOLD-PEDIA',
     tierSingularity: { name: '11+ Tim Cook Satellite', desc: 'Keynote Orbit & iSat' },
     tierAirliner: { name: '9–10 Airliner', desc: 'Luggage Explosion' },
     tierLimit: { name: '7–8 Human Limit', desc: 'Table Shakes' },
@@ -242,16 +311,6 @@ export const translations: Record<SupportedLang, Translations> = {
     tierCrane: { name: '3–4 Origami Crane', desc: 'High Flight' },
     tierPigeon: { name: '1–2 City Pigeon', desc: 'Low Glider' },
     tierSheet: { name: '0 Fresh Sheet', desc: 'Fluttering (~3m)' },
-
-    sheetTag: (num) => `SHEET #${num}`,
-    modeFolding: 'Folding Mode',
-    modeAiming: 'Aiming Mode',
-    modeFlying: 'In Flight',
-    thicknessUnit: 'Thickness',
-    limitMarker: '7: Human Limit',
-    layersLabel: 'Layers (2^N):',
-    rangeLabel: 'Range:',
-    comparisonLabel: 'Comparison:',
 
     btnFoldMain: 'FOLD',
     btnFoldSub: (thicknessStr) => `[Key F] Double to ${thicknessStr}`,
@@ -268,6 +327,27 @@ export const translations: Record<SupportedLang, Translations> = {
     pitchLabel: 'Pitch [↑/↓]:',
     powerLabel: 'Power:',
 
+    introSubtitle: '★ THE EXPONENTIAL PAPER FOLDING EXPERIENCE ★',
+    introPressEnter: '▶ PRESS [ENTER] OR [SPACE] TO START ◀',
+    introStartBtn: 'START GAME',
+    introHintF: '<kbd>F</kbd> Fold Paper (Double)',
+    introHintSpace: '<kbd>Space</kbd> Aim & Launch',
+    introHintT: '<kbd>T</kbd> Cycle Target (Lock-On)',
+    introHintArrows: '<kbd>Arrow Keys</kbd> Steer & Pitch',
+
+    menuTitle: 'MENU',
+    menuClose: '✕',
+    menuLangLabel: '🌐 Switch Language / Sprache:',
+    menuFaltpediaBtn: '📖 Open FOLD-PEDIA Codex',
+    menuAimLabel: '🎯 Apple iAim Auto-Targeting:',
+    menuCycleTargetBtn: '🎯 Cycle Next Target [Key T]',
+    menuSoundLabel: '🔊 Sound & Music:',
+    menuSoundOn: '🔊 Sound: ON',
+    menuSoundOff: '🔇 Sound: OFF',
+    menuKeymapBtn: '⌨️ Controls (Key Map) [K]',
+    menuReplayIntroBtn: '🎬 Replay Retro Intro Animation',
+    menuSkyStatusLabel: '🪿 Currently active above garden:',
+
     keymapModalHeader: '⌨️ Controls (Key Map)',
     keymapF: '<strong>Fold Paper</strong> (double thickness & range) / Return to table',
     keymapSpace: '<strong>Enter Aim Mode</strong> or <strong>Launch Paper</strong>',
@@ -280,28 +360,81 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapEsc: 'Close popups & dialogs',
     keymapOk: 'Got it, let me play!',
 
-    escalationReady: 'READY TO LAUNCH:',
-    escalationActiveLow: 'ACTIVE: LOW-ALTITUDE HUNT',
-    escalationActiveMid: 'ACTIVE: CRANE & SEAGULL RANGE',
-    escalationCraterTitle: 'NEW: METEOR CRATER ACTIVE!',
-    escalationLimitTitle: 'NEW: TABLE VIBRATION ACTIVE!',
-    escalationPlaneTitle: 'NEW: PASSENGER JET READY!',
-    escalationOrbitTitle: 'ORBIT REACHED: TIM COOK SATELLITE ACTIVE!',
-
-    esc0Now: '<strong>Fluttering Paper</strong>: Flies only ~3 m and flutters harmlessly into the lawn.',
-    esc0Next: '⏩ <em>Fold to 1:</em> Doubles range to ~16 m for low-altitude origami pigeons!',
-    esc1Now: '<strong>Aerodynamic Glider</strong>: Ideal altitude for low origami pigeons.',
-    esc1Next: '⏩ <em>Fold to 3:</em> Enough lift to reach majestic origami cranes!',
-    esc3Now: '<strong>Long-Range Dart</strong>: Soars high across the lawn towards cranes & seagulls.',
-    esc3Next: '⏩ <em>From Fold 5:</em> 💥 <strong>Neighbor’s Car Alarm & Fainting Sheep!</strong>',
-    esc5Now: '<strong>Kinetic Mass</strong>: Missed shots blast craters, trip the car alarm & knock out the sheep!',
-    esc5Next: '⏩ <em>From Fold 7:</em> Human limit surpassed & table begins to shake!',
-    esc7Now: '<strong>Hypersonic Slug</strong>: Table trembles. Range reaches the iFold Stealth Dart!',
-    esc7Next: '⏩ <em>From Fold 9:</em> ✈️ Intercept <strong>Foldtality Airlines FL-404</strong> in the clouds!',
-    esc9Now: '<strong>Stratospheric Punch</strong>: Strikes passenger jet FL-404 (luggage rain & fainting sheep)!',
-    esc9Next: '⏩ <em>From Fold 11+:</em> 🛰️ <strong>Tim Cook Keynote Satellite enters orbit!</strong>',
-    esc11Now: '<strong>Exosphere Reached</strong>: Tim Cook’s secret Keynote satellite orbits overhead!',
-    esc11Next: '🎯 <em>Take it down:</em> Press [T] to lock on & harvest AirPods, iPhones & Polishing Cloths!',
+    pediaTitle: '📖 FOLD-PEDIA',
+    pediaSubtitle: 'The Kinetic Paper Physics Codex & Destructive Potential',
+    pediaCloseBtn: 'Close',
+    pediaTiers: [
+      {
+        id: 'tier-0',
+        icon: '📄',
+        folds: '0 Folds (1 Layer)',
+        name: 'Unfolded Sheet',
+        range: '~3 meters range',
+        thickness: '0.1 mm thickness',
+        effect: 'Drops limply into the grass like a feather. Zero kinetic punch.',
+        target: 'No birds reachable – please fold first!'
+      },
+      {
+        id: 'tier-1',
+        icon: '🕊️',
+        folds: '1–2 Folds (2–4 Layers)',
+        name: 'Aerodynamic Glider',
+        range: '16–32 meters range',
+        thickness: '0.2–0.4 mm (Notebook thickness)',
+        effect: 'Flat gliding flight across the garden fence.',
+        target: 'Hits low-altitude origami pigeons.'
+      },
+      {
+        id: 'tier-2',
+        icon: '🦢',
+        folds: '3–4 Folds (8–16 Layers)',
+        name: 'Pocket Dart & Aerodynamic Wedge',
+        range: '65–120 meters range',
+        thickness: '0.8–1.6 mm (Credit card stack)',
+        effect: 'High ballistic arch soaring above the treetops.',
+        target: 'Perfect for Japanese origami cranes & seagulls.'
+      },
+      {
+        id: 'tier-3',
+        icon: '💥',
+        folds: '5–6 Folds (32–64 Layers)',
+        name: 'iFold Mini & Origami Bullet',
+        range: '220–380 meters range',
+        thickness: '3.2–6.4 mm (New iPhone Fold)',
+        effect: '💥 CHAOS ZONE: Missed shots blast meteor craters! Neighbor’s car alarm wails, hazards flash, and fainting sheep keel over!',
+        target: 'Obliterates birds & craters the front lawn.'
+      },
+      {
+        id: 'tier-4',
+        icon: '⚡',
+        folds: '7–8 Folds (128–256 Layers)',
+        name: 'Human Peak Fold & Hydraulic Crusher',
+        range: '650–1,100 meters range',
+        thickness: '1.3–2.6 cm (Novel thickness)',
+        effect: '⚡ THE LIMIT: Human hands cannot fold paper past 7 times. The wooden table shakes under kinetic compression!',
+        target: 'Penetrates even the nimble iFold Stealth Dart drone!'
+      },
+      {
+        id: 'tier-5',
+        icon: '✈️',
+        folds: '9–10 Folds (512–1,024 Layers)',
+        name: 'iFold Pro Max & Stratosphere Piercer',
+        range: '1,800–2,800 meters range',
+        thickness: '5.1–10.2 cm (Dense as granite)',
+        effect: '✈️ STRATOSPHERIC BREACH: Pierces cloud layer! Strikes passenger flight FL-404. Luggage rains down & neighbor’s sheep faint!',
+        target: 'Passenger Jet “Foldtality Airlines FL-404”'
+      },
+      {
+        id: 'tier-6',
+        icon: '🛰️',
+        folds: '11+ Folds (2,048+ Layers)',
+        name: 'Black Hole of Paper (Singularity)',
+        range: '4,500+ meters range',
+        thickness: '20+ cm pure titanium-cellulose block',
+        effect: '🍏 ONE MORE THING: Escapes Earth gravity and vaporizes Tim Cook’s secret Keynote satellite! Rains AirPods Pro, gold iPhones & $19 Polishing Cloths!',
+        target: 'Tim Cook’s orbital Apple Keynote Satellite!'
+      }
+    ],
 
     bannerFaltality: 'F O L D T A L I T Y !',
     bannerOneMoreThing: '🍏 ONE MORE THING !',

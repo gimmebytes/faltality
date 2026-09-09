@@ -3,10 +3,12 @@ import { FaltalityGame } from './game';
 import type { BirdData } from './models/birds';
 import { translations, detectLanguage } from './i18n';
 import type { SupportedLang } from './i18n';
+import { sound } from './sound';
 
 window.addEventListener('DOMContentLoaded', () => {
   // Current active language: default detected from domain/localstorage/browser
   let currentLang: SupportedLang = detectLanguage();
+  let introActive = true;
 
   // 3D Canvas Container
   const container = document.getElementById('game-canvas') || document.getElementById('canvas-container');
@@ -21,9 +23,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const logoTitle = document.getElementById('logo-title')!;
   const logoBadge = document.getElementById('logo-badge')!;
 
-  const trackerLabel = document.getElementById('tracker-label')!;
-  const skyBirdsInfo = document.getElementById('sky-birds-info')!;
-
+  // Top Header Scoreboard
   const labelScore = document.getElementById('label-score')!;
   const scoreVal = document.getElementById('score-val')!;
   const labelBirdsHit = document.getElementById('label-birds-hit')!;
@@ -31,19 +31,46 @@ window.addEventListener('DOMContentLoaded', () => {
   const labelCombo = document.getElementById('label-combo')!;
   const comboVal = document.getElementById('combo-val')!;
 
-  const langBtn = document.getElementById('lang-btn');
-  const aimToggleBtn = document.getElementById('aim-toggle-btn')!;
-  const cycleTargetBtn = document.getElementById('cycle-target-btn');
-  const keymapBtn = document.getElementById('keymap-btn');
-  const soundBtn = document.getElementById('sound-btn');
-  const helpBtn = document.getElementById('help-btn');
+  // Hamburger Menu & Drawer
+  const menuToggleBtn = document.getElementById('menu-toggle-btn')!;
+  const menuDrawerBackdrop = document.getElementById('menu-drawer-backdrop')!;
+  const menuCloseBtn = document.getElementById('menu-close-btn')!;
+  const menuTitle = document.getElementById('menu-title')!;
+  const menuLangLabel = document.getElementById('menu-lang-label')!;
+  const langBtnDe = document.getElementById('lang-btn-de')!;
+  const langBtnEn = document.getElementById('lang-btn-en')!;
+  const drawerPediaBtn = document.getElementById('drawer-pedia-btn')!;
+  const menuPediaLabel = document.getElementById('menu-pedia-label')!;
+  const menuAimLabel = document.getElementById('menu-aim-label')!;
+  const menuIaimBtn = document.getElementById('menu-iaim-btn')!;
+  const menuCycleTargetBtn = document.getElementById('menu-cycle-target-btn')!;
+  const menuSkyLabel = document.getElementById('menu-sky-label')!;
+  const menuSkyText = document.getElementById('menu-sky-text')!;
+  const menuSoundBtn = document.getElementById('menu-sound-btn')!;
+  const menuKeymapBtn = document.getElementById('menu-keymap-btn')!;
+  const menuReplayIntroBtn = document.getElementById('menu-replay-intro-btn')!;
 
-  // Left Fold Tower
+  // Retro 80s/90s Intro Screen
+  const introScreen = document.getElementById('intro-screen')!;
+  const introTitle = document.getElementById('intro-title')!;
+  const introSubtitle = document.getElementById('intro-subtitle')!;
+  const introLangBtn = document.getElementById('intro-lang-btn')!;
+  const introLangLabel = document.getElementById('intro-lang-label')!;
+  const introStartBtn = document.getElementById('intro-start-btn')!;
+  const introPressEnter = document.getElementById('intro-press-enter')!;
+  const introHintF = document.getElementById('intro-hint-f')!;
+  const introHintSpace = document.getElementById('intro-hint-space')!;
+  const introHintT = document.getElementById('intro-hint-t')!;
+  const introHintArrows = document.getElementById('intro-hint-arrows')!;
+
+  // Left Fold Tower (FALT-O-METER)
   const towerTag = document.getElementById('tower-tag')!;
   const towerFoldsVal = document.getElementById('tower-folds-val');
   const towerUnit = document.getElementById('tower-unit')!;
   const towerLayersVal = document.getElementById('tower-layers-val');
   const towerThicknessVal = document.getElementById('tower-thickness-val');
+  const openPediaPillBtn = document.getElementById('open-pedia-pill-btn');
+  const openPediaPillText = document.getElementById('open-pedia-pill-text');
 
   const tierSingularity = document.getElementById('tier-singularity');
   const tierSingularityName = document.getElementById('tier-singularity-name')!;
@@ -73,39 +100,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const tierSheetName = document.getElementById('tier-sheet-name')!;
   const tierSheetDesc = document.getElementById('tier-sheet-desc')!;
 
-  // Bottom Dashboard
-  const sheetTagPrefix = document.getElementById('sheet-tag-prefix')!;
-  const sheetNum = document.getElementById('sheet-num')!;
-  const modeBadge = document.getElementById('mode-badge')!;
-  const foldName = document.getElementById('fold-name')!;
-  const thicknessVal = document.getElementById('thickness-val')!;
-  const thicknessUnit = document.getElementById('thickness-unit')!;
-  const foldProgress = document.getElementById('fold-progress')!;
-  const limitMarker = document.getElementById('limit-marker')!;
-
-  const labelLayers = document.getElementById('label-layers')!;
-  const layersVal = document.getElementById('layers-val')!;
-  const labelRange = document.getElementById('label-range')!;
-  const rangeVal = document.getElementById('range-val')!;
-  const labelComparison = document.getElementById('label-comparison')!;
-  const comparisonVal = document.getElementById('comparison-val')!;
-
-  // Escalation Card
-  const escalationCard = document.getElementById('escalation-card')!;
-  const escalationIcon = document.getElementById('escalation-icon')!;
-  const escalationStatus = document.getElementById('escalation-status')!;
-  const escalationNow = document.getElementById('escalation-now')!;
-  const escalationNext = document.getElementById('escalation-next')!;
-
-  // Actions Panel
-  const aimSliders = document.getElementById('aim-sliders')!;
-  const labelPitch = document.getElementById('label-pitch')!;
-  const pitchSlider = document.getElementById('pitch-slider') as HTMLInputElement;
-  const pitchVal = document.getElementById('pitch-val')!;
-  const labelPower = document.getElementById('label-power')!;
-  const powerSlider = document.getElementById('power-slider') as HTMLInputElement;
-  const powerVal = document.getElementById('power-val')!;
-
+  // Bottom Dashboard & Controls
   const foldBtn = document.getElementById('fold-btn')!;
   const foldMainText = document.getElementById('fold-main-text')!;
   const foldSubtext = document.getElementById('fold-subtext')!;
@@ -116,20 +111,28 @@ window.addEventListener('DOMContentLoaded', () => {
   const newSheetBtn = document.getElementById('new-sheet-btn')!;
   const newSheetText = document.getElementById('new-sheet-text')!;
 
-  // Banners & Overlays
-  const faltalityBanner = document.getElementById('faltality-banner')!;
-  const faltalityTitle = document.getElementById('faltality-title') || document.querySelector('.faltality-title')!;
-  const faltalitySubtitle = document.getElementById('faltality-subtitle')!;
-  const faltalityPoints = document.getElementById('faltality-points')!;
-  const lootShowerContainer = document.getElementById('loot-shower-container');
-  let bannerTimeout: number | null = null;
-  let lastFoldsCount = -1;
+  // Aiming Sliders
+  const aimSliders = document.getElementById('aim-sliders')!;
+  const pitchSlider = document.getElementById('pitch-slider') as HTMLInputElement;
+  const pitchVal = document.getElementById('pitch-val')!;
+  const powerSlider = document.getElementById('power-slider') as HTMLInputElement;
+  const powerVal = document.getElementById('power-val')!;
+  const labelPitch = document.getElementById('label-pitch')!;
+  const labelPower = document.getElementById('label-power')!;
 
-  // Key Map Modal Elements
+  // FALT-PEDIA Modal
+  const pediaModal = document.getElementById('pedia-modal')!;
+  const pediaModalTitle = document.getElementById('pedia-modal-title')!;
+  const pediaModalSubtitle = document.getElementById('pedia-modal-subtitle')!;
+  const pediaCloseBtn = document.getElementById('pedia-close-btn')!;
+  const pediaOkBtn = document.getElementById('pedia-ok-btn')!;
+  const pediaTierList = document.getElementById('pedia-tier-list')!;
+
+  // Keyboard Shortcuts Modal [Key K]
   const keymapModal = document.getElementById('keymap-modal');
+  const keymapModalTitle = document.getElementById('keymap-modal-title');
   const keymapCloseBtn = document.getElementById('keymap-close-btn');
   const keymapOkBtn = document.getElementById('keymap-ok-btn');
-  const keymapModalTitle = document.getElementById('keymap-modal-title');
   const keymapDescF = document.getElementById('keymap-desc-f');
   const keymapDescSpace = document.getElementById('keymap-desc-space');
   const keymapDescT = document.getElementById('keymap-desc-t');
@@ -140,56 +143,164 @@ window.addEventListener('DOMContentLoaded', () => {
   const keymapDescR = document.getElementById('keymap-desc-r');
   const keymapDescEsc = document.getElementById('keymap-desc-esc');
 
-  const setLanguage = (newLang: SupportedLang) => {
-    currentLang = newLang;
-    localStorage.setItem('faltality_lang', newLang);
-    document.documentElement.lang = newLang;
+  // Banners & Loot
+  const faltalityBanner = document.getElementById('faltality-banner')!;
+  const faltalityTitle = document.getElementById('faltality-title')!;
+  const faltalitySubtitle = document.getElementById('faltality-subtitle')!;
+  const faltalityPoints = document.getElementById('faltality-points')!;
+  const lootShowerContainer = document.getElementById('loot-shower-container');
+
+  let bannerTimeout: number | null = null;
+  let lastFoldsCount = -1;
+
+  // ===================================================
+  // 🎬 START GAME & RETRO INTRO HANDLING
+  // ===================================================
+  const startGame = () => {
+    if (!introActive) return;
+    introActive = false;
+    sound.playRetroStart();
+    introScreen.classList.add('hidden');
+  };
+
+  const replayIntro = () => {
+    introActive = true;
+    introScreen.classList.remove('hidden');
+    closeMenu();
+  };
+
+  introStartBtn.addEventListener('click', startGame);
+
+  // ===================================================
+  // 🌐 LANGUAGE MANAGEMENT (DE / EN)
+  // ===================================================
+  const setLanguage = (lang: SupportedLang) => {
+    currentLang = lang;
+    localStorage.setItem('faltality_lang', lang);
     updateUI();
   };
 
-  if (langBtn) {
-    langBtn.addEventListener('click', () => {
-      setLanguage(currentLang === 'de' ? 'en' : 'de');
-    });
-  }
+  introLangBtn.addEventListener('click', () => {
+    setLanguage(currentLang === 'de' ? 'en' : 'de');
+  });
 
+  langBtnDe.addEventListener('click', () => setLanguage('de'));
+  langBtnEn.addEventListener('click', () => setLanguage('en'));
+
+  // ===================================================
+  // 🍔 HAMBURGER DRAWER MANAGEMENT
+  // ===================================================
+  const toggleMenu = (open?: boolean) => {
+    const isClosed = menuDrawerBackdrop.classList.contains('hidden');
+    const shouldOpen = open !== undefined ? open : isClosed;
+    if (shouldOpen) {
+      menuDrawerBackdrop.classList.remove('hidden');
+      menuToggleBtn.classList.add('active');
+    } else {
+      menuDrawerBackdrop.classList.add('hidden');
+      menuToggleBtn.classList.remove('active');
+    }
+  };
+
+  const closeMenu = () => toggleMenu(false);
+
+  menuToggleBtn.addEventListener('click', () => toggleMenu());
+  menuCloseBtn.addEventListener('click', closeMenu);
+  menuDrawerBackdrop.addEventListener('click', (e) => {
+    if (e.target === menuDrawerBackdrop) closeMenu();
+  });
+
+  menuReplayIntroBtn.addEventListener('click', replayIntro);
+
+  // ===================================================
+  // 📖 FALT-PEDIA MODAL
+  // ===================================================
+  const toggleFaltPedia = (show?: boolean) => {
+    const isClosed = pediaModal.classList.contains('hidden');
+    const shouldShow = show !== undefined ? show : isClosed;
+    if (shouldShow) {
+      closeMenu();
+      renderFaltPedia();
+      pediaModal.classList.remove('hidden');
+    } else {
+      pediaModal.classList.add('hidden');
+    }
+  };
+
+  const renderFaltPedia = () => {
+    const t = translations[currentLang];
+    pediaModalTitle.textContent = t.pediaTitle;
+    pediaModalSubtitle.textContent = t.pediaSubtitle;
+    pediaOkBtn.textContent = t.pediaCloseBtn;
+
+    pediaTierList.innerHTML = t.pediaTiers.map((tier) => `
+      <div class="pedia-tier-item" id="${tier.id}">
+        <div class="pedia-tier-icon">${tier.icon}</div>
+        <div class="pedia-tier-body">
+          <div class="pedia-tier-header">
+            <span class="pedia-tier-title">${tier.name}</span>
+            <span class="pedia-tier-folds">${tier.folds}</span>
+          </div>
+          <div class="pedia-tier-specs">
+            <span>📏 ${tier.range}</span>
+            <span>📐 ${tier.thickness}</span>
+          </div>
+          <div class="pedia-tier-effect">${tier.effect}</div>
+          <div class="pedia-tier-target">🎯 <em>${tier.target}</em></div>
+        </div>
+      </div>
+    `).join('');
+  };
+
+  drawerPediaBtn.addEventListener('click', () => toggleFaltPedia(true));
+  if (openPediaPillBtn) openPediaPillBtn.addEventListener('click', () => toggleFaltPedia(true));
+  pediaCloseBtn.addEventListener('click', () => toggleFaltPedia(false));
+  pediaOkBtn.addEventListener('click', () => toggleFaltPedia(false));
+
+  // ===================================================
+  // ⌨️ KEYMAP MODAL
+  // ===================================================
   const toggleKeymap = (show?: boolean) => {
     if (!keymapModal) return;
     const isVisible = !keymapModal.classList.contains('hidden');
     const shouldShow = show !== undefined ? show : !isVisible;
     if (shouldShow) {
+      closeMenu();
       keymapModal.classList.remove('hidden');
     } else {
       keymapModal.classList.add('hidden');
     }
   };
 
-  if (keymapBtn) keymapBtn.addEventListener('click', () => toggleKeymap());
-  if (helpBtn) helpBtn.addEventListener('click', () => toggleKeymap(true));
+  menuKeymapBtn.addEventListener('click', () => toggleKeymap(true));
   if (keymapCloseBtn) keymapCloseBtn.addEventListener('click', () => toggleKeymap(false));
   if (keymapOkBtn) keymapOkBtn.addEventListener('click', () => toggleKeymap(false));
 
-  // Toggle Auto-Aim
+  // ===================================================
+  // 🎯 TARGETING & SOUND ACTIONS
+  // ===================================================
   const toggleAim = () => {
     const active = game.toggleAutoAim();
     const t = translations[currentLang];
-    if (active) {
-      aimToggleBtn.classList.add('active');
-      aimToggleBtn.textContent = t.iAimOn;
-    } else {
-      aimToggleBtn.classList.remove('active');
-      aimToggleBtn.textContent = t.iAimOff;
-    }
+    menuIaimBtn.textContent = active ? t.iAimOn : t.iAimOff;
   };
 
-  aimToggleBtn.addEventListener('click', toggleAim);
+  menuIaimBtn.addEventListener('click', toggleAim);
 
-  // Cycle Target Button & Keyboard listener
   const cycleTarget = () => {
     game.cycleTarget();
+    updateUI();
   };
-  if (cycleTargetBtn) cycleTargetBtn.addEventListener('click', cycleTarget);
-  skyBirdsInfo.parentElement?.addEventListener('click', cycleTarget);
+
+  menuCycleTargetBtn.addEventListener('click', cycleTarget);
+
+  const toggleSound = () => {
+    sound.enabled = !sound.enabled;
+    const t = translations[currentLang];
+    menuSoundBtn.textContent = sound.enabled ? t.menuSoundOn : t.menuSoundOff;
+  };
+
+  menuSoundBtn.addEventListener('click', toggleSound);
 
   // Trigger Fun Apple Keynote Loot Rain Overlay
   const triggerAppleKeynoteLootShower = () => {
@@ -199,7 +310,7 @@ window.addEventListener('DOMContentLoaded', () => {
       { icon: '🎧', label: 'AirPods Pro Case', price: '$249' },
       { icon: '📱', label: 'iPhone 16 Pro (Titanium)', price: '$1,199' },
       { icon: '🧣', label: 'Apple Polishing Cloth', price: '$19' },
-      { icon: '💸', label: '$19.00 USD', price: '' },
+      { icon: '💵', label: '$19.00 USD', price: '' },
       { icon: '🍏', label: 'One More Thing', price: 'Priceless' }
     ];
 
@@ -226,35 +337,52 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Update UI Stats & State with current language translations
+  // ===================================================
+  // 🔄 MAIN UI UPDATE LOOP
+  // ===================================================
   const updateUI = () => {
     const t = translations[currentLang];
     const stats = game.paper.getStats(currentLang);
 
-    // Dynamic Title and Flag Indicator
+    // Meta Title and Header
     if (metaPageTitle) metaPageTitle.textContent = t.metaTitle;
     logoTitle.textContent = t.gameTitle;
     logoBadge.textContent = t.gameSubtitle;
-    if (langBtn) {
-      langBtn.textContent = currentLang === 'de' ? '🇩🇪 DE' : '🇬🇧 EN';
-      langBtn.title = currentLang === 'de' ? 'Switch to English (Foldtality)' : 'Auf Deutsch umschalten (Faltality)';
-    }
 
-    // Top Header
-    trackerLabel.textContent = t.skyActive;
+    // Header Scoreboard
     labelScore.textContent = t.score;
     labelBirdsHit.textContent = t.birdsHit;
     labelCombo.textContent = t.combo;
-
     scoreVal.textContent = game.state.score.toLocaleString();
     birdsHitVal.textContent = game.state.birdsHitCount.toString();
     comboVal.textContent = `x${game.state.currentCombo}`;
-    sheetTagPrefix.textContent = `${t.sheetTag(game.state.paperCount).split('#')[0]}#`;
-    sheetNum.textContent = game.state.paperCount.toString();
 
-    aimToggleBtn.textContent = game.autoAim ? t.iAimOn : t.iAimOff;
+    // Intro Screen Translations
+    introTitle.textContent = t.gameTitle;
+    introSubtitle.textContent = t.introSubtitle;
+    introLangLabel.textContent = currentLang === 'de' ? 'Sprache: 🇩🇪 Deutsch' : 'Language: 🇬🇧 English';
+    introStartBtn.textContent = t.introStartBtn;
+    introPressEnter.textContent = t.introPressEnter;
+    introHintF.innerHTML = t.introHintF;
+    introHintSpace.innerHTML = t.introHintSpace;
+    introHintT.innerHTML = t.introHintT;
+    introHintArrows.innerHTML = t.introHintArrows;
 
-    // Sky birds & aircraft count
+    // Hamburger Menu Translations & State
+    menuTitle.textContent = t.menuTitle;
+    menuLangLabel.textContent = t.menuLangLabel;
+    langBtnDe.classList.toggle('active', currentLang === 'de');
+    langBtnEn.classList.toggle('active', currentLang === 'en');
+    menuPediaLabel.textContent = t.menuFaltpediaBtn;
+    menuAimLabel.textContent = t.menuAimLabel;
+    menuIaimBtn.textContent = game.autoAim ? t.iAimOn : t.iAimOff;
+    menuCycleTargetBtn.textContent = game.targetedBird ? `🎯 ${game.targetedBird.title} [T]` : t.menuCycleTargetBtn;
+    menuSoundBtn.textContent = sound.enabled ? t.menuSoundOn : t.menuSoundOff;
+    menuKeymapBtn.textContent = t.menuKeymapBtn;
+    menuReplayIntroBtn.textContent = t.menuReplayIntroBtn;
+    menuSkyLabel.textContent = t.menuSkyStatusLabel;
+
+    // Sky Status inside Menu
     const livingBirds = game.birdManager.birds.filter((b: BirdData) => b.alive);
     const geese = livingBirds.filter((b: BirdData) => b.type === 'goose').length;
     const pigeons = livingBirds.filter((b: BirdData) => b.type === 'pigeon').length;
@@ -263,52 +391,26 @@ window.addEventListener('DOMContentLoaded', () => {
     const airliners = livingBirds.filter((b: BirdData) => b.type === 'airplane').length;
     const satellites = livingBirds.filter((b: BirdData) => b.type === 'satellite').length;
 
-    // Show current targeted bird on HUD if aiming
-    if (game.phase === 'aiming' && game.targetedBird) {
-      const targetPrefix = game.targetedBird.type === 'satellite' ? '🛰️' : (game.targetedBird.type === 'airplane' ? '✈️' : '🎯');
-      skyBirdsInfo.textContent = `${targetPrefix} ${t.skyLocked(game.targetedBird.title)}`;
-      if (cycleTargetBtn) {
-        cycleTargetBtn.textContent = t.cycleTargetShort(game.targetedBird.title.split(' ')[0]);
-      }
+    if (currentLang === 'en') {
+      menuSkyText.textContent = `${geese} Cranes, ${pigeons} Pigeons, ${seagulls} Seagulls${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}${satellites > 0 ? `, 🛰️ ${satellites} Tim Cook Satellite` : ''}`;
     } else {
-      if (currentLang === 'en') {
-        skyBirdsInfo.textContent = `${geese} Cranes, ${pigeons} Pigeons, ${seagulls} Seagulls${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}${satellites > 0 ? `, 🛰️ ${satellites} Tim Cook Satellite` : ''}`;
-      } else {
-        skyBirdsInfo.textContent = `${geese} Kraniche, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}${satellites > 0 ? `, 🛰️ ${satellites} Tim Cook Satellit` : ''}`;
-      }
-      if (cycleTargetBtn) {
-        cycleTargetBtn.textContent = t.cycleTarget;
-      }
+      menuSkyText.textContent = `${geese} Kraniche, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}${satellites > 0 ? `, 🛰️ ${satellites} Tim Cook Satellit` : ''}`;
     }
 
-    foldName.textContent = stats.foldName;
+    // UPDATE LARGE FOLD TOWER (Left HUD)
+    towerTag.textContent = t.foldTowerTag;
+    towerUnit.textContent = t.foldsUnit;
+    if (openPediaPillText) openPediaPillText.textContent = t.openFaltpediaPill;
+
     const formattedThickness = stats.thicknessMm >= 1000 
       ? (stats.thicknessMm / 1000).toFixed(2) + ' m'
       : (stats.thicknessMm >= 10 ? (stats.thicknessMm / 10).toFixed(1) + ' cm' : stats.thicknessMm.toFixed(1) + ' mm');
-    thicknessVal.textContent = stats.thicknessMm >= 1000 
-      ? (stats.thicknessMm / 1000).toFixed(2) + ' m'
-      : (stats.thicknessMm >= 10 ? (stats.thicknessMm / 10).toFixed(1) + ' cm' : stats.thicknessMm.toFixed(1));
-    thicknessUnit.textContent = `${stats.thicknessMm >= 1000 ? '' : (stats.thicknessMm >= 10 ? '' : 'mm ')}${t.thicknessUnit}`;
 
-    const pct = Math.min(100, (stats.folds / 10) * 100);
-    foldProgress.style.width = `${pct}%`;
-    limitMarker.textContent = t.limitMarker;
-
-    labelLayers.textContent = t.layersLabel;
-    layersVal.textContent = stats.layers.toLocaleString();
-    labelRange.textContent = t.rangeLabel;
-    rangeVal.textContent = `~${stats.maxDistanceM} m`;
-    labelComparison.textContent = t.comparisonLabel;
-    comparisonVal.textContent = stats.comparison;
-
-    // UPDATE LARGE FOLD TOWER INDICATOR (Left HUD)
-    towerTag.textContent = t.foldTowerTag;
-    towerUnit.textContent = t.foldsUnit;
     if (towerFoldsVal) {
       towerFoldsVal.textContent = stats.folds.toString();
       if (stats.folds > lastFoldsCount && lastFoldsCount !== -1) {
         towerFoldsVal.classList.add('pulse');
-        setTimeout(() => towerFoldsVal.classList.remove('pulse'), 250);
+        setTimeout(() => towerFoldsVal?.classList.remove('pulse'), 250);
       }
       lastFoldsCount = stats.folds;
     }
@@ -319,7 +421,7 @@ window.addEventListener('DOMContentLoaded', () => {
       towerThicknessVal.textContent = formattedThickness;
     }
 
-    // Tier segment names and descriptions
+    // Tier segment names and descriptions in Fold Tower
     tierSingularityName.textContent = t.tierSingularity.name;
     tierSingularityDesc.textContent = t.tierSingularity.desc;
     tierAirlinerName.textContent = t.tierAirliner.name;
@@ -354,49 +456,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Feature Escalation Preview in stats panel
-    escalationCard.className = 'escalation-card';
-    if (stats.folds === 0) {
-      escalationIcon.textContent = '📄';
-      escalationStatus.textContent = t.escalationReady;
-      escalationNow.innerHTML = t.esc0Now;
-      escalationNext.innerHTML = t.esc0Next;
-    } else if (stats.folds <= 2) {
-      escalationIcon.textContent = '🕊️';
-      escalationStatus.textContent = t.escalationActiveLow;
-      escalationNow.innerHTML = t.esc1Now;
-      escalationNext.innerHTML = t.esc1Next;
-    } else if (stats.folds <= 4) {
-      escalationIcon.textContent = '🦢';
-      escalationStatus.textContent = t.escalationActiveMid;
-      escalationNow.innerHTML = t.esc3Now;
-      escalationNext.innerHTML = t.esc3Next;
-    } else if (stats.folds <= 6) {
-      escalationCard.classList.add('crater-stage');
-      escalationIcon.textContent = '💥';
-      escalationStatus.textContent = t.escalationCraterTitle;
-      escalationNow.innerHTML = t.esc5Now;
-      escalationNext.innerHTML = t.esc5Next;
-    } else if (stats.folds <= 8) {
-      escalationCard.classList.add('crater-stage');
-      escalationIcon.textContent = '🛸';
-      escalationStatus.textContent = t.escalationLimitTitle;
-      escalationNow.innerHTML = t.esc7Now;
-      escalationNext.innerHTML = t.esc7Next;
-    } else if (stats.folds <= 10) {
-      escalationCard.classList.add('plane-stage');
-      escalationIcon.textContent = '✈️';
-      escalationStatus.textContent = t.escalationPlaneTitle;
-      escalationNow.innerHTML = t.esc9Now;
-      escalationNext.innerHTML = t.esc9Next;
-    } else {
-      escalationCard.classList.add('singularity-stage');
-      escalationIcon.textContent = '🛰️';
-      escalationStatus.textContent = t.escalationOrbitTitle;
-      escalationNow.innerHTML = t.esc11Now;
-      escalationNext.innerHTML = t.esc11Next;
-    }
-
+    // Sliders
     labelPitch.textContent = t.pitchLabel;
     labelPower.textContent = t.powerLabel;
     newSheetText.textContent = t.btnReset;
@@ -419,7 +479,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (keymapDescEsc) keymapDescEsc.innerHTML = t.keymapEsc;
     if (keymapOkBtn) keymapOkBtn.textContent = t.keymapOk;
 
-    // 2-Phase Dynamic Button Text & State
+    // Action Buttons State
     if (game.phase === 'flying') {
       foldBtn.setAttribute('disabled', 'true');
       actionBtn.setAttribute('disabled', 'true');
@@ -427,8 +487,6 @@ window.addEventListener('DOMContentLoaded', () => {
       foldSubtext.textContent = t.btnFoldFlyingSub;
       actionMainText.textContent = t.btnFlyingMain;
       actionSubtext.textContent = t.btnFlyingSub;
-      modeBadge.textContent = t.modeFlying;
-      modeBadge.classList.add('aiming');
       aimSliders.classList.add('hidden');
     } else if (game.phase === 'aiming') {
       foldBtn.removeAttribute('disabled');
@@ -442,8 +500,6 @@ window.addEventListener('DOMContentLoaded', () => {
       actionMainText.textContent = t.btnLaunchMain;
       actionSubtext.textContent = t.btnLaunchSub;
 
-      modeBadge.textContent = t.modeAiming;
-      modeBadge.classList.add('aiming');
       aimSliders.classList.remove('hidden');
     } else {
       // Folding mode
@@ -460,8 +516,6 @@ window.addEventListener('DOMContentLoaded', () => {
       actionMainText.textContent = t.btnAimMain;
       actionSubtext.textContent = t.btnAimSub;
 
-      modeBadge.textContent = t.modeFolding;
-      modeBadge.classList.remove('aiming');
       aimSliders.classList.add('hidden');
     }
   };
@@ -538,17 +592,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  if (soundBtn) {
-    soundBtn.addEventListener('click', () => {
-      const isMuted = soundBtn.textContent?.includes('🔇');
-      if (isMuted) {
-        soundBtn.textContent = '🔊';
-      } else {
-        soundBtn.textContent = '🔇';
-      }
-    });
-  }
-
   // Slider Listeners
   pitchSlider.addEventListener('input', () => {
     game.pitchDeg = parseFloat(pitchSlider.value);
@@ -570,6 +613,21 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Intro Screen starts on Enter or Space
+    if (introActive) {
+      if (e.code === 'Enter' || e.code === 'Space') {
+        e.preventDefault();
+        startGame();
+        return;
+      }
+    }
+
+    if (e.code === 'KeyM') {
+      e.preventDefault();
+      toggleMenu();
+      return;
+    }
+
     if (e.code === 'KeyK') {
       toggleKeymap();
       return;
@@ -582,7 +640,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if (e.code === 'Escape') {
+      closeMenu();
       toggleKeymap(false);
+      toggleFaltPedia(false);
       return;
     }
 
