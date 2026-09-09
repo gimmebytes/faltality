@@ -1,6 +1,11 @@
-# 🦢 FALTALITY (iFold Edition)
+# 🪿 FALTALITY (iFold Edition)
 
 Ein satirisch-physikalisches 3D-Browsergame im charmanten Low-Poly Flat-Shading Stil von **Untitled Goose Game**, gewidmet dem Mythos des exponentiellen Papierfaltens und dem Erscheinen des neuen *iPhone Fold*.
+
+---
+
+## 🌐 Live URL
+👉 **[https://faltality.gimmebytes.com](https://faltality.gimmebytes.com)**
 
 ---
 
@@ -13,16 +18,20 @@ In **FALTALITY** startest du mit einem frischen Blatt Papier auf einem gemütlic
 1. **Phase 1: Faltmodus (Tischperspektive)**
    - Du sitzt am Tisch und faltest dein Blatt (`Taste F`).
    - Jede Faltung verdoppelt die Schichten und Dicke exponentiell ($d = 0.1\,\text{mm} \cdot 2^n$).
+   - Die Live-Eskalationskarte verrät dir genau, welches Feature bei wie vielen Faltungen aktiv wird.
    - Nach ausreichend Faltungen drückst du die **Leertaste** (oder Klick auf **ZIELEN**), um in den Zielmodus zu wechseln.
 
 2. **Phase 2: Zielmodus (Himmelsperspektive)**
    - Die Kamera schwenkt majestätisch hoch in den Himmel über den Garten.
-   - Am Himmel ziehen gefaltete japanische Origami-Kraniche, Origami-Tauben, Möwen und die gefürchtete *iFold Origami Stealth Dart* ihre Bahnen.
+   - Am Himmel ziehen gefaltete japanische Origami-Kraniche, Origami-Tauben, Möwen, die *iFold Origami Stealth Dart* und in den Wolken **Faltality Airlines Flug FL-404** ihre Bahnen.
    - Steuere deinen Schuss flüssig mit den **Pfeiltasten [↑ ↓ ← →]** oder der Maus.
    - Drücke die **Leertaste** zum blitzschnellen Moorhuhn-Abschuss!
 
 3. **Phase 3: Flug & Faltality**
-   - Das Papier pfeift zischend durch den Himmel! Bei einem Treffer schaltet das Spiel in filmische Zeitlupe, bunte Origami-Papierschnipsel wirbeln umher, die **F A L T A L I T Y !**-Fanfare ertönt und der Vogel schwebt mit einem Fallschirmchen zu Boden.
+   - Das Papier pfeift zischend durch den Himmel!
+   - Bei Vogel-Treffern: Slow-Motion, Konfetti, Papierschnipsel und Fallschirme.
+   - Bei Airliner-Treffern: Cartoon-Crash & bunter Reisekoffer-Regen!
+   - Bei Fehlwürfen mit $\ge 5$ Faltungen: Kinetischer Meteoriten-Krater, Erdbeben-Shake und Nachbars Autoalarmanlage!
 
 ---
 
@@ -45,8 +54,8 @@ In **FALTALITY** startest du mit einem frischen Blatt Papier auf einem gemütlic
 
 - **WebGL & Three.js** mit geometrischen Origami-3D-Skulpturen, custom Flat-Shading und weichen Schatten
 - **Vite & TypeScript** für blitzschnelle Performance und HMR
-- **Web Audio API Synth**: Knusprige Papier-Faltgeräusche, dynamische Flug-Whooshes, Gans-Honks und generative Debussy-Klaviertöne ohne externe Asset-Downloads
-- **Canvas-Confetti & Origami-Partikel** für den Triumph-Moment bei einem Treffer
+- **Web Audio API Synth**: Knusprige Papier-Faltgeräusche, dynamische Flug-Whooshes, Gans-Honks, generative Debussy-Klaviertöne, quietschende Autoalarmanlagen und Sub-Bass-Kraterwumms ohne externe Asset-Downloads
+- **Canvas-Confetti & Origami-Partikel / Koffer** für den Triumph-Moment bei einem Treffer
 
 ---
 
