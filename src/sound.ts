@@ -136,6 +136,20 @@ class SoundEngine {
     this.playPaperNoise(0.12, 0.35);
   }
 
+  // Launch whoosh sound wrapper
+  public playWhoosh(folds: number = 0) {
+    this.playLaunch(Math.min(1.5, 0.8 + folds * 0.08));
+  }
+
+  // Crash impact sound wrapper
+  public playCrash(folds: number = 0) {
+    if (folds >= 5) {
+      this.playGroundImpact();
+    } else {
+      this.playPaperNoise(0.2, 0.4);
+    }
+  }
+
   // Goose Honk when hit
   public playHonk(pitch: number = 1.0) {
     if (!this.enabled) return;
@@ -339,61 +353,82 @@ class SoundEngine {
     const gain = this.ctx.createGain();
 
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(580, t);
-    osc.frequency.linearRampToValueAtTime(120, t + 0.6); // cartoon descending slide
+    osc.frequency.setValueAtTime(440, t);
+    osc.frequency.linearRampToValueAtTime(180, t + 0.6);
 
-    gain.gain.setValueAtTime(0.3, t);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(850, t);
+
+    gain.gain.setValueAtTime(0.01, t);
+    gain.gain.linearRampToValueAtTime(0.4, t + 0.04);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.65);
 
-    osc.connect(gain);
+    osc.connect(filter);
+    filter.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(t);
     osc.stop(t + 0.7);
+
+    this.playPaperNoise(0.5, 0.7);
   }
 
-  // Iconic Mac Keynote / Apple Startup Chime (C-Major rich harmonic chord)
-  public playMacStartupChime() {
+  // Apple Keynote Celestial Chime & Cash Register "Cha-Ching"
+  public playSatelliteHit() {
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;
 
-    // Rich Apple Startup Chord (F# major / C-major resonant chime)
-    const freqs = [185.0, 277.18, 369.99, 554.37, 739.99]; // F#2, C#3, F#3, C#4, F#4
-    const startT = this.ctx.currentTime;
-
-    freqs.forEach(freq => {
+    // 1. Iconic Apple Mac Boot / Keynote Chime chord (F# Major)
+    const chord = [369.99, 466.16, 554.37, 739.99];
+    chord.forEach((freq) => {
+      const t = this.ctx!.currentTime;
       const osc = this.ctx!.createOscillator();
       const gain = this.ctx!.createGain();
 
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, startT);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t);
 
-      gain.gain.setValueAtTime(0.001, startT);
-      gain.gain.linearRampToValueAtTime(0.18, startT + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.0001, startT + 2.2);
+      gain.gain.setValueAtTime(0.01, t);
+      gain.gain.linearRampToValueAtTime(0.25, t + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 2.4);
 
-      const filter = this.ctx!.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1800, startT);
-
-      osc.connect(filter);
-      filter.connect(gain);
+      osc.connect(gain);
       gain.connect(this.ctx!.destination);
 
-      osc.start(startT);
-      osc.stop(startT + 2.3);
+      osc.start(t);
+      osc.stop(t + 2.5);
     });
+
+    // 2. Playful Cash Register Ding ($19 polishing cloth sold!)
+    const dingT = this.ctx.currentTime + 0.25;
+    const dingOsc = this.ctx.createOscillator();
+    const dingGain = this.ctx.createGain();
+    dingOsc.type = 'sine';
+    dingOsc.frequency.setValueAtTime(1760, dingT); // A6 bright bell
+    dingGain.gain.setValueAtTime(0.3, dingT);
+    dingGain.gain.exponentialRampToValueAtTime(0.001, dingT + 0.8);
+    dingOsc.connect(dingGain);
+    dingGain.connect(this.ctx.destination);
+    dingOsc.start(dingT);
+    dingOsc.stop(dingT + 0.85);
   }
 
-  // 80s/90s Brutal Retro Arcade Synthwave Impact Fanfare for Game Start
+  // Alias for Keynote chime
+  public playMacStartupChime() {
+    this.playSatelliteHit();
+  }
+
+  // 80s/90s Brutal Retro Synthwave Intro Power Chord + Sub Bass
   public playRetroStart() {
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;
 
     const t = this.ctx.currentTime;
-    // Power Chord in D minor / synthwave aesthetic: D2, A2, D3, F3, A3, D4
+
+    // Power chord: D2, A2, D3, F3, A3, D4 (D Minor synth brass stab)
     const freqs = [73.42, 110.0, 146.83, 174.61, 220.0, 293.66];
     freqs.forEach((freq, i) => {
       const osc = this.ctx!.createOscillator();
