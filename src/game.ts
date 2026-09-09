@@ -75,6 +75,11 @@ export class FaltalityGame {
   // Keyboard state for smooth arrow key aiming
   public keysPressed: Record<string, boolean> = {};
 
+  // Free-Look & Head Pan Offsets from the table
+  public foldYawOffset: number = 0;
+  public foldPitchOffset: number = 0;
+  public isManualAiming: boolean = false;
+
   public onStatsChanged?: () => void;
   public onFaltality?: (bird: BirdData, folds: number, scoreAward: number) => void;
   public onOverkillCrater?: (folds: number) => void;
@@ -263,6 +268,17 @@ export class FaltalityGame {
   }
 
   // Target Cycling: Press [T] to switch between sky targets!
+  public resetCameraLook() {
+    this.foldYawOffset = 0;
+    this.foldPitchOffset = 0;
+    this.isManualAiming = false;
+    if (this.phase === 'aiming') {
+      this.enterFoldingMode();
+    } else {
+      if (this.onStatsChanged) this.onStatsChanged();
+    }
+  }
+
   public cycleTarget() {
     const aliveBirds = this.birdManager.birds.filter(b => b.alive);
     if (aliveBirds.length === 0) return;
@@ -312,6 +328,9 @@ export class FaltalityGame {
     if (this.phase === 'flying' || this.paper.isFolding) return;
     this.isChaosSpectating = false;
     this.phase = 'aiming';
+    this.foldYawOffset = 0;
+    this.foldPitchOffset = 0;
+    this.isManualAiming = false;
 
     const stats = this.paper.getStats();
     // Only spawn and auto-acquire satellite if high fold stage (11+)!
@@ -338,6 +357,9 @@ export class FaltalityGame {
     this.phase = 'folding';
     this.paper.trajectoryLine.visible = false;
     this.lockOnReticle.visible = false;
+    this.foldYawOffset = 0;
+    this.foldPitchOffset = 0;
+    this.isManualAiming = false;
     if (this.onPhaseChange) this.onPhaseChange(this.phase);
     if (this.onStatsChanged) this.onStatsChanged();
   }
@@ -488,32 +510,49 @@ export class FaltalityGame {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
-  private handleArrowKeyAiming(delta: number) {
-    if (this.phase !== 'aiming') return;
+  private handleArrowKeyLook(delta: number) {
+    const panSpeed = 62.0 * delta;
 
-    const aimSpeed = 48.0 * delta;
-    let changed = false;
+    if (this.phase === "folding") {
+      if (this.keysPressed["ArrowUp"]) {
+        this.foldPitchOffset = Math.min(65, this.foldPitchOffset + panSpeed);
+      }
+      if (this.keysPressed["ArrowDown"]) {
+        this.foldPitchOffset = Math.max(-25, this.foldPitchOffset - panSpeed);
+      }
+      if (this.keysPressed["ArrowLeft"]) {
+        this.foldYawOffset = Math.min(88, this.foldYawOffset + panSpeed);
+      }
+      if (this.keysPressed["ArrowRight"]) {
+        this.foldYawOffset = Math.max(-88, this.foldYawOffset - panSpeed);
+      }
+    } else if (this.phase === "aiming") {
+      let changed = false;
+      if (this.keysPressed["ArrowUp"]) {
+        this.pitchDeg = Math.min(85, this.pitchDeg + panSpeed);
+        this.isManualAiming = true;
+        changed = true;
+      }
+      if (this.keysPressed["ArrowDown"]) {
+        this.pitchDeg = Math.max(10, this.pitchDeg - panSpeed);
+        this.isManualAiming = true;
+        changed = true;
+      }
+      if (this.keysPressed["ArrowLeft"]) {
+        this.yawDeg = Math.min(88, this.yawDeg + panSpeed);
+        this.isManualAiming = true;
+        changed = true;
+      }
+      if (this.keysPressed["ArrowRight"]) {
+        this.yawDeg = Math.max(-88, this.yawDeg - panSpeed);
+        this.isManualAiming = true;
+        changed = true;
+      }
 
-    if (this.keysPressed['ArrowUp']) {
-      this.pitchDeg = Math.min(80, this.pitchDeg + aimSpeed);
-      changed = true;
-    }
-    if (this.keysPressed['ArrowDown']) {
-      this.pitchDeg = Math.max(12, this.pitchDeg - aimSpeed);
-      changed = true;
-    }
-    if (this.keysPressed['ArrowLeft']) {
-      this.yawDeg = Math.min(75, this.yawDeg + aimSpeed);
-      changed = true;
-    }
-    if (this.keysPressed['ArrowRight']) {
-      this.yawDeg = Math.max(-75, this.yawDeg - aimSpeed);
-      changed = true;
-    }
-
-    if (changed) {
-      this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
-      if (this.onStatsChanged) this.onStatsChanged();
+      if (changed) {
+        this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
+        if (this.onStatsChanged) this.onStatsChanged();
+      }
     }
   }
 
@@ -624,7 +663,7 @@ export class FaltalityGame {
     this.environment.update(delta);
     this.birdManager.update(delta);
 
-    this.handleArrowKeyAiming(delta);
+    this.handleArrowKeyLook(delta);
     this.updateAutoAim(delta);
 
     if (this.paper.isFlying) {
@@ -682,7 +721,17 @@ export class FaltalityGame {
       );
     } else {
       this.targetCamPos.copy(this.foldCamPos);
-      this.targetCamLookAt.copy(this.foldCamTarget);
+
+      const basePitchDeg = -32.0;
+      const pitchRad = THREE.MathUtils.degToRad(basePitchDeg + this.foldPitchOffset);
+      const yawRad = THREE.MathUtils.degToRad(this.foldYawOffset);
+      const lookDist = 20.0;
+
+      this.targetCamLookAt.set(
+        this.foldCamPos.x - Math.sin(yawRad) * Math.cos(pitchRad) * lookDist,
+        this.foldCamPos.y + Math.sin(pitchRad) * lookDist,
+        this.foldCamPos.z - Math.cos(yawRad) * Math.cos(pitchRad) * lookDist
+      );
     }
 
     const camLerpSpeed = this.isChaosSpectating ? 0.08 : (this.phase === 'flying' ? 0.25 : 0.15);

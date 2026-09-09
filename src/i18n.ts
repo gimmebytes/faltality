@@ -56,6 +56,8 @@ export interface Translations {
   btnFlyingSub: string;
   btnReset: string;
   btnTable: string;
+  btnFocusPaper: string;
+  btnFocusPaperTitle: string;
 
   // Sliders
   pitchLabel: string;
@@ -93,6 +95,7 @@ export interface Translations {
   keymapArrowsYaw: string;
   keymapA: string;
   keymapK: string;
+  keymapC: string;
   keymapR: string;
   keymapEsc: string;
   keymapOk: string;
@@ -159,6 +162,8 @@ export const translations: Record<SupportedLang, Translations> = {
     btnFlyingSub: 'Tracking',
     btnReset: 'Reset',
     btnTable: 'Tisch',
+    btnFocusPaper: 'Fokus',
+    btnFocusPaperTitle: 'Sicht auf Papier zentrieren [Taste C]',
 
     pitchLabel: 'Steigung [↑/↓]:',
     powerLabel: 'Wurfkraft:',
@@ -192,6 +197,7 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapArrowsYaw: '<strong>Richtung (Yaw)</strong> nach links / rechts steuern',
     keymapA: '<strong>Apple iAim</strong> Auto-Lock an-/ausschalten',
     keymapK: 'Dieses <strong>Tastenbelegungs-Fenster</strong> öffnen / schließen',
+    keymapC: '<strong>Blick auf Papier zentrieren</strong> (Kamera-Reset zurück zum Tisch)',
     keymapR: '<strong>Frisches Blatt Papier</strong> auf den Tisch legen (Reset)',
     keymapEsc: 'Fenster & Overlays schließen',
     keymapOk: 'Verstanden, weiterspielen!',
@@ -325,6 +331,8 @@ export const translations: Record<SupportedLang, Translations> = {
     btnFlyingSub: 'Tracking',
     btnReset: 'Reset',
     btnTable: 'Table',
+    btnFocusPaper: 'Focus',
+    btnFocusPaperTitle: 'Center view on paper [Key C]',
 
     pitchLabel: 'Pitch [↑/↓]:',
     powerLabel: 'Power:',
@@ -335,7 +343,7 @@ export const translations: Record<SupportedLang, Translations> = {
     introHintF: '<kbd>F</kbd> Fold Paper (Double)',
     introHintSpace: '<kbd>Space</kbd> Aim & Launch',
     introHintT: '<kbd>T</kbd> Cycle Target (Lock-On)',
-    introHintArrows: '<kbd>Arrow Keys</kbd> Steer & Pitch',
+    introHintArrows: '<kbd>← → ↑ ↓</kbd> Pan View & Aim',
 
     menuTitle: 'MENU',
     menuClose: '✕',
@@ -358,6 +366,7 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapArrowsYaw: '<strong>Adjust Yaw</strong> left / right',
     keymapA: 'Toggle <strong>Apple iAim</strong> Auto-Lock',
     keymapK: 'Open / close this <strong>Controls Modal</strong>',
+    keymapC: '<strong>Center view on paper</strong> (Camera reset back to table)',
     keymapR: 'Place a <strong>Fresh Sheet of Paper</strong> on table (Reset)',
     keymapEsc: 'Close dialogs & overlays',
     keymapOk: 'Got it, let’s fold!',

@@ -110,6 +110,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const actionKbd = document.getElementById('action-kbd');
   const newSheetBtn = document.getElementById('new-sheet-btn')!;
   const newSheetText = document.getElementById('new-sheet-text')!;
+  const camResetBtn = document.getElementById('cam-reset-btn');
+  const camResetText = document.getElementById('cam-reset-text');
+  const keymapDescC = document.getElementById('keymap-desc-c');
 
   // Aiming Sliders
   const aimSliders = document.getElementById('aim-sliders')!;
@@ -464,6 +467,9 @@ window.addEventListener('DOMContentLoaded', () => {
     labelPitch.textContent = t.pitchLabel;
     labelPower.textContent = t.powerLabel;
     newSheetText.textContent = t.btnReset;
+    if (camResetText) camResetText.textContent = t.btnFocusPaper;
+    if (camResetBtn) camResetBtn.title = t.btnFocusPaperTitle;
+    if (keymapDescC) keymapDescC.innerHTML = t.keymapC;
 
     pitchSlider.value = Math.round(game.pitchDeg).toString();
     pitchVal.textContent = Math.round(game.pitchDeg).toString();
@@ -602,6 +608,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  camResetBtn?.addEventListener('click', () => {
+    game.resetCameraLook();
+    updateUI();
+  });
+
   // Slider Listeners
   pitchSlider.addEventListener('input', () => {
     game.pitchDeg = parseFloat(pitchSlider.value);
@@ -640,6 +651,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (e.code === 'KeyK') {
       toggleKeymap();
+      return;
+    }
+
+    if (e.code === 'KeyC') {
+      e.preventDefault();
+      game.resetCameraLook();
+      updateUI();
       return;
     }
 
