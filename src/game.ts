@@ -48,6 +48,11 @@ export class FaltalityGame {
   // 2. Aiming & Shooting mode (Moorhuhn Style): stationary PoV overlooking the garden sky
   private aimCamPos = new THREE.Vector3(0, 2.05, 3.8);
 
+  // 3. Chaos Wide Pan-Out Cam: Elevated overview of garden, neighbor car and fainting sheep!
+  private chaosCamPos = new THREE.Vector3(0, 5.2, 8.5);
+  private chaosCamTarget = new THREE.Vector3(0.5, 1.4, -14.0);
+  public isChaosSpectating: boolean = false;
+
   private targetCamPos = new THREE.Vector3();
   private targetCamLookAt = new THREE.Vector3();
 
@@ -198,8 +203,9 @@ export class FaltalityGame {
       const deltaX = clientX - startX;
       const deltaY = clientY - startY;
 
-      this.yawDeg = Math.max(-55, Math.min(55, initialYaw - deltaX * 0.25));
-      this.pitchDeg = Math.max(15, Math.min(80, initialPitch + deltaY * 0.28));
+      // Generous yaw range to easily look left at the sheep or right at the neighbor's house!
+      this.yawDeg = Math.max(-75, Math.min(75, initialYaw - deltaX * 0.25));
+      this.pitchDeg = Math.max(12, Math.min(80, initialPitch + deltaY * 0.28));
 
       this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
       if (this.onStatsChanged) this.onStatsChanged();
@@ -304,6 +310,7 @@ export class FaltalityGame {
 
   public enterAimingMode() {
     if (this.phase === 'flying' || this.paper.isFolding) return;
+    this.isChaosSpectating = false;
     this.phase = 'aiming';
 
     const stats = this.paper.getStats();
@@ -327,6 +334,7 @@ export class FaltalityGame {
 
   public enterFoldingMode() {
     if (this.phase === 'flying') return;
+    this.isChaosSpectating = false;
     this.phase = 'folding';
     this.paper.trajectoryLine.visible = false;
     this.lockOnReticle.visible = false;
@@ -375,6 +383,7 @@ export class FaltalityGame {
     this.paper.resetNewSheet();
     this.birdManager.despawnSatellite();
     this.targetedBird = null;
+    this.isChaosSpectating = false;
     this.enterFoldingMode();
     if (this.onStatsChanged) this.onStatsChanged();
   }
@@ -387,6 +396,7 @@ export class FaltalityGame {
       return;
     }
 
+    this.isChaosSpectating = false;
     this.phase = 'flying';
     this.screenShake = 0.15; // Crisp shooter kick!
     this.lockOnReticle.visible = false;
@@ -413,6 +423,7 @@ export class FaltalityGame {
     // Comedic trigger: Airliners and Satellites scare the fainting sheep!
     if (bird.type === 'airplane' || bird.type === 'satellite') {
       this.environment.triggerFaintingSheep();
+      this.isChaosSpectating = true;
     }
 
     sound.playFaltality();
@@ -432,6 +443,8 @@ export class FaltalityGame {
     if (this.isResettingCam) return;
     this.isResettingCam = true;
 
+    const hasChaos = this.paper.folds >= 5 || this.isChaosSpectating;
+
     // Overkill crater effect for overfolded missed throws
     if (this.paper.folds >= 5) {
       this.screenShake = 0.6;
@@ -442,6 +455,7 @@ export class FaltalityGame {
       // Neighbor's car hazards flash & car bounces; fainting sheep keel over sideways!
       this.environment.triggerCarAlarm();
       this.environment.triggerFaintingSheep();
+      this.isChaosSpectating = true;
 
       if (this.onOverkillCrater) {
         this.onOverkillCrater(this.paper.folds);
@@ -450,18 +464,22 @@ export class FaltalityGame {
 
     if (this.onFlightEnd) this.onFlightEnd();
 
-    // Snappy reset
+    // WIDE GARDEN CINEMATIC TIMEOUT:
+    // If chaos occurred (car alarm or sheep fainting), pull camera back for 3.8s so player can watch!
+    const resetDelay = hasChaos ? 3800 : 600;
+
     setTimeout(() => {
       this.state.paperCount++;
       this.paper.resetNewSheet();
       this.birdManager.despawnSatellite();
       this.targetedBird = null;
+      this.isChaosSpectating = false;
       this.phase = 'folding';
       this.paper.trajectoryLine.visible = false;
       this.isResettingCam = false;
       if (this.onPhaseChange) this.onPhaseChange(this.phase);
       if (this.onStatsChanged) this.onStatsChanged();
-    }, 600);
+    }, resetDelay);
   }
 
   private onWindowResize() {
@@ -481,15 +499,15 @@ export class FaltalityGame {
       changed = true;
     }
     if (this.keysPressed['ArrowDown']) {
-      this.pitchDeg = Math.max(15, this.pitchDeg - aimSpeed);
+      this.pitchDeg = Math.max(12, this.pitchDeg - aimSpeed);
       changed = true;
     }
     if (this.keysPressed['ArrowLeft']) {
-      this.yawDeg = Math.min(55, this.yawDeg + aimSpeed);
+      this.yawDeg = Math.min(75, this.yawDeg + aimSpeed);
       changed = true;
     }
     if (this.keysPressed['ArrowRight']) {
-      this.yawDeg = Math.max(-55, this.yawDeg - aimSpeed);
+      this.yawDeg = Math.max(-75, this.yawDeg - aimSpeed);
       changed = true;
     }
 
@@ -645,9 +663,12 @@ export class FaltalityGame {
       }
     }
 
-    // DYNAMIC FIRST-PERSON CAMERA AIMING:
-    // Full spherical projection based on pitchDeg and yawDeg!
-    if (this.phase === 'aiming' || this.phase === 'flying') {
+    // DYNAMIC FIRST-PERSON CAMERA & CHAOS PANORAMA-CAM:
+    if (this.isChaosSpectating) {
+      // Elevated wide cinematic shot: shows lawn, sheep fainting and neighbor car hazards!
+      this.targetCamPos.copy(this.chaosCamPos);
+      this.targetCamLookAt.copy(this.chaosCamTarget);
+    } else if (this.phase === 'aiming' || this.phase === 'flying') {
       this.targetCamPos.copy(this.aimCamPos);
 
       const pitchRad = THREE.MathUtils.degToRad(this.pitchDeg);
@@ -664,7 +685,7 @@ export class FaltalityGame {
       this.targetCamLookAt.copy(this.foldCamTarget);
     }
 
-    const camLerpSpeed = this.phase === 'flying' ? 0.25 : 0.15;
+    const camLerpSpeed = this.isChaosSpectating ? 0.08 : (this.phase === 'flying' ? 0.25 : 0.15);
     this.camera.position.lerp(this.targetCamPos, camLerpSpeed);
 
     // Apply screen shake if active
