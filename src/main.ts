@@ -61,6 +61,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const powerVal = document.getElementById('power-val')!;
 
   const aimToggleBtn = document.getElementById('aim-toggle-btn')!;
+  const cycleTargetBtn = document.getElementById('cycle-target-btn');
   const newSheetBtn = document.getElementById('new-sheet-btn')!;
   const soundBtn = document.getElementById('sound-btn');
   const keymapBtn = document.getElementById('keymap-btn');
@@ -105,6 +106,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   aimToggleBtn.addEventListener('click', toggleAim);
 
+  // Cycle Target Button & Keyboard listener
+  const cycleTarget = () => {
+    game.cycleTarget();
+  };
+  if (cycleTargetBtn) cycleTargetBtn.addEventListener('click', cycleTarget);
+  skyBirdsInfo.parentElement?.addEventListener('click', cycleTarget);
+
   // Update UI Stats & State
   const updateUI = () => {
     const stats = game.paper.getStats();
@@ -123,7 +131,19 @@ window.addEventListener('DOMContentLoaded', () => {
     const airliners = livingBirds.filter((b: BirdData) => b.type === 'airplane').length;
     const satellites = livingBirds.filter((b: BirdData) => b.type === 'satellite').length;
 
-    skyBirdsInfo.textContent = `${geese} Kraniche, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}${satellites > 0 ? `, 🛰️ ${satellites} Tim Cook Satellit` : ''}`;
+    // Show current targeted bird on HUD if aiming
+    if (game.phase === 'aiming' && game.targetedBird) {
+      const targetPrefix = game.targetedBird.type === 'satellite' ? '🛰️' : (game.targetedBird.type === 'airplane' ? '✈️' : '🎯');
+      skyBirdsInfo.textContent = `${targetPrefix} Lock: ${game.targetedBird.title} [Taste T für Wechsel]`;
+      if (cycleTargetBtn) {
+        cycleTargetBtn.textContent = `${targetPrefix} ${game.targetedBird.title.split(' ')[0]} [T]`;
+      }
+    } else {
+      skyBirdsInfo.textContent = `${geese} Kraniche, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}${satellites > 0 ? `, 🛰️ ${satellites} Tim Cook Satellit` : ''}`;
+      if (cycleTargetBtn) {
+        cycleTargetBtn.textContent = `🎯 Ziel wechseln [T]`;
+      }
+    }
 
     foldName.textContent = stats.foldName;
     const formattedThickness = stats.thicknessMm >= 1000 
@@ -371,6 +391,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (e.code === 'KeyK') {
       toggleKeymap();
+      return;
+    }
+
+    if (e.code === 'KeyT') {
+      e.preventDefault();
+      cycleTarget();
       return;
     }
 

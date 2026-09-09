@@ -13,6 +13,7 @@ export interface BirdData {
   leftWing: THREE.Object3D;
   rightWing: THREE.Object3D;
   head: THREE.Object3D;
+  beaconMesh?: THREE.Mesh;
   radius: number;
   alive: boolean;
   hitVelocity: THREE.Vector3;
@@ -54,8 +55,8 @@ export class BirdManager {
     this.spawnBird('airplane', 18.5, -15, -19);
     this.spawnBird('airplane', 23.0, 20, -22);
 
-    // 6. TIM COOK KEYNOTE SATELLITE: Orbiting high above in the exosphere!
-    this.spawnBird('satellite', 35.5, -12, -23);
+    // 6. TIM COOK KEYNOTE SATELLITE: High in the exosphere, clearly placed in the forward view arc!
+    this.spawnBird('satellite', 28.5, -5, -16.5);
   }
 
   public spawnBird(type: BirdType, altitude: number, startX?: number, startZ?: number): BirdData {
@@ -63,6 +64,7 @@ export class BirdManager {
     let leftWing: THREE.Object3D;
     let rightWing: THREE.Object3D;
     let head: THREE.Object3D;
+    let beaconMesh: THREE.Mesh | undefined;
     let radius = 1.4;
     let speed = 4.5;
     let scoreValue = 100;
@@ -118,9 +120,10 @@ export class BirdManager {
       leftWing = parts.leftWing;
       rightWing = parts.rightWing;
       head = parts.head;
-      group.scale.set(3.2, 3.2, 3.2);
-      radius = 4.0;
-      speed = 5.5;
+      beaconMesh = parts.beacon;
+      group.scale.set(3.8, 3.8, 3.8);
+      radius = 5.0; // Large generous hit radius so it's super rewarding to nail!
+      speed = 5.0;
       scoreValue = 10000;
       title = '🛰️ Tim Cook Keynote-Satellit (iSat One)';
     } else {
@@ -156,6 +159,7 @@ export class BirdManager {
       leftWing,
       rightWing,
       head,
+      beaconMesh,
       radius,
       alive: true,
       hitVelocity: new THREE.Vector3(),
@@ -464,6 +468,7 @@ export class BirdManager {
       color: 0xf1c40f, roughness: 0.2, metalness: 0.9, flatShading: true
     });
     const appleWhite = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const cyanBeaconMat = new THREE.MeshBasicMaterial({ color: 0x55efff });
 
     // Main Satellite Bus (Titanium Space Gray cube)
     const busGeo = new THREE.BoxGeometry(1.2, 1.2, 1.4);
@@ -498,6 +503,11 @@ export class BirdManager {
     appleBadge.rotation.x = Math.PI / 2;
     bodyGroup.add(appleBadge);
 
+    // Blinking Orbit Beacon on top
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), cyanBeaconMat);
+    beacon.position.set(0, 0.85, 0);
+    bodyGroup.add(beacon);
+
     // Left Solar Panel Array (Double wing)
     const leftWingGroup = new THREE.Group();
     leftWingGroup.position.set(-0.7, 0, 0);
@@ -522,7 +532,7 @@ export class BirdManager {
 
     bodyGroup.add(leftWingGroup, rightWingGroup);
 
-    return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: dish };
+    return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: dish, beacon };
   }
 
   // Origami Confetti, Paper Shreds, Luggage & Apple Accessories Explosion when hit
@@ -688,7 +698,11 @@ export class BirdManager {
         if (bird.type === 'satellite') {
           // Slow dignified space orbit drift and gentle solar panel tilt
           bird.mesh.rotation.y += 0.3 * delta;
-          bird.mesh.position.y = bird.baseAltitude + Math.sin(bird.mesh.position.x * 0.05) * 0.2;
+          bird.mesh.position.y = bird.baseAltitude + Math.sin(bird.mesh.position.x * 0.05) * 0.25;
+          if (bird.beaconMesh) {
+            const pulse = (Math.sin(Date.now() * 0.008) + 1) * 0.5;
+            bird.beaconMesh.scale.setScalar(0.8 + pulse * 0.6);
+          }
         } else if (bird.type === 'airplane') {
           // Airliner gentle bank and cloud cruising
           bird.mesh.rotation.z = Math.sin(bird.mesh.position.x * 0.05) * 0.08;

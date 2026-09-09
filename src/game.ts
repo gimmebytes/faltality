@@ -33,6 +33,7 @@ export class FaltalityGame {
   public autoAim: boolean = true;
   public targetedBird: BirdData | null = null;
   private lockOnReticle: THREE.Group;
+  private reticleMat: THREE.MeshBasicMaterial;
 
   // Aiming parameters
   public pitchDeg: number = 38;
@@ -51,13 +52,12 @@ export class FaltalityGame {
   private targetCamLookAt = new THREE.Vector3();
 
   // Screen shake for punchy arcade feel
-  public screenShake: number = 0;
+  private screenShake: number = 0;
 
   // Slow-motion & game state
   private timeScale: number = 1.0;
   private slowMoTimer: number = 0;
   private isResettingCam: boolean = false;
-  private hitBirdThisFlight: boolean = false;
 
   public state: GameState = {
     score: 0,
@@ -77,6 +77,8 @@ export class FaltalityGame {
   public onPhaseChange?: (phase: GamePhase) => void;
 
   private lastTime: number = 0;
+  private raycaster = new THREE.Raycaster();
+  private mouse = new THREE.Vector2();
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -107,7 +109,9 @@ export class FaltalityGame {
     this.birdManager.initFlocks();
     this.paper = new PaperSheet(this.scene);
 
-    this.lockOnReticle = this.createLockOnReticle();
+    const { reticleGroup, reticleMat } = this.createLockOnReticle();
+    this.lockOnReticle = reticleGroup;
+    this.reticleMat = reticleMat;
     this.scene.add(this.lockOnReticle);
 
     window.addEventListener('resize', this.onWindowResize.bind(this));
@@ -117,12 +121,12 @@ export class FaltalityGame {
     requestAnimationFrame(this.animate.bind(this));
   }
 
-  private createLockOnReticle(): THREE.Group {
+  private createLockOnReticle(): { reticleGroup: THREE.Group; reticleMat: THREE.MeshBasicMaterial } {
     const group = new THREE.Group();
     const reticleMat = new THREE.MeshBasicMaterial({
       color: 0x28cd41,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.92,
       side: THREE.DoubleSide
     });
 
@@ -140,7 +144,7 @@ export class FaltalityGame {
     }
 
     group.visible = false;
-    return group;
+    return { reticleGroup: group, reticleMat };
   }
 
   private setupLighting() {
@@ -168,6 +172,7 @@ export class FaltalityGame {
     let startY = 0;
     let initialYaw = this.yawDeg;
     let initialPitch = this.pitchDeg;
+    let pointerDownTime = 0;
 
     const onPointerDown = (e: MouseEvent | TouchEvent) => {
       if (this.phase !== 'aiming') return;
@@ -182,6 +187,7 @@ export class FaltalityGame {
       startY = clientY;
       initialYaw = this.yawDeg;
       initialPitch = this.pitchDeg;
+      pointerDownTime = performance.now();
     };
 
     const onPointerMove = (e: MouseEvent | TouchEvent) => {
@@ -199,8 +205,17 @@ export class FaltalityGame {
       if (this.onStatsChanged) this.onStatsChanged();
     };
 
-    const onPointerUp = () => {
+    const onPointerUp = (e: MouseEvent | TouchEvent) => {
+      if (!isDragging) return;
       isDragging = false;
+
+      // Quick click/tap: check if player tapped directly on a bird/plane/satellite to lock it!
+      const clickDuration = performance.now() - pointerDownTime;
+      if (clickDuration < 250) {
+        const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : (e as MouseEvent).clientX;
+        const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : (e as MouseEvent).clientY;
+        this.checkRaycastTarget(clientX, clientY);
+      }
     };
 
     window.addEventListener('mousedown', onPointerDown);
@@ -210,6 +225,72 @@ export class FaltalityGame {
     window.addEventListener('touchstart', onPointerDown, { passive: false });
     window.addEventListener('touchmove', onPointerMove, { passive: false });
     window.addEventListener('touchend', onPointerUp);
+  }
+
+  // Click on a target in the sky to manually acquire lock!
+  private checkRaycastTarget(clientX: number, clientY: number) {
+    if (this.phase !== 'aiming') return;
+    this.mouse.x = (clientX / window.innerWidth) * 2 - 1;
+    this.mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const aliveBirds = this.birdManager.birds.filter(b => b.alive);
+    let bestBird: BirdData | null = null;
+    let minDist = 3.5;
+
+    for (const b of aliveBirds) {
+      const screenPos = b.mesh.position.clone().project(this.camera);
+      const dx = screenPos.x - this.mouse.x;
+      const dy = screenPos.y - this.mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 0.22 && dist < minDist) {
+        minDist = dist;
+        bestBird = b;
+      }
+    }
+
+    if (bestBird) {
+      this.targetedBird = bestBird;
+      this.aimAtTarget(bestBird);
+      if (this.onStatsChanged) this.onStatsChanged();
+    }
+  }
+
+  // Target Cycling: Press [T] to switch between sky targets!
+  public cycleTarget() {
+    const aliveBirds = this.birdManager.birds.filter(b => b.alive && Math.abs(b.mesh.position.x) < 40);
+    if (aliveBirds.length === 0) return;
+
+    // Prefer ordering: satellite first if high folds, then airliners, then birds
+    const currentIndex = this.targetedBird ? aliveBirds.indexOf(this.targetedBird) : -1;
+    const nextIndex = (currentIndex + 1) % aliveBirds.length;
+    this.targetedBird = aliveBirds[nextIndex];
+
+    this.aimAtTarget(this.targetedBird);
+    if (this.onStatsChanged) this.onStatsChanged();
+  }
+
+  public aimAtTarget(bird: BirdData) {
+    const paperPos = this.paper.mesh.position;
+    const stats = this.paper.getStats();
+    const dist = paperPos.distanceTo(bird.mesh.position);
+    const baseSpeed = 24.0 + stats.folds * 15.0;
+    const flightSpeed = baseSpeed * (this.powerPercent / 100);
+    const timeToHit = Math.max(0.05, dist / flightSpeed);
+
+    const predictedX = bird.mesh.position.x + bird.speed * timeToHit * 0.98;
+    const predictedY = bird.mesh.position.y + 0.5 * 9.81 * (timeToHit * timeToHit * 0.25);
+    const predictedZ = bird.mesh.position.z;
+
+    const dx = predictedX - paperPos.x;
+    const dy = predictedY - paperPos.y;
+    const dz = predictedZ - paperPos.z;
+    const horizontalDist = Math.sqrt(dx * dx + dz * dz);
+
+    this.yawDeg = THREE.MathUtils.radToDeg(Math.atan2(-dx, -dz));
+    this.pitchDeg = Math.min(78, Math.max(18, THREE.MathUtils.radToDeg(Math.atan2(dy, horizontalDist))));
+
+    this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, true);
   }
 
   public enterAimingMode() {
@@ -250,11 +331,6 @@ export class FaltalityGame {
 
     sound.playPianoNote(this.paper.folds);
 
-    // Overfolding comic table shake!
-    if (this.paper.folds >= 7) {
-      this.screenShake = 0.25;
-    }
-
     this.paper.fold(() => {
       if (this.onStatsChanged) this.onStatsChanged();
     });
@@ -269,8 +345,7 @@ export class FaltalityGame {
     }
 
     this.phase = 'flying';
-    this.hitBirdThisFlight = false;
-    this.screenShake = 0.15;
+    this.screenShake = 0.15; // Crisp shooter kick!
     this.lockOnReticle.visible = false;
     this.paper.launch(this.pitchDeg, this.yawDeg, this.powerPercent);
     if (this.onPhaseChange) this.onPhaseChange(this.phase);
@@ -278,10 +353,9 @@ export class FaltalityGame {
   }
 
   private triggerFaltality(bird: BirdData) {
-    this.hitBirdThisFlight = true;
     this.timeScale = 0.25;
     this.slowMoTimer = 1.2;
-    this.screenShake = bird.type === 'airplane' ? 0.75 : 0.45;
+    this.screenShake = 0.45; // Satisfying hit impact!
 
     const foldBonusMultiplier = 1 + this.paper.folds * 0.5;
     const pointsAwarded = Math.round(bird.scoreValue * foldBonusMultiplier);
@@ -295,8 +369,8 @@ export class FaltalityGame {
 
     sound.playFaltality();
     confetti({
-      particleCount: bird.type === 'airplane' ? 140 : 80,
-      spread: bird.type === 'airplane' ? 100 : 75,
+      particleCount: 80,
+      spread: 75,
       origin: { y: 0.6 },
       colors: ['#ff3b30', '#ffd700', '#4cd964', '#5ac8fa', '#5856d6']
     });
@@ -310,11 +384,11 @@ export class FaltalityGame {
     if (this.isResettingCam) return;
     this.isResettingCam = true;
 
-    // Overkill Ground Impact check: if projectile had 5+ folds and hit the lawn!
-    if (!this.hitBirdThisFlight && this.paper.folds >= 5 && this.paper.mesh.position.y <= 0.3) {
+    // Overkill crater effect for overfolded missed throws
+    if (this.paper.folds >= 5) {
+      this.screenShake = 0.6;
       sound.playGroundImpact();
       sound.playCarAlarm();
-      this.screenShake = 0.7;
       if (this.onOverkillCrater) {
         this.onOverkillCrater(this.paper.folds);
       }
@@ -322,6 +396,7 @@ export class FaltalityGame {
 
     if (this.onFlightEnd) this.onFlightEnd();
 
+    // Snappy reset
     setTimeout(() => {
       this.state.paperCount++;
       this.paper.resetNewSheet();
@@ -375,8 +450,9 @@ export class FaltalityGame {
     }
 
     const stats = this.paper.getStats();
-    const paperPos = this.paper.mesh.position;
 
+    // INTELLIGENT TARGET ACQUISITION:
+    // If we don't have a targeted bird, or if it died or left visible screen:
     if (!this.targetedBird || !this.targetedBird.alive || Math.abs(this.targetedBird.mesh.position.x) > 35) {
       const reachableBirds = this.birdManager.birds.filter((b: BirdData) => {
         if (!b.alive) return false;
@@ -385,8 +461,19 @@ export class FaltalityGame {
       });
 
       if (reachableBirds.length > 0) {
-        reachableBirds.sort((a: BirdData, b: BirdData) => Math.abs(a.mesh.position.x) - Math.abs(b.mesh.position.x));
-        this.targetedBird = reachableBirds[0];
+        // High folds (>= 11) or aiming steep upwards (pitch >= 48) -> PRIORITIZE TIM COOK SATELLITE!
+        const satellite = reachableBirds.find(b => b.type === 'satellite');
+        if (satellite && (stats.folds >= 11 || this.pitchDeg >= 48)) {
+          this.targetedBird = satellite;
+        } else if (stats.folds >= 9 && stats.folds <= 10) {
+          // At 9-10 folds, prioritize airliner!
+          const plane = reachableBirds.find(b => b.type === 'airplane');
+          this.targetedBird = plane || reachableBirds[0];
+        } else {
+          // Otherwise pick target closest to center line
+          reachableBirds.sort((a: BirdData, b: BirdData) => Math.abs(a.mesh.position.x) - Math.abs(b.mesh.position.x));
+          this.targetedBird = reachableBirds[0];
+        }
       } else {
         this.targetedBird = null;
       }
@@ -395,12 +482,26 @@ export class FaltalityGame {
     if (this.targetedBird && this.targetedBird.alive) {
       const bird = this.targetedBird;
 
+      // Color code reticle by target type!
+      if (bird.type === 'satellite') {
+        this.reticleMat.color.setHex(0xffd700); // Gold / Keynote Chime!
+        this.lockOnReticle.scale.set(1.4, 1.4, 1.4);
+      } else if (bird.type === 'airplane') {
+        this.reticleMat.color.setHex(0x0984e3); // Sky Blue
+        this.lockOnReticle.scale.set(1.2, 1.2, 1.2);
+      } else {
+        this.reticleMat.color.setHex(0x28cd41); // Classic Green
+        this.lockOnReticle.scale.set(1.0, 1.0, 1.0);
+      }
+
       this.lockOnReticle.visible = true;
       this.lockOnReticle.position.copy(bird.mesh.position);
       this.lockOnReticle.lookAt(this.camera.position);
       this.lockOnReticle.rotation.z += 2.0 * delta;
 
+      // Smooth auto-track if player is not actively pressing arrow keys
       if (!this.paper.isFlying && !this.keysPressed['ArrowUp'] && !this.keysPressed['ArrowDown'] && !this.keysPressed['ArrowLeft'] && !this.keysPressed['ArrowRight']) {
+        const paperPos = this.paper.mesh.position;
         const dist = paperPos.distanceTo(bird.mesh.position);
         const baseSpeed = 24.0 + stats.folds * 15.0;
         const flightSpeed = baseSpeed * (this.powerPercent / 100);
@@ -461,10 +562,17 @@ export class FaltalityGame {
       const paperPos = this.paper.mesh.position;
       const stats = this.paper.getStats();
       const paperRadius = Math.max(stats.width, stats.length) * 0.5;
-      const hitTolerance = this.autoAim ? 2.0 : 1.0;
+      const hitTolerance = this.autoAim ? 2.2 : 1.2;
 
       for (const bird of this.birdManager.birds) {
         if (!bird.alive) continue;
+
+        // CRUCIAL ANTI-INTERCEPTION:
+        // If the player locked on the Tim Cook Satellite, intermediate airliners MUST NOT intercept the shot!
+        if (this.targetedBird?.type === 'satellite' && bird.type === 'airplane') {
+          continue; // Pierce right past the airliner into space!
+        }
+
         const dist = paperPos.distanceTo(bird.mesh.position);
         if (dist < bird.radius + paperRadius + hitTolerance) {
           this.birdManager.hitBird(bird, this.paper.velocity);
