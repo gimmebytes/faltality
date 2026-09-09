@@ -25,6 +25,13 @@ window.addEventListener('DOMContentLoaded', () => {
   const rangeVal = document.getElementById('range-val')!;
   const comparisonVal = document.getElementById('comparison-val')!;
 
+  // Feature Preview / Escalation Card
+  const escalationCard = document.getElementById('escalation-card')!;
+  const escalationIcon = document.getElementById('escalation-icon')!;
+  const escalationStatus = document.getElementById('escalation-status')!;
+  const escalationNow = document.getElementById('escalation-now')!;
+  const escalationNext = document.getElementById('escalation-next')!;
+
   const foldBtn = document.getElementById('fold-btn')!;
   const foldMainText = document.getElementById('fold-main-text')!;
   const foldSubtext = document.getElementById('fold-subtext')!;
@@ -114,6 +121,49 @@ window.addEventListener('DOMContentLoaded', () => {
     layersVal.textContent = stats.layers.toLocaleString();
     rangeVal.textContent = `~${stats.maxDistanceM} m`;
     comparisonVal.textContent = stats.comparison;
+
+    // Feature Escalation Preview depending on folds count
+    escalationCard.className = 'escalation-card';
+    if (stats.folds === 0) {
+      escalationIcon.textContent = '📄';
+      escalationStatus.textContent = 'BEREIT ZUM START:';
+      escalationNow.innerHTML = '<strong>Flatterndes Blatt</strong>: Fliegt nur ~2 m und trudelt harmlos ins Gras.';
+      escalationNext.innerHTML = '⏩ <em>Falte auf 1:</em> Verdoppelt Reichweite auf ~4 m für tiefe Origami-Tauben!';
+    } else if (stats.folds <= 2) {
+      escalationIcon.textContent = '🕊️';
+      escalationStatus.textContent = 'AKTIV: TIEFFLIEGER-JAGD';
+      escalationNow.innerHTML = '<strong>Aerodynamischer Flachgleiter</strong>: Perfekte Höhe für tiefe Origami-Tauben.';
+      escalationNext.innerHTML = '⏩ <em>Falte auf 3:</em> Ausreichend Steigflug für japanische Origami-Kraniche!';
+    } else if (stats.folds <= 4) {
+      escalationIcon.textContent = '🦢';
+      escalationStatus.textContent = 'AKTIV: KRANICH- & MÖWEN-REICHWEITE';
+      escalationNow.innerHTML = '<strong>Stabiler Weitstreckengleiter</strong>: Zieht hoch über den Garten zu Kranichen & Möwen.';
+      escalationNext.innerHTML = '⏩ <em>Ab Faltung 5:</em> 💥 <strong>Meteoriten-Krater & Autoalarm</strong> bei Fehlschüssen!';
+    } else if (stats.folds <= 6) {
+      escalationCard.classList.add('crater-stage');
+      escalationIcon.textContent = '💥';
+      escalationStatus.textContent = 'NEU: METEORITEN-KRATER AKTIV!';
+      escalationNow.innerHTML = '<strong>Kinetische Masse</strong>: Fehlwürfe erzeugen Erdbeben, Krater & Autoalarm!';
+      escalationNext.innerHTML = '⏩ <em>Ab Faltung 7:</em> Menschl. Limit überschritten & Tisch beginnt zu zittern!';
+    } else if (stats.folds <= 8) {
+      escalationCard.classList.add('crater-stage');
+      escalationIcon.textContent = '🛸';
+      escalationStatus.textContent = 'NEU: TISCH-VIBRATION AKTIV!';
+      escalationNow.innerHTML = '<strong>Hyperschall-Geschoss</strong>: Tisch bebt. Reichweite reicht für die iFold Stealth Dart!';
+      escalationNext.innerHTML = '⏩ <em>Ab Faltung 9:</em> ✈️ <strong>Faltality Airlines FL-404</strong> in den Wolken abschießen!';
+    } else if (stats.folds <= 10) {
+      escalationCard.classList.add('plane-stage');
+      escalationIcon.textContent = '✈️';
+      escalationStatus.textContent = 'NEU: AIRLINER-JAGD BEREIT!';
+      escalationNow.innerHTML = '<strong>Stratosphären-Punch</strong>: Kann Passagierflugzeug FL-404 treffen (Koffer-Regen)!';
+      escalationNext.innerHTML = '⏩ <em>Ab Faltung 11:</em> 🕳️ <strong>Zellulose-Singularität</strong> droht!';
+    } else {
+      escalationCard.classList.add('singularity-stage');
+      escalationIcon.textContent = '🕳️';
+      escalationStatus.textContent = 'WARNUNG: CHANDRASEKHAR-LIMIT!';
+      escalationNow.innerHTML = '<strong>Papier-Singularität</strong>: Dichte nähert sich schwarzem Loch! Tisch vibriert extrem!';
+      escalationNext.innerHTML = '⏩ Kosmische Zerstörungskraft beim nächsten Wurf!';
+    }
 
     pitchSlider.value = Math.round(game.pitchDeg).toString();
     pitchVal.textContent = Math.round(game.pitchDeg).toString();

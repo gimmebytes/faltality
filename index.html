@@ -2,7 +2,7 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦢</text></svg>" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪿</text></svg>\" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FALTALITY – Das exponentielle Papierfalt-Spiel</title>
     <!-- Google Fonts for Untitled Goose Game & Apple Keynote aesthetic -->
@@ -26,7 +26,7 @@
 
         <!-- Live Birds in Sky Status -->
         <div class="sky-tracker ui-interactive" title="Aktuell über dem Garten fliegende Ziele">
-          <span class="tracker-icon">🦢</span>
+          <span class="tracker-icon">🪿</span>
           <div class="tracker-text">
             <span class="tracker-label">AM HIMMEL AKTIV</span>
             <span id="sky-birds-info" class="tracker-val">Gänse, Tauben & Möwen</span>
@@ -98,6 +98,22 @@
               <span id="comparison-val" class="detail-val">Flatterndes Notizblatt</span>
             </div>
           </div>
+
+          <!-- Live Feature & Escalation Preview -->
+          <div class="escalation-card" id="escalation-card">
+            <div class="escalation-badge">
+              <span class="escalation-icon" id="escalation-icon">🕊️</span>
+              <span class="escalation-status" id="escalation-status">BEREIT FÜR SCHUSS:</span>
+            </div>
+            <div class="escalation-content">
+              <div class="escalation-now" id="escalation-now">
+                <strong>Flatterflug</strong>: Erreicht tieffliegende Origami-Tauben.
+              </div>
+              <div class="escalation-next" id="escalation-next">
+                ⏩ <em>Nächste Faltung:</em> Mehr Reichweite & Höhe für Kraniche!
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Controls Action Row -->
@@ -158,61 +174,38 @@
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>↑</kbd> <kbd>↓</kbd></div>
-                <div class="desc"><strong>Steigung / Pitch</strong> im Zielmodus erhöhen oder senken</div>
+                <div class="desc"><strong>Steigung (Pitch)</strong> erhöhen / senken</div>
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>←</kbd> <kbd>→</kbd></div>
-                <div class="desc"><strong>Richtung / Yaw</strong> nach links oder rechts schwenken</div>
+                <div class="desc"><strong>Richtung (Yaw)</strong> nach links / rechts steuern</div>
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>A</kbd></div>
-                <div class="desc"><strong>Apple iAim</strong> Auto-Locking an- oder ausschalten</div>
-              </div>
-              <div class="keymap-row">
-                <div class="keys"><kbd>R</kbd></div>
-                <div class="desc"><strong>Neues Blatt Papier</strong> auf den Tisch legen</div>
+                <div class="desc"><strong>Apple iAim</strong> Auto-Lock an-/ausschalten</div>
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>K</kbd></div>
-                <div class="desc">Diese <strong>Tastenbelegung</strong> öffnen & schliessen</div>
+                <div class="desc">Dieses <strong>Tastenbelegungs-Fenster</strong> öffnen / schließen</div>
+              </div>
+              <div class="keymap-row">
+                <div class="keys"><kbd>R</kbd></div>
+                <div class="desc"><strong>Frisches Blatt Papier</strong> auf den Tisch legen (Reset)</div>
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>Esc</kbd></div>
-                <div class="desc">Modals und Overlays schliessen</div>
+                <div class="desc">Fenster & Overlays schließen</div>
               </div>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button id="keymap-ok-btn" class="btn btn-primary">Alles klar!</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Help / Lore Modal -->
-      <div id="help-modal" class="modal-backdrop hidden ui-interactive">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h2>Die Wissenschaft hinter FALTALITY</h2>
-            <button id="modal-close-btn" class="icon-btn">✕</button>
-          </div>
-          <div class="modal-content">
-            <p><strong>Das Apple iFold Rätsel:</strong> Warum kann man ein Blatt Papier eigentlich nicht beliebig oft falten?</p>
-            <p>Normales Papier ist ca. <strong>0.1 mm</strong> dick. Bei jedem Falten verdoppelt sich die Dicke ($d = 0.1 \cdot 2^n$):</p>
-            <ul>
-              <li><strong>7 Faltungen:</strong> 1.28 cm – das theoretische Limit für Menschenhände (Zellulose reißt).</li>
-              <li><strong>11 Faltungen:</strong> ~20 cm – benötigt ein Papier von der Größe eines Fußballfelds!</li>
-              <li><strong>23 Faltungen:</strong> ~838 Meter – höher als das Burj Khalifa!</li>
-              <li><strong>42 Faltungen:</strong> ~440.000 Kilometer – bis zum Mond!</li>
-            </ul>
-            <p><strong>Im Spiel:</strong> Falte das Blatt im Faltmodus so oft, bis es die nötige Dichte und Reichweite besitzt. Wechsle dann mit der <strong>Leertaste</strong> in den Zielmodus und steuere mit den <strong>Pfeiltasten [↑ ↓ ← →]</strong> oder der Maus dein Ziel an!</p>
-          </div>
-          <div class="modal-footer">
-            <button id="modal-start-btn" class="btn btn-primary">Verstanden, ab ins Gefecht!</button>
+            <div class="keymap-footer">
+              <button id="keymap-ok-btn" class="btn btn-primary">Verstanden, weiterspielen!</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Main Game Bundle -->
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>
