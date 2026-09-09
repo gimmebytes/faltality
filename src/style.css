@@ -994,3 +994,74 @@ kbd {
     font-size: 2.5rem;
   }
 }
+
+/* ===================================================
+   APPLE KEYNOTE 2D LOOT RAIN SHOWER
+   =================================================== */
+.loot-subtext {
+  display: inline-block;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #d35400;
+  margin-top: 6px;
+  padding: 4px 12px;
+  background: rgba(255, 215, 0, 0.25);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.5);
+}
+
+.loot-shower-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 95;
+}
+
+.apple-loot-item {
+  position: absolute;
+  top: -80px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  border-radius: 24px;
+  padding: 8px 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  font-family: var(--font-sans);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1d1d1f;
+  animation: lootRainFall linear forwards;
+  will-change: transform;
+}
+
+.apple-loot-item .loot-icon {
+  font-size: 1.6rem;
+}
+
+.apple-loot-item .loot-price {
+  color: #27ae60;
+  font-size: 0.95rem;
+}
+
+@keyframes lootRainFall {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(0.7);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(12vh) rotate(8deg) scale(1.05);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(85vh) rotate(-12deg) scale(1);
+  }
+  100% {
+    transform: translateY(105vh) rotate(15deg) scale(0.9);
+    opacity: 0;
+  }
+}

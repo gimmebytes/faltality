@@ -67,8 +67,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const keymapBtn = document.getElementById('keymap-btn');
 
   const faltalityBanner = document.getElementById('faltality-banner')!;
+  const faltalityTitle = document.getElementById('faltality-title') || document.querySelector('.faltality-title')!;
   const faltalitySubtitle = document.getElementById('faltality-subtitle')!;
   const faltalityPoints = document.getElementById('faltality-points')!;
+  const lootShowerContainer = document.getElementById('loot-shower-container');
   let bannerTimeout: number | null = null;
   let lastFoldsCount = -1;
 
@@ -112,6 +114,41 @@ window.addEventListener('DOMContentLoaded', () => {
   };
   if (cycleTargetBtn) cycleTargetBtn.addEventListener('click', cycleTarget);
   skyBirdsInfo.parentElement?.addEventListener('click', cycleTarget);
+
+  // Trigger Fun Apple Keynote Loot Rain Overlay
+  const triggerAppleKeynoteLootShower = () => {
+    if (!lootShowerContainer) return;
+
+    const items = [
+      { icon: '🎧', label: 'AirPods Pro Case', price: '$249' },
+      { icon: '📱', label: 'iPhone 16 Pro (Titanium)', price: '$1,199' },
+      { icon: '🧣', label: 'Apple Polishing Cloth', price: '$19' },
+      { icon: '💸', label: '$19.00 USD', price: '' },
+      { icon: '🍏', label: 'One More Thing', price: 'Priceless' }
+    ];
+
+    const count = 28;
+    for (let i = 0; i < count; i++) {
+      const item = items[Math.floor(Math.random() * items.length)];
+      const el = document.createElement('div');
+      el.className = 'apple-loot-item';
+      el.innerHTML = `<span class="loot-icon">${item.icon}</span> <span>${item.label}</span> <span class="loot-price">${item.price}</span>`;
+
+      const leftPercent = Math.random() * 85 + 5;
+      const duration = 2.8 + Math.random() * 2.2;
+      const delay = Math.random() * 1.5;
+
+      el.style.left = `${leftPercent}%`;
+      el.style.animationDuration = `${duration}s`;
+      el.style.animationDelay = `${delay}s`;
+
+      lootShowerContainer.appendChild(el);
+
+      setTimeout(() => {
+        el.remove();
+      }, (duration + delay) * 1000);
+    }
+  };
 
   // Update UI Stats & State
   const updateUI = () => {
@@ -297,13 +334,17 @@ window.addEventListener('DOMContentLoaded', () => {
     updateUI();
 
     if (bird.type === 'satellite') {
-      faltalitySubtitle.textContent = '🍏 ONE MORE THING! Tim Cooks Keynote-Satellit abgeschossen!';
-      faltalityPoints.textContent = `🛰️ +${scoreAward.toLocaleString()} PUNKTE & POLIER-TÜCHER!`;
+      faltalityTitle.textContent = '🍏 ONE MORE THING !';
+      faltalitySubtitle.innerHTML = `<strong>Tim Cooks Keynote-Satellit pulverisiert!</strong><br><span class="loot-subtext">✨ LOOT: AirPods Pro Cases • Gold iPhones • $19 Poliertücher</span>`;
+      faltalityPoints.textContent = `🛰️ +${scoreAward.toLocaleString()} PUNKTE!`;
+      triggerAppleKeynoteLootShower();
     } else if (bird.type === 'airplane') {
-      faltalitySubtitle.textContent = '🚨 FLUGVERSPÄTUNG DES TODES! Koffer & Duty-Free regnen herab!';
+      faltalityTitle.textContent = 'F A L T A L I T Y !';
+      faltalitySubtitle.innerHTML = '🚨 FLUGVERSPÄTUNG DES TODES! Koffer & Duty-Free regnen herab!';
       faltalityPoints.textContent = `✈️ +${scoreAward.toLocaleString()} PUNKTE!`;
     } else {
-      faltalitySubtitle.textContent = `${bird.title} mit ${folds} Faltungen erwischt!`;
+      faltalityTitle.textContent = 'F A L T A L I T Y !';
+      faltalitySubtitle.innerHTML = `${bird.title} mit ${folds} Faltungen erwischt!`;
       faltalityPoints.textContent = `+${scoreAward.toLocaleString()} PUNKTE!`;
     }
 
@@ -312,13 +353,14 @@ window.addEventListener('DOMContentLoaded', () => {
     if (bannerTimeout) clearTimeout(bannerTimeout);
     bannerTimeout = window.setTimeout(() => {
       faltalityBanner.classList.add('hidden');
-    }, 3200);
+    }, 4200);
   };
 
   game.onOverkillCrater = (folds: number) => {
     updateUI();
-    faltalitySubtitle.textContent = `💥 BUMM! Gartenzaun des Nachbarn vaporisiert! Autoalarm heult!`;
-    faltalityPoints.textContent = `OVERKILL MIT ${folds} FALTUNGEN!`;
+    faltalityTitle.textContent = 'O V E R K I L L !';
+    faltalitySubtitle.innerHTML = `💥 BUMM! Gartenzaun des Nachbarn vaporisiert! Autoalarm heult!`;
+    faltalityPoints.textContent = `MIT ${folds} FALTUNGEN!`;
     faltalityBanner.classList.remove('hidden');
 
     if (bannerTimeout) clearTimeout(bannerTimeout);

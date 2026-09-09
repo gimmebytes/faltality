@@ -121,7 +121,6 @@ export class BirdManager {
       rightWing = parts.rightWing;
       head = parts.head;
       beaconMesh = parts.beacon;
-      // Massive 4.8x scale so it is unmistakably visible in the sky!
       group.scale.set(4.8, 4.8, 4.8);
       radius = 5.5; // Very generous target radius
       speed = 3.6;
@@ -536,17 +535,170 @@ export class BirdManager {
     return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: dish, beacon };
   }
 
+  // 3D MODELS FOR THE SATELLITE LOOT DROPS:
+  // 1. Glossy White AirPods Pro Case
+  private createAirPodsProModel(): THREE.Group {
+    const g = new THREE.Group();
+    const whiteGloss = new THREE.MeshStandardMaterial({
+      color: 0xffffff, roughness: 0.12, metalness: 0.15
+    });
+    const seamMat = new THREE.MeshBasicMaterial({ color: 0x95a5a6 });
+    const ledMat = new THREE.MeshBasicMaterial({ color: 0x2ed573 });
+    const portMat = new THREE.MeshBasicMaterial({ color: 0x555555 });
+
+    // Case main body (1.4m wide in world space)
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.0, 0.55), whiteGloss);
+    g.add(body);
+
+    // Case opening seam
+    const seam = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.04, 0.57), seamMat);
+    seam.position.y = 0.18;
+    g.add(seam);
+
+    // Green status LED dot
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), ledMat);
+    led.position.set(0, -0.06, 0.29);
+    g.add(led);
+
+    // USB-C connector on bottom
+    const port = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.06, 0.12), portMat);
+    port.position.set(0, -0.51, 0);
+    g.add(port);
+
+    return g;
+  }
+
+  // 2. Desert Titanium iPhone 16 Pro
+  private createIPhoneModel(): THREE.Group {
+    const g = new THREE.Group();
+    const goldTitanium = new THREE.MeshStandardMaterial({
+      color: 0xdfba73, roughness: 0.22, metalness: 0.85
+    });
+    const blackScreen = new THREE.MeshBasicMaterial({ color: 0x0a0b0c });
+    const cameraIslandMat = new THREE.MeshStandardMaterial({
+      color: 0xc9a45c, roughness: 0.25, metalness: 0.8
+    });
+    const lensMat = new THREE.MeshBasicMaterial({ color: 0x111122 });
+
+    // Phone chassis (1.8m tall in world space)
+    const phone = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.9, 0.12), goldTitanium);
+    g.add(phone);
+
+    // Front Screen
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.88, 1.82), blackScreen);
+    screen.position.set(0, 0, 0.065);
+    g.add(screen);
+
+    // Dynamic Island Pill
+    const island = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.06, 0.02), lensMat);
+    island.position.set(0, 0.76, 0.07);
+    g.add(island);
+
+    // Camera Bump on Back
+    const bump = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.08), cameraIslandMat);
+    bump.position.set(-0.18, 0.58, -0.08);
+    g.add(bump);
+
+    // 3 Camera Lenses
+    for (const [lx, ly] of [[-0.28, 0.7], [-0.28, 0.46], [-0.09, 0.58]]) {
+      const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.07, 12), lensMat);
+      lens.rotation.x = Math.PI / 2;
+      lens.position.set(lx, ly, -0.13);
+      g.add(lens);
+    }
+
+    return g;
+  }
+
+  // 3. The $19 Apple Polishing Cloth
+  private createPolishingClothModel(): THREE.Group {
+    const g = new THREE.Group();
+    const clothMat = new THREE.MeshStandardMaterial({
+      color: 0xdcdde1, roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide
+    });
+    const logoMat = new THREE.MeshBasicMaterial({ color: 0xa4b0be });
+
+    // The $19 Cloth: Soft fabric square (1.5m x 1.5m)
+    const cloth = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5, 2, 2), clothMat);
+    g.add(cloth);
+
+    // Embossed Apple Logo in corner
+    const logo = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.16, 8), logoMat);
+    logo.position.set(0.5, -0.5, 0.01);
+    g.add(logo);
+
+    return g;
+  }
+
   // Origami Confetti, Paper Shreds, Luggage & Apple Accessories Explosion when hit
   public spawnPaperExplosion(pos: THREE.Vector3, birdType: BirdType) {
     const shredGroup = new THREE.Group();
     shredGroup.position.copy(pos);
 
-    let colors: number[];
+    const shreds: { mesh: THREE.Object3D; vel: THREE.Vector3; rotVel: THREE.Vector3 }[] = [];
+
+    // SPECIAL APPLE SATELLITE LOOT DROPS:
     if (birdType === 'satellite') {
-      // Iconic Apple Rainbow palette + Titanium & Polishing Cloth Gray!
-      colors = [0x61bb46, 0xfdb827, 0xf5821f, 0xe03a3e, 0x963d97, 0x009ddc, 0xffffff, 0xd2dae2];
-    } else if (birdType === 'airplane') {
-      colors = [0x0984e3, 0xff7675, 0xfdcb6e, 0x00cec9, 0xffffff]; // colorful luggage bags!
+      const dropCount = 42; // 42 gloriously large items!
+      for (let i = 0; i < dropCount; i++) {
+        let itemGroup: THREE.Group;
+        if (i % 3 === 0) {
+          itemGroup = this.createAirPodsProModel();
+        } else if (i % 3 === 1) {
+          itemGroup = this.createIPhoneModel();
+        } else {
+          itemGroup = this.createPolishingClothModel();
+        }
+
+        itemGroup.position.set(
+          (Math.random() - 0.5) * 4.0,
+          (Math.random() - 0.5) * 3.0,
+          (Math.random() - 0.5) * 4.0
+        );
+
+        // Fountains outwards and gently towards the camera PoV!
+        const vel = new THREE.Vector3(
+          (Math.random() - 0.5) * 14.0,
+          (Math.random() * 8.0) + 3.0,
+          (Math.random() * 8.0) // drift forward toward garden camera!
+        );
+
+        const rotVel = new THREE.Vector3(
+          (Math.random() - 0.5) * 4.0,
+          (Math.random() - 0.5) * 6.0,
+          (Math.random() - 0.5) * 4.0
+        );
+
+        shredGroup.add(itemGroup);
+        shreds.push({ mesh: itemGroup, vel, rotVel });
+      }
+
+      // Also add sparkling rainbow keynote confetti
+      const rainbowColors = [0x61bb46, 0xfdb827, 0xf5821f, 0xe03a3e, 0x963d97, 0x009ddc, 0xffffff];
+      for (let i = 0; i < 40; i++) {
+        const geo = new THREE.PlaneGeometry(0.5, 0.5);
+        const mat = new THREE.MeshBasicMaterial({
+          color: rainbowColors[Math.floor(Math.random() * rainbowColors.length)],
+          side: THREE.DoubleSide
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set((Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3);
+        const vel = new THREE.Vector3((Math.random() - 0.5) * 20, (Math.random() * 12) + 4, (Math.random() - 0.5) * 20);
+        const rotVel = new THREE.Vector3((Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15);
+        shredGroup.add(mesh);
+        shreds.push({ mesh, vel, rotVel });
+      }
+
+      shredGroup.userData = { shreds, age: 0, maxAge: 8.5, isSatellite: true };
+      this.scene.add(shredGroup);
+      this.paperShreds.push(shredGroup);
+      return;
+    }
+
+    // Standard birds and airliner luggage
+    let colors: number[];
+    if (birdType === 'airplane') {
+      colors = [0x0984e3, 0xff7675, 0xfdcb6e, 0x00cec9, 0xffffff];
     } else if (birdType === 'goose') {
       colors = [0xfaf9f5, 0xcc2222, 0xe8e5dc];
     } else if (birdType === 'pigeon') {
@@ -557,32 +709,18 @@ export class BirdManager {
       colors = [0x1e272e, 0x00d2d3, 0x576574];
     }
 
-    const shredCount = birdType === 'satellite' ? 70 : (birdType === 'airplane' ? 50 : 28);
-    const shreds: { mesh: THREE.Mesh; vel: THREE.Vector3; rotVel: THREE.Vector3 }[] = [];
+    const shredCount = birdType === 'airplane' ? 50 : 28;
 
     for (let i = 0; i < shredCount; i++) {
       let geo: THREE.BufferGeometry;
-      if (birdType === 'satellite') {
-        if (i % 4 === 0) {
-          // Cute miniature AirPods Pro Case!
-          geo = new THREE.BoxGeometry(0.35, 0.26, 0.18);
-        } else if (i % 4 === 1) {
-          // Miniature Gold iPhone 16 Pro!
-          geo = new THREE.BoxGeometry(0.24, 0.48, 0.05);
-        } else if (i % 4 === 2) {
-          // The $19 Apple Polishing Cloth!
-          geo = new THREE.PlaneGeometry(0.42, 0.42);
-        } else {
-          geo = new THREE.ConeGeometry(0.25, 0.4, 3);
-        }
-      } else if (birdType === 'airplane' && i % 3 === 0) {
+      if (birdType === 'airplane' && i % 3 === 0) {
         // Cute miniature origami suitcase!
-        geo = new THREE.BoxGeometry(0.35, 0.24, 0.18);
+        geo = new THREE.BoxGeometry(0.7, 0.48, 0.36);
       } else {
         const isTri = Math.random() > 0.5;
         geo = isTri 
-          ? new THREE.ConeGeometry(0.25, 0.45, 3) 
-          : new THREE.PlaneGeometry(0.35, 0.35);
+          ? new THREE.ConeGeometry(0.3, 0.55, 3) 
+          : new THREE.PlaneGeometry(0.45, 0.45);
       }
 
       const color = colors[Math.floor(Math.random() * colors.length)];
@@ -611,7 +749,7 @@ export class BirdManager {
       shreds.push({ mesh, vel, rotVel });
     }
 
-    shredGroup.userData = { shreds, age: 0, maxAge: 3.5 };
+    shredGroup.userData = { shreds, age: 0, maxAge: 3.5, isSatellite: false };
     this.scene.add(shredGroup);
     this.paperShreds.push(shredGroup);
   }
@@ -769,14 +907,19 @@ export class BirdManager {
       }
     }
 
-    // Update Paper Shreds explosion
+    // Update Paper Shreds & 3D Loot Explosion
     for (let i = this.paperShreds.length - 1; i >= 0; i--) {
       const group = this.paperShreds[i];
       group.userData.age += delta;
 
-      const shreds = group.userData.shreds as { mesh: THREE.Mesh; vel: THREE.Vector3; rotVel: THREE.Vector3 }[];
+      const isSat = group.userData.isSatellite === true;
+      const gravity = isSat ? 3.8 : 7.5; // Soft gentle glide for satellite drops!
+      const shreds = group.userData.shreds as { mesh: THREE.Object3D; vel: THREE.Vector3; rotVel: THREE.Vector3 }[];
+
       for (const s of shreds) {
-        s.vel.y -= 7.5 * delta;
+        s.vel.y -= gravity * delta;
+        s.vel.x *= 0.985;
+        s.vel.z *= 0.985;
         s.mesh.position.addScaledVector(s.vel, delta);
         s.mesh.rotation.x += s.rotVel.x * delta;
         s.mesh.rotation.y += s.rotVel.y * delta;
