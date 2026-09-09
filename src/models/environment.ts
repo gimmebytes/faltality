@@ -119,7 +119,7 @@ export class Environment {
 
     // 3. Low-Poly Trees in the background
     const treePositions = [
-      [-22, 0, -26],
+      [-36, 0, -26],
       [28, 0, -28],
       [-28, 0, 15],
       [32, 0, 18],
@@ -142,7 +142,7 @@ export class Environment {
   // Neighbor house, garage driveway, red car with blinkers and wobbly fence
   private buildNeighborProperty() {
     const houseGroup = new THREE.Group();
-    houseGroup.position.set(-32, 0, -42);
+    houseGroup.position.set(-25, 0, -28);
 
     // Main House Body
     const houseGeo = new THREE.BoxGeometry(16, 8, 12);
@@ -191,13 +191,13 @@ export class Environment {
     driveGeo.rotateX(-Math.PI / 2);
     const driveMat = new THREE.MeshLambertMaterial({ color: 0x95a5a6, flatShading: true });
     const driveway = new THREE.Mesh(driveGeo, driveMat);
-    driveway.position.set(14, 0.05, 4);
+    driveway.position.set(13, 0.05, 4);
     driveway.receiveShadow = true;
     houseGroup.add(driveway);
 
     // Neighbor's Prized Low-Poly Station Wagon (Car)
     const carGroup = new THREE.Group();
-    carGroup.position.set(14, 0.65, 4);
+    carGroup.position.set(13, 0.65, 4);
     carGroup.rotateY(-Math.PI * 0.15);
 
     // Chassis
@@ -259,32 +259,32 @@ export class Environment {
   // Neighboring sheep pasture with fainting origami sheep
   private buildSheepPasture() {
     const pastureGroup = new THREE.Group();
-    pastureGroup.position.set(38, 0, -32);
+    pastureGroup.position.set(17, 0, -23);
 
     // Fence around pasture
     const fenceMat = new THREE.MeshLambertMaterial({ color: 0xdeb887, flatShading: true });
-    for (let i = -14; i <= 14; i += 3.5) {
+    for (let i = -7.5; i <= 7.5; i += 3.0) {
       const postGeo = new THREE.BoxGeometry(0.2, 1.3, 0.2);
       const post = new THREE.Mesh(postGeo, fenceMat);
-      post.position.set(i, 0.65, -12);
+      post.position.set(i, 0.65, -6.5);
       pastureGroup.add(post);
 
       const postFront = new THREE.Mesh(postGeo, fenceMat);
-      postFront.position.set(i, 0.65, 12);
+      postFront.position.set(i, 0.65, 6.5);
       pastureGroup.add(postFront);
     }
-    const railGeo = new THREE.BoxGeometry(28, 0.12, 0.08);
+    const railGeo = new THREE.BoxGeometry(15.5, 0.12, 0.08);
     const rail1 = new THREE.Mesh(railGeo, fenceMat);
-    rail1.position.set(0, 0.9, -12);
+    rail1.position.set(0, 0.9, -6.5);
     const rail2 = new THREE.Mesh(railGeo, fenceMat);
-    rail2.position.set(0, 0.5, -12);
+    rail2.position.set(0, 0.5, -6.5);
     pastureGroup.add(rail1, rail2);
 
     // Create 3 comical low-poly origami sheep
     const sheepConfigs = [
-      { x: -5, z: -2, rotY: 0.4 },
-      { x: 2, z: 4, rotY: -1.2 },
-      { x: 7, z: -4, rotY: 2.1 }
+      { x: -3.5, z: -1, rotY: 0.4 },
+      { x: 0.5, z: 2.2, rotY: -1.2 },
+      { x: 4.0, z: -1.5, rotY: 2.1 }
     ];
 
     this.sheepFlock = sheepConfigs.map((cfg) => {

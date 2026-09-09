@@ -49,8 +49,8 @@ export class FaltalityGame {
   private aimCamPos = new THREE.Vector3(0, 2.05, 3.8);
 
   // 3. Chaos Wide Pan-Out Cam: Elevated overview of garden, neighbor car and fainting sheep!
-  private chaosCamPos = new THREE.Vector3(0, 5.2, 8.5);
-  private chaosCamTarget = new THREE.Vector3(0.5, 1.4, -14.0);
+  private chaosCamPos = new THREE.Vector3(0, 5.8, 9.2);
+  private chaosCamTarget = new THREE.Vector3(0.5, 1.2, -18.0);
   public isChaosSpectating: boolean = false;
 
   private targetCamPos = new THREE.Vector3();
