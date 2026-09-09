@@ -3,7 +3,12 @@ import { FaltalityGame } from './game';
 import type { BirdData } from './models/birds';
 
 window.addEventListener('DOMContentLoaded', () => {
-  const container = document.getElementById('canvas-container')!;
+  // 3D Canvas Container
+  const container = document.getElementById('game-canvas') || document.getElementById('canvas-container');
+  if (!container) {
+    console.error('Canvas container not found!');
+    return;
+  }
   const game = new FaltalityGame(container);
 
   // UI Element References
@@ -38,8 +43,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const aimToggleBtn = document.getElementById('aim-toggle-btn')!;
   const newSheetBtn = document.getElementById('new-sheet-btn')!;
-  const soundToggleBtn = document.getElementById('sound-toggle-btn')!;
-  const keymapBtn = document.getElementById('keymap-btn')!;
+  const soundBtn = document.getElementById('sound-btn');
+  const keymapBtn = document.getElementById('keymap-btn');
 
   const faltalityBanner = document.getElementById('faltality-banner')!;
   const faltalitySubtitle = document.getElementById('faltality-subtitle')!;
@@ -47,11 +52,12 @@ window.addEventListener('DOMContentLoaded', () => {
   let bannerTimeout: number | null = null;
 
   // Key Map Modal Elements
-  const keymapModal = document.getElementById('keymap-modal')!;
-  const keymapClose = document.getElementById('keymap-close')!;
-  const keymapOkBtn = document.getElementById('keymap-ok-btn')!;
+  const keymapModal = document.getElementById('keymap-modal');
+  const keymapCloseBtn = document.getElementById('keymap-close-btn');
+  const keymapOkBtn = document.getElementById('keymap-ok-btn');
 
   const toggleKeymap = (show?: boolean) => {
+    if (!keymapModal) return;
     const isVisible = !keymapModal.classList.contains('hidden');
     const shouldShow = show !== undefined ? show : !isVisible;
     if (shouldShow) {
@@ -61,9 +67,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  keymapBtn.addEventListener('click', () => toggleKeymap());
-  keymapClose.addEventListener('click', () => toggleKeymap(false));
-  keymapOkBtn.addEventListener('click', () => toggleKeymap(false));
+  if (keymapBtn) keymapBtn.addEventListener('click', () => toggleKeymap());
+  if (keymapCloseBtn) keymapCloseBtn.addEventListener('click', () => toggleKeymap(false));
+  if (keymapOkBtn) keymapOkBtn.addEventListener('click', () => toggleKeymap(false));
 
   // Toggle Auto-Aim
   const toggleAim = () => {
@@ -225,14 +231,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  soundToggleBtn.addEventListener('click', () => {
-    const isMuted = soundToggleBtn.textContent?.includes('MUTED');
-    if (isMuted) {
-      soundToggleBtn.textContent = '🔊 AUDIO';
-    } else {
-      soundToggleBtn.textContent = '🔇 MUTED';
-    }
-  });
+  if (soundBtn) {
+    soundBtn.addEventListener('click', () => {
+      const isMuted = soundBtn.textContent?.includes('🔇');
+      if (isMuted) {
+        soundBtn.textContent = '🔊';
+      } else {
+        soundBtn.textContent = '🔇';
+      }
+    });
+  }
 
   // Slider Listeners
   pitchSlider.addEventListener('input', () => {
