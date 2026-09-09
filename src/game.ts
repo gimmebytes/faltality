@@ -307,12 +307,16 @@ export class FaltalityGame {
     this.phase = 'aiming';
 
     const stats = this.paper.getStats();
-    // Auto-acquire satellite if high fold stage!
+    // Only spawn and auto-acquire satellite if high fold stage (11+)!
     if (stats.folds >= 11) {
-      const satellite = this.birdManager.birds.find(b => b.alive && b.type === 'satellite');
-      if (satellite) {
-        this.targetedBird = satellite;
-        this.aimAtTarget(satellite);
+      const satellite = this.birdManager.ensureSatelliteSpawned();
+      this.targetedBird = satellite;
+      this.aimAtTarget(satellite);
+    } else {
+      // Ensure satellite is NOT present if folds < 11
+      this.birdManager.despawnSatellite();
+      if (this.targetedBird?.type === 'satellite') {
+        this.targetedBird = null;
       }
     }
 
@@ -352,8 +356,27 @@ export class FaltalityGame {
     sound.playPianoNote(this.paper.folds);
 
     this.paper.fold(() => {
+      const folds = this.paper.folds;
+      // Satellite triggers exclusively at 11+ folds!
+      if (folds >= 11) {
+        this.birdManager.ensureSatelliteSpawned();
+        if (folds === 11) {
+          sound.playMacStartupChime(); // Majestic orbit insertion chime!
+        }
+      } else {
+        this.birdManager.despawnSatellite();
+      }
       if (this.onStatsChanged) this.onStatsChanged();
     });
+  }
+
+  public resetNewSheet() {
+    this.state.paperCount++;
+    this.paper.resetNewSheet();
+    this.birdManager.despawnSatellite();
+    this.targetedBird = null;
+    this.enterFoldingMode();
+    if (this.onStatsChanged) this.onStatsChanged();
   }
 
   public launchPaper() {
@@ -420,6 +443,8 @@ export class FaltalityGame {
     setTimeout(() => {
       this.state.paperCount++;
       this.paper.resetNewSheet();
+      this.birdManager.despawnSatellite();
+      this.targetedBird = null;
       this.phase = 'folding';
       this.paper.trajectoryLine.visible = false;
       this.isResettingCam = false;
@@ -471,16 +496,22 @@ export class FaltalityGame {
 
     const stats = this.paper.getStats();
 
+    // If folds < 11, satellite cannot be locked!
+    if (stats.folds < 11 && this.targetedBird?.type === 'satellite') {
+      this.targetedBird = null;
+    }
+
     // Only pick a new target if we don't have one or if the current one died
     if (!this.targetedBird || !this.targetedBird.alive) {
       const reachableBirds = this.birdManager.birds.filter((b: BirdData) => {
         if (!b.alive) return false;
+        if (b.type === 'satellite' && stats.folds < 11) return false;
         return b.baseAltitude <= stats.maxAltitudeM * 1.25;
       });
 
       if (reachableBirds.length > 0) {
         const satellite = reachableBirds.find(b => b.type === 'satellite');
-        if (satellite && (stats.folds >= 11 || this.pitchDeg >= 48)) {
+        if (satellite && stats.folds >= 11) {
           this.targetedBird = satellite;
         } else if (stats.folds >= 9 && stats.folds <= 10) {
           const plane = reachableBirds.find(b => b.type === 'airplane');

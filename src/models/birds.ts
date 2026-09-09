@@ -55,8 +55,25 @@ export class BirdManager {
     this.spawnBird('airplane', 18.5, -15, -19);
     this.spawnBird('airplane', 24.0, 20, -22);
 
-    // 6. TIM COOK KEYNOTE SATELLITE: Placed center stage in upper sky arc, huge & impossible to miss!
-    this.spawnBird('satellite', 22.5, 0, -14.5);
+    // NOTE: Tim Cook Satellite is NOT spawned by default!
+    // It is an exclusive Endgame easter egg that only enters orbit once the player reaches 11+ folds!
+  }
+
+  // Dynamically launch the Keynote Satellite into orbit when 11+ folds reached!
+  public ensureSatelliteSpawned(): BirdData {
+    const existing = this.birds.find(b => b.type === 'satellite' && b.alive);
+    if (existing) return existing;
+    return this.spawnBird('satellite', 22.5, 0, -14.5);
+  }
+
+  // Remove the satellite when player resets paper back to 0 folds
+  public despawnSatellite() {
+    for (let i = this.birds.length - 1; i >= 0; i--) {
+      if (this.birds[i].type === 'satellite') {
+        this.scene.remove(this.birds[i].mesh);
+        this.birds.splice(i, 1);
+      }
+    }
   }
 
   public spawnBird(type: BirdType, altitude: number, startX?: number, startZ?: number): BirdData {
@@ -896,13 +913,15 @@ export class BirdManager {
           bird.parachuteMesh.scale.set(s, s, s);
         }
 
-        // Quick reliable respawn after hit!
+        // Quick reliable respawn after hit! (Satellites do not auto-respawn if not 11+ folds)
         if (bird.mesh.position.y <= 1.5) {
           this.scene.remove(bird.mesh);
           this.birds.splice(i, 1);
-          setTimeout(() => {
-            this.spawnBird(bird.type, bird.baseAltitude, 0, -14.5);
-          }, 2000);
+          if (bird.type !== 'satellite') {
+            setTimeout(() => {
+              this.spawnBird(bird.type, bird.baseAltitude, 0, -14.5);
+            }, 2000);
+          }
         }
       }
     }

@@ -266,13 +266,13 @@ window.addEventListener('DOMContentLoaded', () => {
       escalationIcon.textContent = '✈️';
       escalationStatus.textContent = 'NEU: AIRLINER-JAGD BEREIT!';
       escalationNow.innerHTML = '<strong>Stratosphären-Punch</strong>: Kann Passagierflugzeug FL-404 treffen (Koffer-Regen)!';
-      escalationNext.innerHTML = '⏩ <em>Ab Faltung 11+:</em> 🛰️ <strong>Tim Cook Keynote-Satellit im Orbit</strong> abschießen!';
+      escalationNext.innerHTML = '⏩ <em>Ab Faltung 11+:</em> 🛰️ <strong>Tim Cook Keynote-Satellit erscheint im Orbit!</strong>';
     } else {
       escalationCard.classList.add('singularity-stage');
       escalationIcon.textContent = '🛰️';
-      escalationStatus.textContent = 'ORBIT-DURCHBRUCH: TIM COOK SATELLIT!';
-      escalationNow.innerHTML = '<strong>Exosphäre erreicht</strong>: Schieße Tim Cooks geheimen Keynote-Satelliten im All ab!';
-      escalationNext.innerHTML = '⏩ <em>Belohnung:</em> Mac-Startup-Chime & fliegende AirPods und Polishing Cloths!';
+      escalationStatus.textContent = 'ORBIT ERREICHT: TIM COOK SATELLIT AKTIV!';
+      escalationNow.innerHTML = '<strong>Exosphäre erreicht</strong>: Tim Cooks geheimer Keynote-Satellit kreist im Orbit!';
+      escalationNext.innerHTML = '🎯 <em>Abschuss:</em> Drücke [T] zum Anvisieren & ernte fliegende AirPods, iPhones & Poliertücher!';
     }
 
     pitchSlider.value = Math.round(game.pitchDeg).toString();
@@ -392,9 +392,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   newSheetBtn.addEventListener('click', () => {
     if (game.phase !== 'flying') {
-      game.state.paperCount++;
-      game.paper.resetNewSheet();
-      game.enterFoldingMode();
+      game.resetNewSheet();
       updateUI();
     }
   });
@@ -464,9 +462,7 @@ window.addEventListener('DOMContentLoaded', () => {
     } else if (e.code === 'KeyR') {
       e.preventDefault();
       if (game.phase !== 'flying') {
-        game.state.paperCount++;
-        game.paper.resetNewSheet();
-        game.enterFoldingMode();
+        game.resetNewSheet();
         updateUI();
       }
     } else if (e.code === 'KeyA') {
