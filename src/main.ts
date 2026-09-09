@@ -1,17 +1,18 @@
+import './style.css';
 import { FaltalityGame } from './game';
-import { sound } from './sound';
 import type { BirdData } from './models/birds';
 
 window.addEventListener('DOMContentLoaded', () => {
-  const container = document.getElementById('game-canvas')!;
+  const container = document.getElementById('canvas-container')!;
   const game = new FaltalityGame(container);
 
-  // UI DOM Elements
+  // UI Element References
   const scoreVal = document.getElementById('score-val')!;
   const birdsHitVal = document.getElementById('birds-hit-val')!;
   const comboVal = document.getElementById('combo-val')!;
   const sheetNum = document.getElementById('sheet-num')!;
-  const modeBadge = document.getElementById('mode-badge')!;
+  const skyBirdsInfo = document.getElementById('sky-birds-info')!;
+
   const foldName = document.getElementById('fold-name')!;
   const thicknessVal = document.getElementById('thickness-val')!;
   const foldProgress = document.getElementById('fold-progress')!;
@@ -27,46 +28,41 @@ window.addEventListener('DOMContentLoaded', () => {
   const actionBtnIcon = document.getElementById('action-btn-icon')!;
   const actionMainText = document.getElementById('action-main-text')!;
   const actionSubtext = document.getElementById('action-subtext')!;
+  const modeBadge = document.getElementById('mode-badge')!;
 
-  const newSheetBtn = document.getElementById('new-sheet-btn')!;
-  const soundBtn = document.getElementById('sound-btn')!;
-  const helpBtn = document.getElementById('help-btn')!;
-  const helpModal = document.getElementById('help-modal')!;
-  const modalCloseBtn = document.getElementById('modal-close-btn')!;
-  const modalStartBtn = document.getElementById('modal-start-btn')!;
-
-  const keymapBtn = document.getElementById('keymap-btn')!;
-  const keymapModal = document.getElementById('keymap-modal')!;
-  const keymapCloseBtn = document.getElementById('keymap-close-btn')!;
-  const keymapOkBtn = document.getElementById('keymap-ok-btn')!;
-
-  const skyBirdsInfo = document.getElementById('sky-birds-info')!;
-  const aimToggleBtn = document.getElementById('aim-toggle-btn')!;
   const aimSliders = document.getElementById('aim-sliders')!;
   const pitchSlider = document.getElementById('pitch-slider') as HTMLInputElement;
   const pitchVal = document.getElementById('pitch-val')!;
   const powerSlider = document.getElementById('power-slider') as HTMLInputElement;
   const powerVal = document.getElementById('power-val')!;
 
-  // Faltality Banner
+  const aimToggleBtn = document.getElementById('aim-toggle-btn')!;
+  const newSheetBtn = document.getElementById('new-sheet-btn')!;
+  const soundToggleBtn = document.getElementById('sound-toggle-btn')!;
+  const keymapBtn = document.getElementById('keymap-btn')!;
+
   const faltalityBanner = document.getElementById('faltality-banner')!;
   const faltalitySubtitle = document.getElementById('faltality-subtitle')!;
   const faltalityPoints = document.getElementById('faltality-points')!;
-
   let bannerTimeout: number | null = null;
 
-  // Toggle Keymap Modal
-  const toggleKeymap = (force?: boolean) => {
-    if (force !== undefined) {
-      if (force) keymapModal.classList.remove('hidden');
-      else keymapModal.classList.add('hidden');
+  // Key Map Modal Elements
+  const keymapModal = document.getElementById('keymap-modal')!;
+  const keymapClose = document.getElementById('keymap-close')!;
+  const keymapOkBtn = document.getElementById('keymap-ok-btn')!;
+
+  const toggleKeymap = (show?: boolean) => {
+    const isVisible = !keymapModal.classList.contains('hidden');
+    const shouldShow = show !== undefined ? show : !isVisible;
+    if (shouldShow) {
+      keymapModal.classList.remove('hidden');
     } else {
-      keymapModal.classList.toggle('hidden');
+      keymapModal.classList.add('hidden');
     }
   };
 
   keymapBtn.addEventListener('click', () => toggleKeymap());
-  keymapCloseBtn.addEventListener('click', () => toggleKeymap(false));
+  keymapClose.addEventListener('click', () => toggleKeymap(false));
   keymapOkBtn.addEventListener('click', () => toggleKeymap(false));
 
   // Toggle Auto-Aim
@@ -92,13 +88,14 @@ window.addEventListener('DOMContentLoaded', () => {
     comboVal.textContent = `x${game.state.currentCombo}`;
     sheetNum.textContent = game.state.paperCount.toString();
 
-    // Sky birds count
+    // Sky birds & aircraft count
     const livingBirds = game.birdManager.birds.filter((b: BirdData) => b.alive);
     const geese = livingBirds.filter((b: BirdData) => b.type === 'goose').length;
     const pigeons = livingBirds.filter((b: BirdData) => b.type === 'pigeon').length;
     const seagulls = livingBirds.filter((b: BirdData) => b.type === 'seagull').length;
     const drones = livingBirds.filter((b: BirdData) => b.type === 'drone').length;
-    skyBirdsInfo.textContent = `${geese} Gänse, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Drohne' : ''}`;
+    const airliners = livingBirds.filter((b: BirdData) => b.type === 'airplane').length;
+    skyBirdsInfo.textContent = `${geese} Kraniche, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? ', ✈️ 1 Airliner' : ''}`;
 
     foldName.textContent = stats.foldName;
     thicknessVal.textContent = stats.thicknessMm >= 1000 
@@ -170,14 +167,32 @@ window.addEventListener('DOMContentLoaded', () => {
   game.onFaltality = (bird: BirdData, folds: number, scoreAward: number) => {
     updateUI();
 
-    faltalitySubtitle.textContent = `${bird.title} mit ${folds} Faltungen erwischt!`;
-    faltalityPoints.textContent = `+${scoreAward} PUNKTE!`;
+    if (bird.type === 'airplane') {
+      faltalitySubtitle.textContent = '🚨 FLUGVERSPÄTUNG DES TODES! Koffer & Duty-Free regnen herab!';
+      faltalityPoints.textContent = `✈️ +${scoreAward.toLocaleString()} PUNKTE!`;
+    } else {
+      faltalitySubtitle.textContent = `${bird.title} mit ${folds} Faltungen erwischt!`;
+      faltalityPoints.textContent = `+${scoreAward.toLocaleString()} PUNKTE!`;
+    }
+
     faltalityBanner.classList.remove('hidden');
 
     if (bannerTimeout) clearTimeout(bannerTimeout);
     bannerTimeout = window.setTimeout(() => {
       faltalityBanner.classList.add('hidden');
-    }, 2400);
+    }, 2800);
+  };
+
+  game.onOverkillCrater = (folds: number) => {
+    updateUI();
+    faltalitySubtitle.textContent = `💥 BUMM! Gartenzaun des Nachbarn vaporisiert! Autoalarm heult!`;
+    faltalityPoints.textContent = `OVERKILL MIT ${folds} FALTUNGEN!`;
+    faltalityBanner.classList.remove('hidden');
+
+    if (bannerTimeout) clearTimeout(bannerTimeout);
+    bannerTimeout = window.setTimeout(() => {
+      faltalityBanner.classList.add('hidden');
+    }, 3000);
   };
 
   game.onFlightEnd = () => {
@@ -210,76 +225,78 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  pitchSlider.addEventListener('input', (e) => {
-    game.pitchDeg = parseFloat((e.target as HTMLInputElement).value);
+  soundToggleBtn.addEventListener('click', () => {
+    const isMuted = soundToggleBtn.textContent?.includes('MUTED');
+    if (isMuted) {
+      soundToggleBtn.textContent = '🔊 AUDIO';
+    } else {
+      soundToggleBtn.textContent = '🔇 MUTED';
+    }
+  });
+
+  // Slider Listeners
+  pitchSlider.addEventListener('input', () => {
+    game.pitchDeg = parseFloat(pitchSlider.value);
     pitchVal.textContent = Math.round(game.pitchDeg).toString();
     game.paper.updateTrajectory(game.pitchDeg, game.yawDeg, game.powerPercent, game.targetedBird !== null);
   });
 
-  powerSlider.addEventListener('input', (e) => {
-    game.powerPercent = parseFloat((e.target as HTMLInputElement).value);
+  powerSlider.addEventListener('input', () => {
+    game.powerPercent = parseFloat(powerSlider.value);
     powerVal.textContent = Math.round(game.powerPercent).toString();
     game.paper.updateTrajectory(game.pitchDeg, game.yawDeg, game.powerPercent, game.targetedBird !== null);
   });
 
-  soundBtn.addEventListener('click', () => {
-    sound.enabled = !sound.enabled;
-    soundBtn.textContent = sound.enabled ? '🔊' : '🔇';
-  });
-
-  helpBtn.addEventListener('click', () => {
-    helpModal.classList.remove('hidden');
-  });
-  modalCloseBtn.addEventListener('click', () => {
-    helpModal.classList.add('hidden');
-  });
-  modalStartBtn.addEventListener('click', () => {
-    helpModal.classList.add('hidden');
-  });
-
-  // Track Arrow keys down / up for smooth continuous camera aiming
-  window.addEventListener('keydown', (e) => {
-    game.keysPressed[e.key] = true;
-
-    // Prevent default scroll on arrow keys & space
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+  // Keyboard Shortcuts:
+  window.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
       e.preventDefault();
+      game.keysPressed[e.code] = true;
+      return;
     }
 
-    if (e.repeat) return;
-    const key = e.key.toLowerCase();
+    if (e.code === 'KeyK') {
+      toggleKeymap();
+      return;
+    }
 
-    if (key === 'f') {
-      if (game.phase === 'aiming') {
-        game.enterFoldingMode();
-      } else {
-        game.foldPaper();
-      }
-    } else if (key === ' ' || key === 'spacebar') {
+    if (e.code === 'Escape') {
+      toggleKeymap(false);
+      return;
+    }
+
+    if (e.code === 'Space') {
+      e.preventDefault();
       if (game.phase === 'folding') {
         game.enterAimingMode();
       } else if (game.phase === 'aiming') {
         game.launchPaper();
       }
-    } else if (key === 'k') {
-      toggleKeymap();
-    } else if (key === 'a') {
-      toggleAim();
-    } else if (key === 'r') {
+    } else if (e.code === 'KeyF') {
+      e.preventDefault();
+      if (game.phase === 'aiming') {
+        game.enterFoldingMode();
+      } else {
+        game.foldPaper();
+      }
+    } else if (e.code === 'KeyR') {
+      e.preventDefault();
       if (game.phase !== 'flying') {
         game.state.paperCount++;
         game.paper.resetNewSheet();
         game.enterFoldingMode();
         updateUI();
       }
-    } else if (key === 'escape') {
-      helpModal.classList.add('hidden');
-      keymapModal.classList.add('hidden');
+    } else if (e.code === 'KeyA') {
+      e.preventDefault();
+      toggleAim();
     }
   });
 
-  window.addEventListener('keyup', (e) => {
-    game.keysPressed[e.key] = false;
+  window.addEventListener('keyup', (e: KeyboardEvent) => {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+      game.keysPressed[e.code] = false;
+    }
   });
 
   updateUI();

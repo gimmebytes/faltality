@@ -51,12 +51,13 @@ export class FaltalityGame {
   private targetCamLookAt = new THREE.Vector3();
 
   // Screen shake for punchy arcade feel
-  private screenShake: number = 0;
+  public screenShake: number = 0;
 
   // Slow-motion & game state
   private timeScale: number = 1.0;
   private slowMoTimer: number = 0;
   private isResettingCam: boolean = false;
+  private hitBirdThisFlight: boolean = false;
 
   public state: GameState = {
     score: 0,
@@ -71,6 +72,7 @@ export class FaltalityGame {
 
   public onStatsChanged?: () => void;
   public onFaltality?: (bird: BirdData, folds: number, scoreAward: number) => void;
+  public onOverkillCrater?: (folds: number) => void;
   public onFlightEnd?: () => void;
   public onPhaseChange?: (phase: GamePhase) => void;
 
@@ -248,6 +250,11 @@ export class FaltalityGame {
 
     sound.playPianoNote(this.paper.folds);
 
+    // Overfolding comic table shake!
+    if (this.paper.folds >= 7) {
+      this.screenShake = 0.25;
+    }
+
     this.paper.fold(() => {
       if (this.onStatsChanged) this.onStatsChanged();
     });
@@ -262,7 +269,8 @@ export class FaltalityGame {
     }
 
     this.phase = 'flying';
-    this.screenShake = 0.15; // Crisp shooter kick!
+    this.hitBirdThisFlight = false;
+    this.screenShake = 0.15;
     this.lockOnReticle.visible = false;
     this.paper.launch(this.pitchDeg, this.yawDeg, this.powerPercent);
     if (this.onPhaseChange) this.onPhaseChange(this.phase);
@@ -270,9 +278,10 @@ export class FaltalityGame {
   }
 
   private triggerFaltality(bird: BirdData) {
+    this.hitBirdThisFlight = true;
     this.timeScale = 0.25;
     this.slowMoTimer = 1.2;
-    this.screenShake = 0.45; // Satisfying hit impact!
+    this.screenShake = bird.type === 'airplane' ? 0.75 : 0.45;
 
     const foldBonusMultiplier = 1 + this.paper.folds * 0.5;
     const pointsAwarded = Math.round(bird.scoreValue * foldBonusMultiplier);
@@ -286,8 +295,8 @@ export class FaltalityGame {
 
     sound.playFaltality();
     confetti({
-      particleCount: 80,
-      spread: 75,
+      particleCount: bird.type === 'airplane' ? 140 : 80,
+      spread: bird.type === 'airplane' ? 100 : 75,
       origin: { y: 0.6 },
       colors: ['#ff3b30', '#ffd700', '#4cd964', '#5ac8fa', '#5856d6']
     });
@@ -301,9 +310,18 @@ export class FaltalityGame {
     if (this.isResettingCam) return;
     this.isResettingCam = true;
 
+    // Overkill Ground Impact check: if projectile had 5+ folds and hit the lawn!
+    if (!this.hitBirdThisFlight && this.paper.folds >= 5 && this.paper.mesh.position.y <= 0.3) {
+      sound.playGroundImpact();
+      sound.playCarAlarm();
+      this.screenShake = 0.7;
+      if (this.onOverkillCrater) {
+        this.onOverkillCrater(this.paper.folds);
+      }
+    }
+
     if (this.onFlightEnd) this.onFlightEnd();
 
-    // Fast and snappy Moorhuhn reset!
     setTimeout(() => {
       this.state.paperCount++;
       this.paper.resetNewSheet();
@@ -312,7 +330,7 @@ export class FaltalityGame {
       this.isResettingCam = false;
       if (this.onPhaseChange) this.onPhaseChange(this.phase);
       if (this.onStatsChanged) this.onStatsChanged();
-    }, 550);
+    }, 600);
   }
 
   private onWindowResize() {
@@ -443,7 +461,7 @@ export class FaltalityGame {
       const paperPos = this.paper.mesh.position;
       const stats = this.paper.getStats();
       const paperRadius = Math.max(stats.width, stats.length) * 0.5;
-      const hitTolerance = this.autoAim ? 1.8 : 0.9;
+      const hitTolerance = this.autoAim ? 2.0 : 1.0;
 
       for (const bird of this.birdManager.birds) {
         if (!bird.alive) continue;
@@ -461,7 +479,7 @@ export class FaltalityGame {
         this.handleFlightFinished();
       }
 
-      // MOORHUHN STYLE: Keep PoV completely stable during flight!
+      // MOORHUHN STYLE: Stationary PoV
       this.targetCamPos.copy(this.aimCamPos);
       this.targetCamLookAt.set(
         -Math.sin(THREE.MathUtils.degToRad(this.yawDeg)) * 14,
@@ -469,7 +487,6 @@ export class FaltalityGame {
         -15.0
       );
     } else if (this.phase === 'aiming') {
-      // Aiming Cam: Stationary look into the sky
       this.targetCamPos.copy(this.aimCamPos);
       this.targetCamLookAt.set(
         -Math.sin(THREE.MathUtils.degToRad(this.yawDeg)) * 14,
@@ -477,7 +494,6 @@ export class FaltalityGame {
         -15.0
       );
     } else {
-      // Folding Cam: Cozy table view
       this.targetCamPos.copy(this.foldCamPos);
       this.targetCamLookAt.copy(this.foldCamTarget);
     }
