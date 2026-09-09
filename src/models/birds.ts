@@ -10,8 +10,8 @@ export interface BirdData {
   speed: number;
   wingAngle: number;
   wingSpeed: number;
-  leftWing: THREE.Mesh;
-  rightWing: THREE.Mesh;
+  leftWing: THREE.Object3D;
+  rightWing: THREE.Object3D;
   head: THREE.Object3D;
   radius: number;
   alive: boolean;
@@ -24,7 +24,7 @@ export interface BirdData {
 export class BirdManager {
   public birds: BirdData[] = [];
   private scene: THREE.Scene;
-  private featherParticles: THREE.Points[] = [];
+  private paperShreds: THREE.Group[] = [];
   private chirpTimer: number = 2.0;
 
   constructor(scene: THREE.Scene) {
@@ -33,47 +33,47 @@ export class BirdManager {
 
   // Spawn initial flocks clearly visible across the garden sky!
   public initFlocks() {
-    // 1. Pigeons flying low and close (3.5m - 6.5m altitude, Z between -8 and -16)
+    // 1. Origami Pigeons flying low and close (3.5m - 6.5m altitude, Z between -8 and -16)
     this.spawnBird('pigeon', 4.0, -10, -10);
     this.spawnBird('pigeon', 5.5, 12, -14);
     this.spawnBird('pigeon', 6.2, -22, -12);
 
-    // 2. Geese flying medium height right over the lawn (8m - 14m altitude, Z between -12 and -22)
+    // 2. Origami Cranes flying medium height right over the lawn (8m - 14m altitude, Z between -12 and -22)
     this.spawnBird('goose', 9.0, 0, -16);
     this.spawnBird('goose', 12.5, -18, -20);
     this.spawnBird('goose', 14.0, 24, -18);
 
-    // 3. Seagulls in higher air (17m - 26m altitude, Z between -15 and -26)
+    // 3. Origami Seagulls in higher air (17m - 26m altitude, Z between -15 and -26)
     this.spawnBird('seagull', 19.0, -15, -22);
     this.spawnBird('seagull', 24.0, 18, -25);
 
-    // 4. Apple iFold Drone humming at top altitude (32m - 40m altitude)
+    // 4. Origami Stealth Flieger humming at top altitude (32m - 40m altitude)
     this.spawnBird('drone', 34.0, 5, -22);
   }
 
   public spawnBird(type: BirdType, altitude: number, startX?: number, startZ?: number): BirdData {
     const group = new THREE.Group();
-    let leftWing: THREE.Mesh;
-    let rightWing: THREE.Mesh;
+    let leftWing: THREE.Object3D;
+    let rightWing: THREE.Object3D;
     let head: THREE.Object3D;
     let radius = 1.4;
     let speed = 4.5;
     let scoreValue = 100;
-    let title = 'Taube';
+    let title = 'Origami-Taube';
 
     if (type === 'goose') {
-      const parts = this.createGooseMesh();
+      const parts = this.createOrigamiCrane();
       group.add(parts.bodyGroup);
       leftWing = parts.leftWing;
       rightWing = parts.rightWing;
       head = parts.head;
-      group.scale.set(1.7, 1.7, 1.7);
+      group.scale.set(1.9, 1.9, 1.9);
       radius = 1.8;
       speed = 6.0 + Math.random() * 2.0;
       scoreValue = 250;
-      title = 'Freche Garten-Gans';
+      title = 'Japanischer Origami-Kranich';
     } else if (type === 'pigeon') {
-      const parts = this.createPigeonMesh();
+      const parts = this.createOrigamiPigeon();
       group.add(parts.bodyGroup);
       leftWing = parts.leftWing;
       rightWing = parts.rightWing;
@@ -82,9 +82,9 @@ export class BirdManager {
       radius = 1.3;
       speed = 4.5 + Math.random() * 1.5;
       scoreValue = 100;
-      title = 'Stadttaube';
+      title = 'Origami-Stadttaube';
     } else if (type === 'seagull') {
-      const parts = this.createSeagullMesh();
+      const parts = this.createOrigamiSeagull();
       group.add(parts.bodyGroup);
       leftWing = parts.leftWing;
       rightWing = parts.rightWing;
@@ -93,26 +93,26 @@ export class BirdManager {
       radius = 1.8;
       speed = 7.5 + Math.random() * 2.5;
       scoreValue = 400;
-      title = 'Küstenseemöwe';
+      title = 'Origami-Küstenseemöwe';
     } else {
-      // Drone
-      const parts = this.createDroneMesh();
+      // High-End Origami Drone / Stealth Dart
+      const parts = this.createOrigamiStealthDart();
       group.add(parts.bodyGroup);
       leftWing = parts.leftWing;
       rightWing = parts.rightWing;
       head = parts.head;
-      group.scale.set(2.0, 2.0, 2.0);
+      group.scale.set(2.2, 2.2, 2.2);
       radius = 2.2;
-      speed = 9.0;
+      speed = 9.5;
       scoreValue = 1000;
-      title = 'iFold Apple Delivery Drone';
+      title = 'iFold Origami Stealth Dart';
     }
 
     const x = startX !== undefined ? startX : (Math.random() > 0.5 ? -55 : 55);
     const z = startZ !== undefined ? startZ : (-10 - Math.random() * 15);
     group.position.set(x, altitude, z);
 
-    // Direction: flying towards opposite side with beak pointing forward!
+    // Direction: flying towards opposite side with beak pointing forward (+Z rotated to flight vector)
     const dir = (startX !== undefined ? (Math.random() > 0.5 ? 1 : -1) : (x < 0 ? 1 : -1));
     group.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
 
@@ -124,7 +124,7 @@ export class BirdManager {
       baseAltitude: altitude,
       speed: speed * dir,
       wingAngle: Math.random() * Math.PI,
-      wingSpeed: type === 'drone' ? 25 : (type === 'pigeon' ? 14 : 9),
+      wingSpeed: type === 'drone' ? 18 : (type === 'pigeon' ? 12 : 8),
       leftWing,
       rightWing,
       head,
@@ -139,295 +139,472 @@ export class BirdManager {
     return bird;
   }
 
-  // Create an Untitled Goose Game style Goose
-  private createGooseMesh() {
-    const bodyGroup = new THREE.Group();
-    const whiteMat = new THREE.MeshLambertMaterial({ color: 0xfcfdfd, flatShading: true });
-    const orangeMat = new THREE.MeshLambertMaterial({ color: 0xff7700, flatShading: true });
-    const blackMat = new THREE.MeshLambertMaterial({ color: 0x222222, flatShading: true });
+  // Helper: Create folded custom triangular buffer geometry
+  private createFoldedFacetGeo(vertices: number[][], indices: number[][]): THREE.BufferGeometry {
+    const geo = new THREE.BufferGeometry();
+    const posList: number[] = [];
 
-    // Body
-    const bodyGeo = new THREE.SphereGeometry(0.7, 8, 6);
-    bodyGeo.scale(1.4, 0.75, 0.9);
-    const body = new THREE.Mesh(bodyGeo, whiteMat);
-    bodyGroup.add(body);
-
-    // Neck and Head
-    const headGroup = new THREE.Group();
-    const neckGeo = new THREE.CylinderGeometry(0.18, 0.28, 0.9, 7);
-    neckGeo.rotateX(0.4);
-    neckGeo.translate(0, 0.45, 0.35);
-    const neck = new THREE.Mesh(neckGeo, whiteMat);
-    headGroup.add(neck);
-
-    const headGeo = new THREE.SphereGeometry(0.28, 7, 6);
-    headGeo.scale(1.1, 0.9, 1.2);
-    headGeo.translate(0, 0.85, 0.65);
-    const head = new THREE.Mesh(headGeo, whiteMat);
-    headGroup.add(head);
-
-    // Beak
-    const beakGeo = new THREE.ConeGeometry(0.14, 0.5, 6);
-    beakGeo.rotateX(Math.PI / 2);
-    beakGeo.translate(0, 0.82, 1.0);
-    const beak = new THREE.Mesh(beakGeo, orangeMat);
-    headGroup.add(beak);
-
-    // Eyes
-    const eyeGeo = new THREE.SphereGeometry(0.04, 4, 4);
-    const eyeL = new THREE.Mesh(eyeGeo, blackMat);
-    eyeL.position.set(0.16, 0.9, 0.7);
-    const eyeR = new THREE.Mesh(eyeGeo, blackMat);
-    eyeR.position.set(-0.16, 0.9, 0.7);
-    headGroup.add(eyeL, eyeR);
-
-    bodyGroup.add(headGroup);
-
-    // Wings
-    const wingGeo = new THREE.BoxGeometry(1.2, 0.08, 0.6);
-    wingGeo.translate(0.6, 0, 0);
-    const leftWing = new THREE.Mesh(wingGeo, whiteMat);
-    leftWing.position.set(0.35, 0.1, 0.1);
-    leftWing.rotation.y = 0.2;
-
-    const rightWingGeo = new THREE.BoxGeometry(1.2, 0.08, 0.6);
-    rightWingGeo.translate(-0.6, 0, 0);
-    const rightWing = new THREE.Mesh(rightWingGeo, whiteMat);
-    rightWing.position.set(-0.35, 0.1, 0.1);
-    rightWing.rotation.y = -0.2;
-
-    bodyGroup.add(leftWing, rightWing);
-
-    // Feet
-    const footGeo = new THREE.BoxGeometry(0.15, 0.08, 0.35);
-    const footL = new THREE.Mesh(footGeo, orangeMat);
-    footL.position.set(0.25, -0.4, -0.5);
-    footL.rotation.x = -0.3;
-    const footR = new THREE.Mesh(footGeo, orangeMat);
-    footR.position.set(-0.25, -0.4, -0.5);
-    footR.rotation.x = -0.3;
-    bodyGroup.add(footL, footR);
-
-    // Bell on ribbon around goose neck
-    const ribbonGeo = new THREE.TorusGeometry(0.24, 0.04, 5, 8);
-    ribbonGeo.rotateX(Math.PI / 2);
-    ribbonGeo.translate(0, 0.65, 0.48);
-    const ribbonMat = new THREE.MeshLambertMaterial({ color: 0xcc2222, flatShading: true });
-    const ribbon = new THREE.Mesh(ribbonGeo, ribbonMat);
-    const bellGeo = new THREE.SphereGeometry(0.08, 6, 6);
-    bellGeo.translate(0, 0.58, 0.7);
-    const bellMat = new THREE.MeshLambertMaterial({ color: 0xffd700, flatShading: true });
-    const bell = new THREE.Mesh(bellGeo, bellMat);
-    headGroup.add(ribbon, bell);
-
-    return { bodyGroup, leftWing, rightWing, head: headGroup };
-  }
-
-  // Create cute round Pigeon
-  private createPigeonMesh() {
-    const bodyGroup = new THREE.Group();
-    const greyMat = new THREE.MeshLambertMaterial({ color: 0x7c8c99, flatShading: true });
-    const darkGreyMat = new THREE.MeshLambertMaterial({ color: 0x48535c, flatShading: true });
-    const greenNeckMat = new THREE.MeshLambertMaterial({ color: 0x4a9375, flatShading: true });
-    const pinkMat = new THREE.MeshLambertMaterial({ color: 0xdf8484, flatShading: true });
-    const beakMat = new THREE.MeshLambertMaterial({ color: 0x222222, flatShading: true });
-
-    const bodyGeo = new THREE.SphereGeometry(0.45, 7, 6);
-    bodyGeo.scale(1.2, 0.85, 0.85);
-    const body = new THREE.Mesh(bodyGeo, greyMat);
-    bodyGroup.add(body);
-
-    const headGroup = new THREE.Group();
-    const neckGeo = new THREE.CylinderGeometry(0.16, 0.22, 0.45, 6);
-    neckGeo.rotateX(0.3);
-    neckGeo.translate(0, 0.25, 0.2);
-    const neck = new THREE.Mesh(neckGeo, greenNeckMat);
-    headGroup.add(neck);
-
-    const headGeo = new THREE.SphereGeometry(0.2, 6, 5);
-    headGeo.translate(0, 0.45, 0.3);
-    const head = new THREE.Mesh(headGeo, greyMat);
-    headGroup.add(head);
-
-    const beakGeo = new THREE.ConeGeometry(0.06, 0.2, 5);
-    beakGeo.rotateX(Math.PI / 2);
-    beakGeo.translate(0, 0.42, 0.52);
-    const beak = new THREE.Mesh(beakGeo, beakMat);
-    headGroup.add(beak);
-
-    bodyGroup.add(headGroup);
-
-    const wingGeo = new THREE.BoxGeometry(0.8, 0.05, 0.45);
-    wingGeo.translate(0.4, 0, 0);
-    const leftWing = new THREE.Mesh(wingGeo, darkGreyMat);
-    leftWing.position.set(0.2, 0.1, 0.0);
-
-    const rightWingGeo = new THREE.BoxGeometry(0.8, 0.05, 0.45);
-    rightWingGeo.translate(-0.4, 0, 0);
-    const rightWing = new THREE.Mesh(rightWingGeo, darkGreyMat);
-    rightWing.position.set(-0.2, 0.1, 0.0);
-
-    bodyGroup.add(leftWing, rightWing);
-
-    const footGeo = new THREE.BoxGeometry(0.08, 0.05, 0.2);
-    const footL = new THREE.Mesh(footGeo, pinkMat);
-    footL.position.set(0.12, -0.3, -0.2);
-    const footR = new THREE.Mesh(footGeo, pinkMat);
-    footR.position.set(-0.12, -0.3, -0.2);
-    bodyGroup.add(footL, footR);
-
-    return { bodyGroup, leftWing, rightWing, head: headGroup };
-  }
-
-  // Create Seagull
-  private createSeagullMesh() {
-    const bodyGroup = new THREE.Group();
-    const whiteMat = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true });
-    const wingMat = new THREE.MeshLambertMaterial({ color: 0x5a6572, flatShading: true });
-    const yellowMat = new THREE.MeshLambertMaterial({ color: 0xfcc203, flatShading: true });
-
-    const bodyGeo = new THREE.SphereGeometry(0.55, 7, 5);
-    bodyGeo.scale(1.5, 0.7, 0.7);
-    const body = new THREE.Mesh(bodyGeo, whiteMat);
-    bodyGroup.add(body);
-
-    const headGroup = new THREE.Group();
-    const headGeo = new THREE.SphereGeometry(0.24, 6, 5);
-    headGeo.translate(0, 0.35, 0.5);
-    const head = new THREE.Mesh(headGeo, whiteMat);
-    headGroup.add(head);
-
-    const beakGeo = new THREE.ConeGeometry(0.08, 0.45, 5);
-    beakGeo.rotateX(Math.PI / 2);
-    beakGeo.translate(0, 0.35, 0.85);
-    const beak = new THREE.Mesh(beakGeo, yellowMat);
-    headGroup.add(beak);
-
-    bodyGroup.add(headGroup);
-
-    const wingGeo = new THREE.BoxGeometry(1.6, 0.06, 0.4);
-    wingGeo.translate(0.8, 0, 0);
-    const leftWing = new THREE.Mesh(wingGeo, wingMat);
-    leftWing.position.set(0.25, 0.1, 0.0);
-
-    const rightWingGeo = new THREE.BoxGeometry(1.6, 0.06, 0.4);
-    rightWingGeo.translate(-0.8, 0, 0);
-    const rightWing = new THREE.Mesh(rightWingGeo, wingMat);
-    rightWing.position.set(-0.25, 0.1, 0.0);
-
-    bodyGroup.add(leftWing, rightWing);
-
-    return { bodyGroup, leftWing, rightWing, head: headGroup };
-  }
-
-  // Create High-Tech Apple "iFold Drone"
-  private createDroneMesh() {
-    const bodyGroup = new THREE.Group();
-    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f7, roughness: 0.2, metalness: 0.1, flatShading: true });
-    const titaniumMat = new THREE.MeshStandardMaterial({ color: 0x999999, metalness: 0.8, roughness: 0.2, flatShading: true });
-    const appleGlowMat = new THREE.MeshBasicMaterial({ color: 0x64b5f6 });
-
-    const bodyGeo = new THREE.CylinderGeometry(0.8, 0.9, 0.25, 12);
-    const body = new THREE.Mesh(bodyGeo, whiteMat);
-    bodyGroup.add(body);
-
-    const ringGeo = new THREE.TorusGeometry(0.3, 0.05, 8, 16);
-    ringGeo.rotateX(Math.PI / 2);
-    ringGeo.translate(0, 0.13, 0);
-    const ring = new THREE.Mesh(ringGeo, appleGlowMat);
-    bodyGroup.add(ring);
-
-    for (let i = 0; i < 4; i++) {
-      const armAngle = (i * Math.PI) / 2 + Math.PI / 4;
-      const armGeo = new THREE.BoxGeometry(0.12, 0.08, 0.9);
-      armGeo.translate(0, 0, 0.45);
-      armGeo.rotateY(armAngle);
-      const arm = new THREE.Mesh(armGeo, titaniumMat);
-      bodyGroup.add(arm);
-
-      const podGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.15, 8);
-      const px = Math.cos(armAngle - Math.PI / 2) * 0.9;
-      const pz = Math.sin(armAngle - Math.PI / 2) * 0.9;
-      podGeo.translate(px, 0.08, pz);
-      const pod = new THREE.Mesh(podGeo, titaniumMat);
-      bodyGroup.add(pod);
+    for (const tri of indices) {
+      for (const vi of tri) {
+        posList.push(vertices[vi][0], vertices[vi][1], vertices[vi][2]);
+      }
     }
 
-    const rotorGeo = new THREE.BoxGeometry(1.6, 0.02, 0.15);
-    const leftWing = new THREE.Mesh(rotorGeo, titaniumMat);
-    leftWing.position.set(0.65, 0.18, 0.65);
-
-    const rightWing = new THREE.Mesh(rotorGeo, titaniumMat);
-    rightWing.position.set(-0.65, 0.18, -0.65);
-
-    bodyGroup.add(leftWing, rightWing);
-
-    return { bodyGroup, leftWing, rightWing, head: ring };
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(posList, 3));
+    geo.computeVertexNormals();
+    return geo;
   }
 
-  // Spawn Low-Poly Feather Explosion Particle Effect
-  public spawnFeatherExplosion(pos: THREE.Vector3, birdType: BirdType) {
-    const featherCount = 35;
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(featherCount * 3);
-    const velocities: THREE.Vector3[] = [];
+  // 1. Japanese Origami Crane (Orizuru)
+  private createOrigamiCrane() {
+    const bodyGroup = new THREE.Group();
 
-    const featherColor = birdType === 'goose' ? 0xffffff :
-      birdType === 'pigeon' ? 0x7c8c99 :
-      birdType === 'seagull' ? 0xfffaea : 0x00bbff;
-
-    for (let i = 0; i < featherCount; i++) {
-      positions[i * 3] = pos.x;
-      positions[i * 3 + 1] = pos.y;
-      positions[i * 3 + 2] = pos.z;
-
-      velocities.push(
-        new THREE.Vector3(
-          (Math.random() - 0.5) * 12,
-          (Math.random() * 8) + 2,
-          (Math.random() - 0.5) * 12
-        )
-      );
-    }
-
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-
-    const material = new THREE.PointsMaterial({
-      color: featherColor,
-      size: 0.45,
-      transparent: true,
-      opacity: 0.95
+    const whiteWashi = new THREE.MeshLambertMaterial({
+      color: 0xfaf9f5,
+      flatShading: true,
+      side: THREE.DoubleSide
+    });
+    const redAccent = new THREE.MeshLambertMaterial({
+      color: 0xcc2222,
+      flatShading: true,
+      side: THREE.DoubleSide
+    });
+    const foldShadow = new THREE.MeshLambertMaterial({
+      color: 0xe8e5dc,
+      flatShading: true,
+      side: THREE.DoubleSide
     });
 
-    const points = new THREE.Points(geometry, material);
-    points.userData = { velocities, age: 0, maxAge: 2.5 };
-    this.scene.add(points);
-    this.featherParticles.push(points);
+    // Central diamond/pyramidal origami body (diamond facets)
+    // Points: 0:TopCenter, 1:BottomTip, 2:Front, 3:Back, 4:Right, 5:Left
+    const bodyVerts = [
+      [0, 0.45, 0],       // 0: top center
+      [0, -0.45, 0],      // 1: bottom center
+      [0, 0.05, 0.65],    // 2: front chest
+      [0, 0.05, -0.65],   // 3: back rump
+      [0.35, 0.1, 0],     // 4: right fold
+      [-0.35, 0.1, 0]     // 5: left fold
+    ];
+    const bodyIndices = [
+      // Top pyramid
+      [0, 2, 4], [0, 4, 3], [0, 3, 5], [0, 5, 2],
+      // Bottom pyramid
+      [1, 4, 2], [1, 3, 4], [1, 5, 3], [1, 2, 5]
+    ];
+    const bodyGeo = this.createFoldedFacetGeo(bodyVerts, bodyIndices);
+    const body = new THREE.Mesh(bodyGeo, whiteWashi);
+    bodyGroup.add(body);
+
+    // Neck & Head (Origami folded slender diamond pointing forward-up)
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, 0.05, 0.6);
+
+    const neckVerts = [
+      [0, 0, 0],            // 0: base
+      [0, 0.9, 0.55],       // 1: neck tip
+      [0.08, 0.35, 0.25],   // 2: right edge
+      [-0.08, 0.35, 0.25]   // 3: left edge
+    ];
+    const neckIndices = [
+      [0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]
+    ];
+    const neckGeo = this.createFoldedFacetGeo(neckVerts, neckIndices);
+    const neck = new THREE.Mesh(neckGeo, whiteWashi);
+    headGroup.add(neck);
+
+    // Folded Beak (folded down at neck tip with red crown)
+    const beakVerts = [
+      [0, 0.9, 0.55],
+      [0, 0.72, 0.85],
+      [0.06, 0.84, 0.65],
+      [-0.06, 0.84, 0.65]
+    ];
+    const beakIndices = [
+      [0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]
+    ];
+    const beakGeo = this.createFoldedFacetGeo(beakVerts, beakIndices);
+    const beak = new THREE.Mesh(beakGeo, redAccent);
+    headGroup.add(beak);
+
+    bodyGroup.add(headGroup);
+
+    // Tail (Origami folded slender triangle pointing back-up)
+    const tailVerts = [
+      [0, 0.05, -0.6],
+      [0, 0.75, -1.05],
+      [0.08, 0.35, -0.8],
+      [-0.08, 0.35, -0.8]
+    ];
+    const tailIndices = [
+      [0, 1, 2], [0, 3, 1], [0, 2, 3], [1, 3, 2]
+    ];
+    const tailGeo = this.createFoldedFacetGeo(tailVerts, tailIndices);
+    const tail = new THREE.Mesh(tailGeo, foldShadow);
+    bodyGroup.add(tail);
+
+    // Folded Wings (Swept geometric origami wings that hinge at the body crease)
+    // Left Wing
+    const leftWingGroup = new THREE.Group();
+    leftWingGroup.position.set(-0.3, 0.1, 0);
+
+    const lWingVerts = [
+      [0, 0, 0.4],          // 0: front inner
+      [0, 0, -0.4],         // 1: back inner
+      [-1.4, 0.35, 0.1],    // 2: main outer tip
+      [-0.8, 0.15, -0.3]    // 3: trailing edge crease
+    ];
+    const lWingIndices = [
+      [0, 2, 1], [1, 2, 3]
+    ];
+    const lWingGeo = this.createFoldedFacetGeo(lWingVerts, lWingIndices);
+    const lWingMesh = new THREE.Mesh(lWingGeo, whiteWashi);
+    leftWingGroup.add(lWingMesh);
+
+    // Right Wing
+    const rightWingGroup = new THREE.Group();
+    rightWingGroup.position.set(0.3, 0.1, 0);
+
+    const rWingVerts = [
+      [0, 0, 0.4],          // 0: front inner
+      [0, 0, -0.4],         // 1: back inner
+      [1.4, 0.35, 0.1],     // 2: main outer tip
+      [0.8, 0.15, -0.3]     // 3: trailing edge crease
+    ];
+    const rWingIndices = [
+      [0, 1, 2], [1, 3, 2]
+    ];
+    const rWingGeo = this.createFoldedFacetGeo(rWingVerts, rWingIndices);
+    const rWingMesh = new THREE.Mesh(rWingGeo, whiteWashi);
+    rightWingGroup.add(rWingMesh);
+
+    bodyGroup.add(leftWingGroup, rightWingGroup);
+
+    return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: headGroup };
   }
 
-  // Create cute parachute that opens when hit!
+  // 2. Origami Pigeon (Slate blue folded city pigeon)
+  private createOrigamiPigeon() {
+    const bodyGroup = new THREE.Group();
+
+    const slateWashi = new THREE.MeshLambertMaterial({
+      color: 0x758aa2,
+      flatShading: true,
+      side: THREE.DoubleSide
+    });
+    const darkWashi = new THREE.MeshLambertMaterial({
+      color: 0x4b6584,
+      flatShading: true,
+      side: THREE.DoubleSide
+    });
+    const pinkAccent = new THREE.MeshLambertMaterial({
+      color: 0xf78fb3,
+      flatShading: true,
+      side: THREE.DoubleSide
+    });
+
+    // Plump geometric folded body
+    const bodyVerts = [
+      [0, 0.35, 0.1],      // 0: top
+      [0, -0.35, 0.1],     // 1: bottom
+      [0, 0.0, 0.55],      // 2: chest
+      [0, 0.1, -0.55],     // 3: tail tip
+      [0.32, 0.05, 0],     // 4: right fold
+      [-0.32, 0.05, 0]     // 5: left fold
+    ];
+    const bodyIndices = [
+      [0, 2, 4], [0, 4, 3], [0, 3, 5], [0, 5, 2],
+      [1, 4, 2], [1, 3, 4], [1, 5, 3], [1, 2, 5]
+    ];
+    const bodyGeo = this.createFoldedFacetGeo(bodyVerts, bodyIndices);
+    const body = new THREE.Mesh(bodyGeo, slateWashi);
+    bodyGroup.add(body);
+
+    // Cute geometric folded head
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, 0.15, 0.45);
+
+    const headVerts = [
+      [0, 0, 0],
+      [0, 0.35, 0.25],
+      [0, 0.2, 0.45], // beak
+      [0.12, 0.15, 0.18],
+      [-0.12, 0.15, 0.18]
+    ];
+    const headIndices = [
+      [0, 3, 1], [0, 1, 4],
+      [1, 3, 2], [1, 2, 4],
+      [0, 4, 3]
+    ];
+    const headGeo = this.createFoldedFacetGeo(headVerts, headIndices);
+    const head = new THREE.Mesh(headGeo, pinkAccent);
+    headGroup.add(head);
+    bodyGroup.add(headGroup);
+
+    // Shorter, folded wings
+    const leftWingGroup = new THREE.Group();
+    leftWingGroup.position.set(-0.28, 0.05, 0);
+    const lWingVerts = [
+      [0, 0, 0.3],
+      [0, 0, -0.3],
+      [-1.0, 0.2, 0.0],
+      [-0.6, 0.05, -0.35]
+    ];
+    const lWingIndices = [[0, 2, 1], [1, 2, 3]];
+    const lWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(lWingVerts, lWingIndices), darkWashi);
+    leftWingGroup.add(lWingMesh);
+
+    const rightWingGroup = new THREE.Group();
+    rightWingGroup.position.set(0.28, 0.05, 0);
+    const rWingVerts = [
+      [0, 0, 0.3],
+      [0, 0, -0.3],
+      [1.0, 0.2, 0.0],
+      [0.6, 0.05, -0.35]
+    ];
+    const rWingIndices = [[0, 1, 2], [1, 3, 2]];
+    const rWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(rWingVerts, rWingIndices), darkWashi);
+    rightWingGroup.add(rWingMesh);
+
+    bodyGroup.add(leftWingGroup, rightWingGroup);
+
+    return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: headGroup };
+  }
+
+  // 3. Origami Seagull (Crisp white with sunny yellow facets)
+  private createOrigamiSeagull() {
+    const bodyGroup = new THREE.Group();
+
+    const whiteWashi = new THREE.MeshLambertMaterial({
+      color: 0xffffff,
+      flatShading: true,
+      side: THREE.DoubleSide
+    });
+    const yellowAccent = new THREE.MeshLambertMaterial({
+      color: 0xf6b93b,
+      flatShading: true,
+      side: THREE.DoubleSide
+    });
+    const greyCrease = new THREE.MeshLambertMaterial({
+      color: 0xd2dae2,
+      flatShading: true,
+      side: THREE.DoubleSide
+    });
+
+    // Sleek aerodynamic body
+    const bodyVerts = [
+      [0, 0.25, 0.2],
+      [0, -0.25, 0.2],
+      [0, 0.0, 0.8],     // beak tip
+      [0, 0.05, -0.7],   // tail tip
+      [0.26, 0.0, 0],
+      [-0.26, 0.0, 0]
+    ];
+    const bodyIndices = [
+      [0, 2, 4], [0, 4, 3], [0, 3, 5], [0, 5, 2],
+      [1, 4, 2], [1, 3, 4], [1, 5, 3], [1, 2, 5]
+    ];
+    const body = new THREE.Mesh(this.createFoldedFacetGeo(bodyVerts, bodyIndices), whiteWashi);
+    bodyGroup.add(body);
+
+    // Beak tip in bright yellow
+    const beakVerts = [
+      [0, 0.08, 0.55],
+      [0, -0.08, 0.55],
+      [0, 0.0, 0.85],
+      [0.08, 0.0, 0.6],
+      [-0.08, 0.0, 0.6]
+    ];
+    const beakIndices = [
+      [0, 3, 2], [0, 2, 4], [1, 2, 3], [1, 4, 2]
+    ];
+    const beak = new THREE.Mesh(this.createFoldedFacetGeo(beakVerts, beakIndices), yellowAccent);
+    bodyGroup.add(beak);
+
+    // Long, slender gliding wings
+    const leftWingGroup = new THREE.Group();
+    leftWingGroup.position.set(-0.25, 0.05, 0.1);
+    const lWingVerts = [
+      [0, 0, 0.35],
+      [0, 0, -0.3],
+      [-1.7, 0.4, 0.05],
+      [-1.0, 0.2, -0.25]
+    ];
+    const lWingIndices = [[0, 2, 1], [1, 2, 3]];
+    const lWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(lWingVerts, lWingIndices), greyCrease);
+    leftWingGroup.add(lWingMesh);
+
+    const rightWingGroup = new THREE.Group();
+    rightWingGroup.position.set(0.25, 0.05, 0.1);
+    const rWingVerts = [
+      [0, 0, 0.35],
+      [0, 0, -0.3],
+      [1.7, 0.4, 0.05],
+      [1.0, 0.2, -0.25]
+    ];
+    const rWingIndices = [[0, 1, 2], [1, 3, 2]];
+    const rWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(rWingVerts, rWingIndices), greyCrease);
+    rightWingGroup.add(rWingMesh);
+
+    bodyGroup.add(leftWingGroup, rightWingGroup);
+
+    return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: beak };
+  }
+
+  // 4. Origami Stealth Dart (High-Tech Matte Dark Titanium Paper with Cyan Folds)
+  private createOrigamiStealthDart() {
+    const bodyGroup = new THREE.Group();
+
+    const stealthMat = new THREE.MeshStandardMaterial({
+      color: 0x1e272e,
+      roughness: 0.3,
+      metalness: 0.2,
+      flatShading: true,
+      side: THREE.DoubleSide
+    });
+    const cyanGlow = new THREE.MeshBasicMaterial({
+      color: 0x00d2d3,
+      side: THREE.DoubleSide
+    });
+
+    // Supersonic geometric dart body
+    const bodyVerts = [
+      [0, 0.2, 0.2],
+      [0, -0.15, 0.2],
+      [0, 0.0, 1.4],      // ultra-sharp needle nose
+      [0, 0.1, -0.8],     // twin exhaust spine
+      [0.35, 0.0, -0.2],
+      [-0.35, 0.0, -0.2]
+    ];
+    const bodyIndices = [
+      [0, 2, 4], [0, 4, 3], [0, 3, 5], [0, 5, 2],
+      [1, 4, 2], [1, 3, 4], [1, 5, 3], [1, 2, 5]
+    ];
+    const body = new THREE.Mesh(this.createFoldedFacetGeo(bodyVerts, bodyIndices), stealthMat);
+    bodyGroup.add(body);
+
+    // Glowing cyan canopy fold
+    const canopyVerts = [
+      [0, 0.32, 0.25],
+      [0, 0.05, 0.8],
+      [0, 0.1, -0.2],
+      [0.12, 0.1, 0.1],
+      [-0.12, 0.1, 0.1]
+    ];
+    const canopyIndices = [
+      [0, 1, 3], [0, 4, 1], [0, 3, 2], [0, 2, 4]
+    ];
+    const canopy = new THREE.Mesh(this.createFoldedFacetGeo(canopyVerts, canopyIndices), cyanGlow);
+    bodyGroup.add(canopy);
+
+    // Stealth Delta Wings
+    const leftWingGroup = new THREE.Group();
+    leftWingGroup.position.set(-0.35, 0.0, -0.1);
+    const lWingVerts = [
+      [0, 0, 0.8],
+      [0, 0, -0.6],
+      [-1.8, 0.1, -0.7],
+      [-1.2, 0.25, -0.6] // winglet
+    ];
+    const lWingIndices = [[0, 2, 1], [2, 3, 1]];
+    const lWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(lWingVerts, lWingIndices), stealthMat);
+    leftWingGroup.add(lWingMesh);
+
+    const rightWingGroup = new THREE.Group();
+    rightWingGroup.position.set(0.35, 0.0, -0.1);
+    const rWingVerts = [
+      [0, 0, 0.8],
+      [0, 0, -0.6],
+      [1.8, 0.1, -0.7],
+      [1.2, 0.25, -0.6]
+    ];
+    const rWingIndices = [[0, 1, 2], [2, 1, 3]];
+    const rWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(rWingVerts, rWingIndices), stealthMat);
+    rightWingGroup.add(rWingMesh);
+
+    bodyGroup.add(leftWingGroup, rightWingGroup);
+
+    return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: canopy };
+  }
+
+  // Origami Confetti & Paper Shreds Explosion when hit
+  public spawnPaperExplosion(pos: THREE.Vector3, birdType: BirdType) {
+    const shredGroup = new THREE.Group();
+    shredGroup.position.copy(pos);
+
+    const colors = birdType === 'goose' 
+      ? [0xfaf9f5, 0xcc2222, 0xe8e5dc]
+      : birdType === 'pigeon'
+      ? [0x758aa2, 0x4b6584, 0xf78fb3]
+      : birdType === 'seagull'
+      ? [0xffffff, 0xf6b93b, 0xd2dae2]
+      : [0x1e272e, 0x00d2d3, 0x576574];
+
+    const shredCount = 28;
+    const shreds: { mesh: THREE.Mesh; vel: THREE.Vector3; rotVel: THREE.Vector3 }[] = [];
+
+    for (let i = 0; i < shredCount; i++) {
+      // Small geometric origami triangle or square
+      const isTri = Math.random() > 0.5;
+      const geo = isTri 
+        ? new THREE.ConeGeometry(0.25, 0.45, 3) 
+        : new THREE.PlaneGeometry(0.35, 0.35);
+
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const mat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide });
+      const mesh = new THREE.Mesh(geo, mat);
+
+      mesh.position.set(
+        (Math.random() - 0.5) * 0.8,
+        (Math.random() - 0.5) * 0.8,
+        (Math.random() - 0.5) * 0.8
+      );
+
+      const vel = new THREE.Vector3(
+        (Math.random() - 0.5) * 16,
+        (Math.random() * 9) + 3,
+        (Math.random() - 0.5) * 16
+      );
+
+      const rotVel = new THREE.Vector3(
+        (Math.random() - 0.5) * 18,
+        (Math.random() - 0.5) * 18,
+        (Math.random() - 0.5) * 18
+      );
+
+      shredGroup.add(mesh);
+      shreds.push({ mesh, vel, rotVel });
+    }
+
+    shredGroup.userData = { shreds, age: 0, maxAge: 2.2 };
+    this.scene.add(shredGroup);
+    this.paperShreds.push(shredGroup);
+  }
+
+  // Origami folded parachute
   public attachParachute(bird: BirdData) {
     const chuteGroup = new THREE.Group();
     const clothMat = new THREE.MeshLambertMaterial({
-      color: bird.type === 'goose' ? 0xff5555 : 0x44aa44,
+      color: bird.type === 'goose' ? 0xff4757 : (bird.type === 'drone' ? 0x00d2d3 : 0x2ed573),
       side: THREE.DoubleSide,
       flatShading: true
     });
 
-    const canopyGeo = new THREE.SphereGeometry(1.3, 8, 5, 0, Math.PI * 2, 0, Math.PI * 0.5);
+    // Folded 8-sided origami umbrella canopy
+    const canopyGeo = new THREE.ConeGeometry(1.5, 0.8, 8, 1, true);
+    canopyGeo.rotateX(Math.PI);
     const canopy = new THREE.Mesh(canopyGeo, clothMat);
     canopy.position.y = 1.6;
     chuteGroup.add(canopy);
 
-    const lineMat = new THREE.LineBasicMaterial({ color: 0x333333 });
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x555555 });
     const lineGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-1.1, 1.6, 0),
-      new THREE.Vector3(0, 0.4, 0),
-      new THREE.Vector3(1.1, 1.6, 0),
-      new THREE.Vector3(0, 0.4, 0),
-      new THREE.Vector3(0, 1.6, -1.1),
-      new THREE.Vector3(0, 0.4, 0),
-      new THREE.Vector3(0, 1.6, 1.1)
+      new THREE.Vector3(-1.1, 1.4, 0),
+      new THREE.Vector3(0, 0.3, 0),
+      new THREE.Vector3(1.1, 1.4, 0),
+      new THREE.Vector3(0, 0.3, 0),
+      new THREE.Vector3(0, 1.4, -1.1),
+      new THREE.Vector3(0, 0.3, 0),
+      new THREE.Vector3(0, 1.4, 1.1)
     ]);
     const lines = new THREE.LineSegments(lineGeo, lineMat);
     chuteGroup.add(lines);
@@ -453,7 +630,7 @@ export class BirdManager {
       sound.playHonk(1.5);
     }
 
-    this.spawnFeatherExplosion(bird.mesh.position, bird.type);
+    this.spawnPaperExplosion(bird.mesh.position, bird.type);
     this.attachParachute(bird);
   }
 
@@ -479,17 +656,14 @@ export class BirdManager {
         bird.mesh.position.x += bird.speed * delta;
         bird.wingAngle += bird.wingSpeed * delta;
 
-        if (bird.type === 'drone') {
-          bird.leftWing.rotation.y += 35 * delta;
-          bird.rightWing.rotation.y += 35 * delta;
-        } else {
-          const flap = Math.sin(bird.wingAngle) * 0.7;
-          bird.leftWing.rotation.z = flap;
-          bird.rightWing.rotation.z = -flap;
+        // Elegant geometric origami wing flapping
+        const flap = Math.sin(bird.wingAngle) * (bird.type === 'drone' ? 0.25 : 0.65);
+        bird.leftWing.rotation.z = flap;
+        bird.rightWing.rotation.z = -flap;
 
-          bird.head.rotation.x = Math.sin(bird.wingAngle * 0.5) * 0.15;
-          bird.mesh.position.y = bird.baseAltitude + Math.sin(bird.wingAngle * 0.7) * 0.4;
-        }
+        // Gentle head bobbing and buoyant floating
+        bird.head.rotation.x = Math.sin(bird.wingAngle * 0.6) * 0.12;
+        bird.mesh.position.y = bird.baseAltitude + Math.sin(bird.wingAngle * 0.7) * 0.35;
 
         // Wrap around when flying offscreen - maintain correct forward heading!
         if (bird.mesh.position.x > 55) {
@@ -507,8 +681,8 @@ export class BirdManager {
         bird.hitVelocity.z *= 0.98;
 
         bird.mesh.position.addScaledVector(bird.hitVelocity, delta);
-        bird.mesh.rotation.z += 1.5 * delta;
-        bird.mesh.rotation.x += 0.8 * delta;
+        bird.mesh.rotation.z += 1.8 * delta;
+        bird.mesh.rotation.x += 1.2 * delta;
 
         if (bird.parachuteMesh && bird.parachuteMesh.scale.x < 1.0) {
           const s = Math.min(1.0, bird.parachuteMesh.scale.x + delta * 2.5);
@@ -520,36 +694,28 @@ export class BirdManager {
           this.birds.splice(i, 1);
           setTimeout(() => {
             this.spawnBird(bird.type, bird.baseAltitude);
-          }, 2000 + Math.random() * 2000);
+          }, 1500 + Math.random() * 1500);
         }
       }
     }
 
-    for (let i = this.featherParticles.length - 1; i >= 0; i--) {
-      const p = this.featherParticles[i];
-      p.userData.age += delta;
+    // Update Paper Shreds explosion
+    for (let i = this.paperShreds.length - 1; i >= 0; i--) {
+      const group = this.paperShreds[i];
+      group.userData.age += delta;
 
-      const posAttr = p.geometry.getAttribute('position') as THREE.BufferAttribute;
-      const positions = posAttr.array as Float32Array;
-      const velocities = p.userData.velocities as THREE.Vector3[];
-
-      for (let j = 0; j < velocities.length; j++) {
-        velocities[j].y -= 4.0 * delta;
-        velocities[j].x += Math.sin(p.userData.age * 5 + j) * 0.5 * delta;
-
-        positions[j * 3] += velocities[j].x * delta;
-        positions[j * 3 + 1] += velocities[j].y * delta;
-        positions[j * 3 + 2] += velocities[j].z * delta;
+      const shreds = group.userData.shreds as { mesh: THREE.Mesh; vel: THREE.Vector3; rotVel: THREE.Vector3 }[];
+      for (const s of shreds) {
+        s.vel.y -= 7.5 * delta; // gravity
+        s.mesh.position.addScaledVector(s.vel, delta);
+        s.mesh.rotation.x += s.rotVel.x * delta;
+        s.mesh.rotation.y += s.rotVel.y * delta;
+        s.mesh.rotation.z += s.rotVel.z * delta;
       }
-      posAttr.needsUpdate = true;
 
-      const mat = p.material as THREE.PointsMaterial;
-      mat.opacity = Math.max(0, 1 - (p.userData.age / p.userData.maxAge));
-
-      if (p.userData.age >= p.userData.maxAge) {
-        this.scene.remove(p);
-        p.geometry.dispose();
-        this.featherParticles.splice(i, 1);
+      if (group.userData.age >= group.userData.maxAge) {
+        this.scene.remove(group);
+        this.paperShreds.splice(i, 1);
       }
     }
   }
