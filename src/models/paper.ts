@@ -82,12 +82,17 @@ export class PaperSheet {
 
     const massKg = 0.08;
 
-    let maxDistanceM = 8;
-    let maxAltitudeM = 4;
-    let comparison = 'Flatterndes Notizblatt (fällt schnell zu Boden)';
-    let foldName = 'Ungefaltet';
+    let maxDistanceM = 3;
+    let maxAltitudeM = 1.5;
+    let comparison = 'Flatterndes Notizblatt (fällt kraftlos ins Gras)';
+    let foldName = 'Ungefaltetes Blatt';
 
-    if (folds === 1) {
+    if (folds === 0) {
+      maxDistanceM = 3;
+      maxAltitudeM = 1.5;
+      comparison = 'Flatterndes Notizblatt (fällt kraftlos ins Gras)';
+      foldName = 'Ungefaltetes Blatt';
+    } else if (folds === 1) {
       maxDistanceM = 16;
       maxAltitudeM = 8;
       comparison = 'Doppelte Lage – flattert noch wild';
@@ -95,22 +100,22 @@ export class PaperSheet {
     } else if (folds === 2) {
       maxDistanceM = 32;
       maxAltitudeM = 15;
-      comparison = 'Schulheft-Stabilität';
+      comparison = 'Schulheft-Stabilität – erreicht Origami-Tauben';
       foldName = 'Postkarten-Format';
     } else if (folds === 3) {
       maxDistanceM = 65;
       maxAltitudeM = 28;
-      comparison = 'Dicke wie 1 Pappkarton – erreicht Tauben!';
+      comparison = 'Dicke wie 1 Pappkarton – erreicht Tauben & Kraniche!';
       foldName = 'Pocket Dart';
     } else if (folds === 4) {
       maxDistanceM = 120;
       maxAltitudeM = 55;
-      comparison = 'Dicke wie ein Kreditkartenstapel – Gänse-Reichweite!';
+      comparison = 'Dicke wie ein Kreditkartenstapel – Gänse- & Möwen-Reichweite!';
       foldName = 'Aerodynamischer Keil';
     } else if (folds === 5) {
       maxDistanceM = 220;
       maxAltitudeM = 95;
-      comparison = 'Dicke wie das neue iPhone Fold – massiver Punch!';
+      comparison = 'Dicke wie das neue iPhone Fold – Krater & Autoalarm!';
       foldName = 'iFold Mini';
     } else if (folds === 6) {
       maxDistanceM = 380;
@@ -130,12 +135,17 @@ export class PaperSheet {
     } else if (folds === 9) {
       maxDistanceM = 1800;
       maxAltitudeM = 750;
-      comparison = 'Massiver Block aus gepresstem Zellulose-Titan';
+      comparison = 'Massiver Block aus Zellulose-Titan – Airliner-Reichweite!';
       foldName = 'iFold Pro Max';
+    } else if (folds === 10) {
+      maxDistanceM = 2800;
+      maxAltitudeM = 1100;
+      comparison = 'Stratosphären-Projektil: Dichte wie Granit!';
+      foldName = 'Stratosphere Piercer';
     } else {
-      maxDistanceM = 3500;
-      maxAltitudeM = 1400;
-      comparison = 'FALTALITY GOD TIER: Durchbricht die Stratosphäre!';
+      maxDistanceM = 4500;
+      maxAltitudeM = 1800;
+      comparison = 'ORBIT-SINGULARITÄT: Erreicht Tim Cooks Keynote-Satellit!';
       foldName = 'Black Hole of Paper';
     }
 
