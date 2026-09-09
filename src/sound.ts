@@ -527,6 +527,94 @@ class SoundEngine {
 
     this.playPaperNoise(0.06, 0.3);
   }
+  // Crunchy procedural aluminium foil crinkle sound
+  public playFoilCrinkle(foldStep: number = 0) {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+
+    // 1. High metallic chime/ding
+    const osc = this.ctx.createOscillator();
+    const oscGain = this.ctx.createGain();
+    osc.type = "sine";
+    const pitch = 1200 + (foldStep % 6) * 220;
+    osc.frequency.setValueAtTime(pitch, t);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 0.7, t + 0.18);
+
+    oscGain.gain.setValueAtTime(0.01, t);
+    oscGain.gain.linearRampToValueAtTime(0.18, t + 0.01);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+
+    osc.connect(oscGain);
+    oscGain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.25);
+
+    // 2. High-pass textured foil crackles / crunches (multiple tiny micro-bursts)
+    const bursts = 4;
+    for (let b = 0; b < bursts; b++) {
+      const burstOffset = b * 0.035 + Math.random() * 0.015;
+      const burstLen = 0.04;
+      const bufferSize = Math.floor(this.ctx.sampleRate * burstLen);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+      }
+
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const hp = this.ctx.createBiquadFilter();
+      hp.type = "highpass";
+      hp.frequency.setValueAtTime(2800 + Math.random() * 1200, t + burstOffset);
+
+      const nGain = this.ctx.createGain();
+      nGain.gain.setValueAtTime(0.28, t + burstOffset);
+      nGain.gain.exponentialRampToValueAtTime(0.001, t + burstOffset + burstLen);
+
+      noise.connect(hp);
+      hp.connect(nGain);
+      nGain.connect(this.ctx.destination);
+
+      noise.start(t + burstOffset);
+      noise.stop(t + burstOffset + burstLen + 0.01);
+    }
+  }
+
+  // Metallic impact ping/clang when the foil ball strikes
+  public playFoilClang() {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(1480, t);
+    osc.frequency.exponentialRampToValueAtTime(840, t + 0.35);
+
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(2960, t);
+    osc2.frequency.exponentialRampToValueAtTime(1200, t + 0.35);
+
+    gain.gain.setValueAtTime(0.35, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+
+    osc.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(t);
+    osc2.start(t);
+    osc.stop(t + 0.4);
+    osc2.stop(t + 0.4);
+  }
 }
 
 export const sound = new SoundEngine();

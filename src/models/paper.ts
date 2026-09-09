@@ -33,6 +33,9 @@ export class PaperSheet {
   // Paper materials
   private paperMat: THREE.MeshLambertMaterial;
   private foldEdgeMat: THREE.MeshLambertMaterial;
+  public materialType: 'paper' | 'foil' = 'paper';
+  private foilMat: THREE.MeshStandardMaterial;
+  private foilEdgeMat: THREE.MeshStandardMaterial;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -47,6 +50,21 @@ export class PaperSheet {
 
     this.foldEdgeMat = new THREE.MeshLambertMaterial({
       color: 0xd4cbb8,
+      flatShading: true
+    });
+
+    this.foilMat = new THREE.MeshStandardMaterial({
+      color: 0xecf0f1,
+      roughness: 0.28,
+      metalness: 0.92,
+      flatShading: true,
+      side: THREE.DoubleSide
+    });
+
+    this.foilEdgeMat = new THREE.MeshStandardMaterial({
+      color: 0xbdc3c7,
+      roughness: 0.38,
+      metalness: 0.82,
       flatShading: true
     });
 
@@ -82,7 +100,7 @@ export class PaperSheet {
       }
     }
 
-    const massKg = 0.08;
+    const massKg = this.materialType === "foil" ? 0.16 : 0.08;
 
     let maxDistanceM = 3;
     let maxAltitudeM = 1.5;
@@ -240,47 +258,107 @@ export class PaperSheet {
     const w = stats.width;
     const l = stats.length;
 
-    // Geometric paper model based on fold stage
-    if (this.folds === 0) {
-      // Crisp flat fresh paper sheet lying flat on the wooden table / cutting mat
-      const geo = new THREE.BoxGeometry(w, 0.005, l);
-      this.paperBody = new THREE.Mesh(geo, this.paperMat);
-      this.paperBody.castShadow = true;
-      this.paperBody.receiveShadow = true;
-      this.mesh.add(this.paperBody);
+    // Geometric model based on fold stage and material
+    if (this.materialType === "foil") {
+      if (this.folds === 0) {
+        // Flat gleaming silver foil sheet with crinkle facets
+        const geo = new THREE.BoxGeometry(w, 0.004, l, 8, 1, 8);
+        const pos = geo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const vx = pos.getX(i);
+          const vz = pos.getZ(i);
+          pos.setY(i, pos.getY(i) + (Math.sin(vx * 18) + Math.cos(vz * 18)) * 0.003);
+        }
+        geo.computeVertexNormals();
+        this.paperBody = new THREE.Mesh(geo, this.foilMat);
+        this.paperBody.castShadow = true;
+        this.paperBody.receiveShadow = true;
+        this.mesh.add(this.paperBody);
+      } else if (this.folds < 3) {
+        // Folded silver foil plate / glider
+        const geo = new THREE.BoxGeometry(w, t * 1.2, l, 4, 1, 4);
+        const pos = geo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const vx = pos.getX(i);
+          const vz = pos.getZ(i);
+          pos.setY(i, pos.getY(i) + (Math.sin(vx * 24) * Math.cos(vz * 24)) * 0.004);
+        }
+        geo.computeVertexNormals();
+        this.paperBody = new THREE.Mesh(geo, this.foilMat);
+        this.paperBody.castShadow = true;
+        this.paperBody.receiveShadow = true;
+        this.mesh.add(this.paperBody);
 
-      // Subtle crease crease guide line along the center
-      const creaseGeo = new THREE.BoxGeometry(w * 0.96, 0.006, 0.004);
-      const crease = new THREE.Mesh(creaseGeo, this.foldEdgeMat);
-      this.mesh.add(crease);
-    } else if (this.folds < 4) {
-      // Folded sheet with creased bevel edge
-      const geo = new THREE.BoxGeometry(w, t, l);
-      this.paperBody = new THREE.Mesh(geo, this.paperMat);
-      this.paperBody.castShadow = true;
-      this.paperBody.receiveShadow = true;
-      this.mesh.add(this.paperBody);
+        const edgeGeo = new THREE.BoxGeometry(w * 1.02, t * 1.3, 0.008);
+        const edge = new THREE.Mesh(edgeGeo, this.foilEdgeMat);
+        this.mesh.add(edge);
+      } else {
+        // 🌯 THE CRUMPLED KINETIC FOIL BALL (Alukugel!)
+        // Compresses tighter & denser as fold count increases
+        const ballRadius = Math.max(0.042, 0.20 * Math.pow(0.81, this.folds - 3));
+        const ballGeo = new THREE.DodecahedronGeometry(ballRadius, 1);
+        const pos = ballGeo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const vx = pos.getX(i);
+          const vy = pos.getY(i);
+          const vz = pos.getZ(i);
+          const crinkleNoise = (Math.sin(vx * 43 + vy * 59 + vz * 67) * 0.5 + 0.5);
+          const scale = 1.0 + (crinkleNoise - 0.5) * 0.32;
+          pos.setXYZ(i, vx * scale, vy * scale, vz * scale);
+        }
+        ballGeo.computeVertexNormals();
+        this.paperBody = new THREE.Mesh(ballGeo, this.foilMat);
+        this.paperBody.castShadow = true;
+        this.paperBody.position.set(0, ballRadius * 0.95, 0);
+        this.mesh.add(this.paperBody);
 
-      // Subtle crease crease line along the fold
-      const creaseGeo = new THREE.BoxGeometry(w * 1.01, t * 1.05, 0.006);
-      const crease = new THREE.Mesh(creaseGeo, this.foldEdgeMat);
-      this.mesh.add(crease);
-    } else if (this.folds < 8) {
-      // Dart / wedge-like origami dart projectile
-      const dartGroup = new THREE.Group();
-      const dartGeo = new THREE.ConeGeometry(w * 0.75, l, 4);
-      dartGeo.rotateX(Math.PI / 2);
-      this.paperBody = new THREE.Mesh(dartGeo, this.paperMat);
-      this.paperBody.scale.set(1, t * 8, 1);
-      this.paperBody.castShadow = true;
-      dartGroup.add(this.paperBody);
-      this.mesh.add(dartGroup);
+        // At orbital tier (11+), add a glowing metallic halo
+        if (this.folds >= 11) {
+          const haloGeo = new THREE.RingGeometry(ballRadius * 1.3, ballRadius * 1.6, 16);
+          haloGeo.rotateX(Math.PI / 2);
+          const haloMat = new THREE.MeshBasicMaterial({ color: 0x00d2d3, side: THREE.DoubleSide });
+          const halo = new THREE.Mesh(haloGeo, haloMat);
+          halo.position.set(0, ballRadius * 0.95, 0);
+          this.mesh.add(halo);
+        }
+      }
     } else {
-      // Ultra-dense cubic kinetic projectile (iFold Singular Block)
-      const cubeGeo = new THREE.BoxGeometry(w * 0.9, Math.min(t, 0.25), l * 0.9);
-      this.paperBody = new THREE.Mesh(cubeGeo, this.paperMat);
-      this.paperBody.castShadow = true;
-      this.mesh.add(this.paperBody);
+      // Classic paper folding models
+      if (this.folds === 0) {
+        const geo = new THREE.BoxGeometry(w, 0.005, l);
+        this.paperBody = new THREE.Mesh(geo, this.paperMat);
+        this.paperBody.castShadow = true;
+        this.paperBody.receiveShadow = true;
+        this.mesh.add(this.paperBody);
+
+        const creaseGeo = new THREE.BoxGeometry(w * 0.96, 0.006, 0.004);
+        const crease = new THREE.Mesh(creaseGeo, this.foldEdgeMat);
+        this.mesh.add(crease);
+      } else if (this.folds < 4) {
+        const geo = new THREE.BoxGeometry(w, t, l);
+        this.paperBody = new THREE.Mesh(geo, this.paperMat);
+        this.paperBody.castShadow = true;
+        this.paperBody.receiveShadow = true;
+        this.mesh.add(this.paperBody);
+
+        const creaseGeo = new THREE.BoxGeometry(w * 1.01, t * 1.05, 0.006);
+        const crease = new THREE.Mesh(creaseGeo, this.foldEdgeMat);
+        this.mesh.add(crease);
+      } else if (this.folds < 8) {
+        const dartGroup = new THREE.Group();
+        const dartGeo = new THREE.ConeGeometry(w * 0.75, l, 4);
+        dartGeo.rotateX(Math.PI / 2);
+        this.paperBody = new THREE.Mesh(dartGeo, this.paperMat);
+        this.paperBody.scale.set(1, t * 8, 1);
+        this.paperBody.castShadow = true;
+        dartGroup.add(this.paperBody);
+        this.mesh.add(dartGroup);
+      } else {
+        const cubeGeo = new THREE.BoxGeometry(w * 0.9, Math.min(t, 0.25), l * 0.9);
+        this.paperBody = new THREE.Mesh(cubeGeo, this.paperMat);
+        this.paperBody.castShadow = true;
+        this.mesh.add(this.paperBody);
+      }
     }
   }
 
@@ -289,7 +367,11 @@ export class PaperSheet {
     if (this.isFolding || this.isFlying) return;
     this.isFolding = true;
 
-    sound.playFold();
+    if (this.materialType === 'foil') {
+      sound.playFoilCrinkle(this.folds);
+    } else {
+      sound.playFold();
+    }
 
     const startPos = this.mesh.position.clone();
     const startTime = performance.now();
@@ -325,7 +407,8 @@ export class PaperSheet {
   // Update parabolic dotted trajectory guide line
   public updateTrajectory(pitchDeg: number, yawDeg: number, powerPercent: number, hasTargetLock: boolean = false) {
     const stats = this.getStats();
-    const baseSpeed = 24.0 + stats.folds * 15.0; // Higher folds launch at immense hypersonic speed
+    const foilMult = this.materialType === 'foil' ? 1.25 : 1.0;
+    const baseSpeed = (24.0 + stats.folds * 15.0) * foilMult; // Higher folds launch at immense hypersonic speed
     const launchSpeed = baseSpeed * (powerPercent / 100);
 
     const pitchRad = THREE.MathUtils.degToRad(pitchDeg);
@@ -376,7 +459,8 @@ export class PaperSheet {
     this.trajectoryLine.visible = false;
 
     const stats = this.getStats();
-    const baseSpeed = 24.0 + stats.folds * 15.0;
+    const foilMult = this.materialType === 'foil' ? 1.25 : 1.0;
+    const baseSpeed = (24.0 + stats.folds * 15.0) * foilMult;
     const launchSpeed = baseSpeed * (powerPercent / 100);
 
     const pitchRad = THREE.MathUtils.degToRad(pitchDeg);

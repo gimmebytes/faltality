@@ -113,6 +113,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const camResetBtn = document.getElementById('cam-reset-btn');
   const camResetText = document.getElementById('cam-reset-text');
   const keymapDescC = document.getElementById('keymap-desc-c');
+  const materialBtn = document.getElementById('material-btn');
+  const materialIcon = document.getElementById('material-icon');
+  const materialText = document.getElementById('material-text');
+  const keymapDescU = document.getElementById('keymap-desc-u');
 
   // Aiming Sliders
   const aimSliders = document.getElementById('aim-sliders')!;
@@ -471,6 +475,21 @@ window.addEventListener('DOMContentLoaded', () => {
     if (camResetBtn) camResetBtn.title = t.btnFocusPaperTitle;
     if (keymapDescC) keymapDescC.innerHTML = t.keymapC;
 
+    // Material state
+    if (game.paper.materialType === "foil") {
+      materialBtn?.classList.add("foil-active");
+      if (materialIcon) materialIcon.textContent = "🌯";
+      if (materialText) materialText.textContent = t.btnMaterialFoil;
+      towerTag.textContent = t.foilActiveTag;
+    } else {
+      materialBtn?.classList.remove("foil-active");
+      if (materialIcon) materialIcon.textContent = "📄";
+      if (materialText) materialText.textContent = t.btnMaterialPaper;
+      towerTag.textContent = t.paperActiveTag;
+    }
+    if (materialBtn) materialBtn.title = t.btnMaterialTitle;
+    if (keymapDescU) keymapDescU.innerHTML = t.keymapU;
+
     pitchSlider.value = Math.round(game.pitchDeg).toString();
     pitchVal.textContent = Math.round(game.pitchDeg).toString();
     powerSlider.value = Math.round(game.powerPercent).toString();
@@ -613,6 +632,11 @@ window.addEventListener('DOMContentLoaded', () => {
     updateUI();
   });
 
+  materialBtn?.addEventListener('click', () => {
+    game.toggleMaterial();
+    updateUI();
+  });
+
   // Slider Listeners
   pitchSlider.addEventListener('input', () => {
     game.pitchDeg = parseFloat(pitchSlider.value);
@@ -657,6 +681,13 @@ window.addEventListener('DOMContentLoaded', () => {
     if (e.code === 'KeyC') {
       e.preventDefault();
       game.resetCameraLook();
+      updateUI();
+      return;
+    }
+
+    if (e.code === 'KeyU') {
+      e.preventDefault();
+      game.toggleMaterial();
       updateUI();
       return;
     }

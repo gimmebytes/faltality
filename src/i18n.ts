@@ -58,6 +58,11 @@ export interface Translations {
   btnTable: string;
   btnFocusPaper: string;
   btnFocusPaperTitle: string;
+  btnMaterialPaper: string;
+  btnMaterialFoil: string;
+  btnMaterialTitle: string;
+  foilActiveTag: string;
+  paperActiveTag: string;
 
   // Sliders
   pitchLabel: string;
@@ -96,6 +101,7 @@ export interface Translations {
   keymapA: string;
   keymapK: string;
   keymapC: string;
+  keymapU: string;
   keymapR: string;
   keymapEsc: string;
   keymapOk: string;
@@ -164,6 +170,11 @@ export const translations: Record<SupportedLang, Translations> = {
     btnTable: 'Tisch',
     btnFocusPaper: 'Fokus',
     btnFocusPaperTitle: 'Sicht auf Papier zentrieren [Taste C]',
+    btnMaterialPaper: 'Papier',
+    btnMaterialFoil: 'Alufolie',
+    btnMaterialTitle: 'Material wechseln: Papier / Alufolie [Taste U]',
+    foilActiveTag: '🌯 ALU-FOLIE (2x SCORE)',
+    paperActiveTag: '📄 PAPIER',
 
     pitchLabel: 'Steigung [↑/↓]:',
     powerLabel: 'Wurfkraft:',
@@ -198,6 +209,7 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapA: '<strong>Apple iAim</strong> Auto-Lock an-/ausschalten',
     keymapK: 'Dieses <strong>Tastenbelegungs-Fenster</strong> öffnen / schließen',
     keymapC: '<strong>Blick auf Papier zentrieren</strong> (Kamera-Reset zurück zum Tisch)',
+    keymapU: '<strong>Material wechseln</strong> (Zwischen Papier & Alufolie umschalten)',
     keymapR: '<strong>Frisches Blatt Papier</strong> auf den Tisch legen (Reset)',
     keymapEsc: 'Fenster & Overlays schließen',
     keymapOk: 'Verstanden, weiterspielen!',
@@ -333,6 +345,11 @@ export const translations: Record<SupportedLang, Translations> = {
     btnTable: 'Table',
     btnFocusPaper: 'Focus',
     btnFocusPaperTitle: 'Center view on paper [Key C]',
+    btnMaterialPaper: 'Paper',
+    btnMaterialFoil: 'Alu Foil',
+    btnMaterialTitle: 'Toggle material: Paper / Tin Foil [Key U]',
+    foilActiveTag: '🌯 TIN FOIL (2x SCORE)',
+    paperActiveTag: '📄 PAPER',
 
     pitchLabel: 'Pitch [↑/↓]:',
     powerLabel: 'Power:',
@@ -367,6 +384,7 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapA: 'Toggle <strong>Apple iAim</strong> Auto-Lock',
     keymapK: 'Open / close this <strong>Controls Modal</strong>',
     keymapC: '<strong>Center view on paper</strong> (Camera reset back to table)',
+    keymapU: '<strong>Toggle Material</strong> (Switch between Paper & Tin Foil)',
     keymapR: 'Place a <strong>Fresh Sheet of Paper</strong> on table (Reset)',
     keymapEsc: 'Close dialogs & overlays',
     keymapOk: 'Got it, let’s fold!',

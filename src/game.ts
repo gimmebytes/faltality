@@ -376,6 +376,20 @@ export class FaltalityGame {
     return this.autoAim;
   }
 
+  public toggleMaterial(): "paper" | "foil" {
+    if (this.phase === "flying" || this.paper.isFolding) return this.paper.materialType;
+    this.paper.materialType = this.paper.materialType === "paper" ? "foil" : "paper";
+    this.paper.rebuildMesh();
+    if (this.paper.materialType === "foil") {
+      sound.playFoilCrinkle(this.paper.folds);
+    } else {
+      sound.playNewPaper();
+    }
+    this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
+    if (this.onStatsChanged) this.onStatsChanged();
+    return this.paper.materialType;
+  }
+
   public foldPaper() {
     if (this.phase === 'flying' || this.paper.isFolding) return;
 
@@ -383,7 +397,11 @@ export class FaltalityGame {
       this.enterFoldingMode();
     }
 
-    sound.playPianoNote(this.paper.folds);
+    if (this.paper.materialType === 'foil') {
+      sound.playFoilCrinkle(this.paper.folds);
+    } else {
+      sound.playPianoNote(this.paper.folds);
+    }
 
     this.paper.fold(() => {
       const folds = this.paper.folds;
@@ -433,7 +451,12 @@ export class FaltalityGame {
     this.screenShake = 0.45; // Satisfying hit impact!
 
     const foldBonusMultiplier = 1 + this.paper.folds * 0.5;
-    const pointsAwarded = Math.round(bird.scoreValue * foldBonusMultiplier);
+    const foilMult = this.paper.materialType === "foil" ? 2.0 : 1.0;
+    const pointsAwarded = Math.round(bird.scoreValue * foldBonusMultiplier * foilMult);
+
+    if (this.paper.materialType === "foil") {
+      sound.playFoilClang();
+    }
 
     this.state.score += pointsAwarded;
     this.state.birdsHitCount++;
