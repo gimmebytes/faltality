@@ -32,6 +32,18 @@ window.addEventListener('DOMContentLoaded', () => {
   const escalationNow = document.getElementById('escalation-now')!;
   const escalationNext = document.getElementById('escalation-next')!;
 
+  // Fold Tower Indicator References (Left Sidebar)
+  const towerFoldsVal = document.getElementById('tower-folds-val');
+  const towerLayersVal = document.getElementById('tower-layers-val');
+  const towerThicknessVal = document.getElementById('tower-thickness-val');
+  const tierSheet = document.getElementById('tier-sheet');
+  const tierPigeon = document.getElementById('tier-pigeon');
+  const tierCrane = document.getElementById('tier-crane');
+  const tierCrater = document.getElementById('tier-crater');
+  const tierLimit = document.getElementById('tier-limit');
+  const tierAirliner = document.getElementById('tier-airliner');
+  const tierSingularity = document.getElementById('tier-singularity');
+
   const foldBtn = document.getElementById('fold-btn')!;
   const foldMainText = document.getElementById('fold-main-text')!;
   const foldSubtext = document.getElementById('fold-subtext')!;
@@ -57,6 +69,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const faltalitySubtitle = document.getElementById('faltality-subtitle')!;
   const faltalityPoints = document.getElementById('faltality-points')!;
   let bannerTimeout: number | null = null;
+  let lastFoldsCount = -1;
 
   // Key Map Modal Elements
   const keymapModal = document.getElementById('keymap-modal');
@@ -108,9 +121,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const seagulls = livingBirds.filter((b: BirdData) => b.type === 'seagull').length;
     const drones = livingBirds.filter((b: BirdData) => b.type === 'drone').length;
     const airliners = livingBirds.filter((b: BirdData) => b.type === 'airplane').length;
-    skyBirdsInfo.textContent = `${geese} Kraniche, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? ', ✈️ 1 Airliner' : ''}`;
+    skyBirdsInfo.textContent = `${geese} Kraniche, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}`;
 
     foldName.textContent = stats.foldName;
+    const formattedThickness = stats.thicknessMm >= 1000 
+      ? (stats.thicknessMm / 1000).toFixed(2) + ' m'
+      : (stats.thicknessMm >= 10 ? (stats.thicknessMm / 10).toFixed(1) + ' cm' : stats.thicknessMm.toFixed(1) + ' mm');
     thicknessVal.textContent = stats.thicknessMm >= 1000 
       ? (stats.thicknessMm / 1000).toFixed(2) + ' m'
       : (stats.thicknessMm >= 10 ? (stats.thicknessMm / 10).toFixed(1) + ' cm' : stats.thicknessMm.toFixed(1));
@@ -122,7 +138,42 @@ window.addEventListener('DOMContentLoaded', () => {
     rangeVal.textContent = `~${stats.maxDistanceM} m`;
     comparisonVal.textContent = stats.comparison;
 
-    // Feature Escalation Preview depending on folds count
+    // UPDATE LARGE FOLD TOWER INDICATOR (Left HUD)
+    if (towerFoldsVal) {
+      towerFoldsVal.textContent = stats.folds.toString();
+      if (stats.folds > lastFoldsCount && lastFoldsCount !== -1) {
+        towerFoldsVal.classList.add('pulse');
+        setTimeout(() => towerFoldsVal.classList.remove('pulse'), 250);
+      }
+      lastFoldsCount = stats.folds;
+    }
+    if (towerLayersVal) {
+      towerLayersVal.textContent = `${stats.layers.toLocaleString()} ${stats.layers === 1 ? 'Lage' : 'Lagen'}`;
+    }
+    if (towerThicknessVal) {
+      towerThicknessVal.textContent = formattedThickness;
+    }
+
+    // Update active tier badge in Fold Tower
+    const tiers = [
+      { el: tierSheet, active: stats.folds === 0 },
+      { el: tierPigeon, active: stats.folds >= 1 && stats.folds <= 2 },
+      { el: tierCrane, active: stats.folds >= 3 && stats.folds <= 4 },
+      { el: tierCrater, active: stats.folds >= 5 && stats.folds <= 6 },
+      { el: tierLimit, active: stats.folds >= 7 && stats.folds <= 8 },
+      { el: tierAirliner, active: stats.folds >= 9 && stats.folds <= 10 },
+      { el: tierSingularity, active: stats.folds >= 11 }
+    ];
+    for (const t of tiers) {
+      if (!t.el) continue;
+      if (t.active) {
+        t.el.classList.add('active');
+      } else {
+        t.el.classList.remove('active');
+      }
+    }
+
+    // Feature Escalation Preview in stats panel
     escalationCard.className = 'escalation-card';
     if (stats.folds === 0) {
       escalationIcon.textContent = '📄';

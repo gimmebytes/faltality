@@ -19,7 +19,6 @@ export interface BirdData {
   parachuteMesh?: THREE.Group;
   scoreValue: number;
   title: string;
-  contrailMesh?: THREE.Group;
 }
 
 export class BirdManager {
@@ -34,25 +33,28 @@ export class BirdManager {
 
   // Spawn initial flocks clearly visible across the garden sky!
   public initFlocks() {
-    // 1. Origami Pigeons flying low and close (3.5m - 6.5m altitude, Z between -8 and -16)
+    // 1. Origami Pigeons flying low and close (3.5m - 6.5m altitude, Z between -8 and -14)
     this.spawnBird('pigeon', 4.0, -10, -10);
     this.spawnBird('pigeon', 5.5, 12, -14);
     this.spawnBird('pigeon', 6.2, -22, -12);
 
-    // 2. Origami Cranes flying medium height right over the lawn (8m - 14m altitude, Z between -12 and -22)
-    this.spawnBird('goose', 9.0, 0, -16);
-    this.spawnBird('goose', 12.5, -18, -20);
-    this.spawnBird('goose', 14.0, 24, -18);
+    // 2. Origami Cranes flying medium height right over the lawn (8m - 13m altitude, Z between -12 and -18)
+    this.spawnBird('goose', 8.5, 0, -15);
+    this.spawnBird('goose', 11.5, -18, -17);
+    this.spawnBird('goose', 13.0, 22, -16);
 
-    // 3. Origami Seagulls in higher air (17m - 26m altitude, Z between -15 and -26)
-    this.spawnBird('seagull', 19.0, -15, -22);
-    this.spawnBird('seagull', 24.0, 18, -25);
+    // 3. Origami Seagulls in higher air (15m - 20m altitude, Z between -15 and -22)
+    this.spawnBird('seagull', 16.0, -15, -18);
+    this.spawnBird('seagull', 19.5, 18, -20);
 
-    // 4. Origami Stealth Flieger humming at top altitude (32m - 40m altitude)
-    this.spawnBird('drone', 34.0, 5, -22);
+    // 4. Origami Stealth Flieger humming at top altitude (26m - 32m altitude)
+    this.spawnBird('drone', 27.0, 5, -20);
 
-    // 5. THE AIRLINER: Faltality Airlines FL-404 cruising majestically in the clouds!
-    this.spawnBird('airplane', 28.0, -35, -24);
+    // 5. COMMERCIAL AIRLINERS: Two Faltality Airlines jets cruising majestically!
+    // Immediate airliner in visible airspace:
+    this.spawnBird('airplane', 18.5, -15, -19);
+    // High-altitude airliner crossing the other way:
+    this.spawnBird('airplane', 23.0, 20, -22);
   }
 
   public spawnBird(type: BirdType, altitude: number, startX?: number, startZ?: number): BirdData {
@@ -64,7 +66,6 @@ export class BirdManager {
     let speed = 4.5;
     let scoreValue = 100;
     let title = 'Origami-Taube';
-    let contrailMesh: THREE.Group | undefined;
 
     if (type === 'goose') {
       const parts = this.createOrigamiCrane();
@@ -105,10 +106,10 @@ export class BirdManager {
       leftWing = parts.leftWing;
       rightWing = parts.rightWing;
       head = parts.head;
-      contrailMesh = parts.contrails;
-      group.scale.set(2.4, 2.4, 2.4);
-      radius = 3.2;
-      speed = 8.0;
+      // Extra large and prominent scale so it's impossible to miss!
+      group.scale.set(3.4, 3.4, 3.4);
+      radius = 4.2;
+      speed = 8.5;
       scoreValue = 2500;
       title = '✈️ Faltality Airlines Flug FL-404';
     } else {
@@ -125,8 +126,8 @@ export class BirdManager {
       title = 'iFold Origami Stealth Dart';
     }
 
-    const x = startX !== undefined ? startX : (Math.random() > 0.5 ? -60 : 60);
-    const z = startZ !== undefined ? startZ : (-10 - Math.random() * 16);
+    const x = startX !== undefined ? startX : (Math.random() > 0.5 ? -55 : 55);
+    const z = startZ !== undefined ? startZ : (-14 - Math.random() * 8);
     group.position.set(x, altitude, z);
 
     const dir = (startX !== undefined ? (Math.random() > 0.5 ? 1 : -1) : (x < 0 ? 1 : -1));
@@ -140,7 +141,7 @@ export class BirdManager {
       baseAltitude: altitude,
       speed: speed * dir,
       wingAngle: Math.random() * Math.PI,
-      wingSpeed: type === 'airplane' ? 0.2 : (type === 'drone' ? 18 : (type === 'pigeon' ? 12 : 8)),
+      wingSpeed: type === 'airplane' ? 0.1 : (type === 'drone' ? 18 : (type === 'pigeon' ? 12 : 8)),
       leftWing,
       rightWing,
       head,
@@ -148,8 +149,7 @@ export class BirdManager {
       alive: true,
       hitVelocity: new THREE.Vector3(),
       scoreValue,
-      title,
-      contrailMesh
+      title
     };
 
     this.birds.push(bird);
@@ -359,75 +359,85 @@ export class BirdManager {
   // 5. Origami Commercial Airliner (Faltality Airlines FL-404)
   private createOrigamiAirplane() {
     const bodyGroup = new THREE.Group();
-    const whiteFuselage = new THREE.MeshLambertMaterial({ color: 0xfafafa, flatShading: true, side: THREE.DoubleSide });
+    const whiteFuselage = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true, side: THREE.DoubleSide });
     const blueAirline = new THREE.MeshLambertMaterial({ color: 0x0984e3, flatShading: true, side: THREE.DoubleSide });
-    const engineMat = new THREE.MeshLambertMaterial({ color: 0x636e72, flatShading: true, side: THREE.DoubleSide });
+    const redStripe = new THREE.MeshLambertMaterial({ color: 0xe63946, flatShading: true, side: THREE.DoubleSide });
+    const engineMat = new THREE.MeshLambertMaterial({ color: 0x2d3436, flatShading: true, side: THREE.DoubleSide });
 
-    // Long octagonal folded fuselage
-    const fuselageGeo = new THREE.CylinderGeometry(0.35, 0.3, 3.4, 6);
+    // Fuselage: Octagonal folded aerodynamic body
+    const fuselageGeo = new THREE.CylinderGeometry(0.38, 0.32, 3.6, 8);
     fuselageGeo.rotateX(Math.PI / 2);
     const fuselage = new THREE.Mesh(fuselageGeo, whiteFuselage);
     bodyGroup.add(fuselage);
 
-    // Folded Nose Cone
-    const noseGeo = new THREE.ConeGeometry(0.35, 0.8, 6);
+    // Folded Blue Nose Cone
+    const noseGeo = new THREE.ConeGeometry(0.38, 1.0, 8);
     noseGeo.rotateX(Math.PI / 2);
-    noseGeo.translate(0, 0, 2.1);
+    noseGeo.translate(0, 0, 2.3);
     const nose = new THREE.Mesh(noseGeo, blueAirline);
     bodyGroup.add(nose);
 
+    // Decorative Red Stripe around fuselage
+    const stripeGeo = new THREE.CylinderGeometry(0.39, 0.39, 0.3, 8);
+    stripeGeo.rotateX(Math.PI / 2);
+    stripeGeo.translate(0, 0, 0.7);
+    const stripe = new THREE.Mesh(stripeGeo, redStripe);
+    bodyGroup.add(stripe);
+
     // Folded Vertical Tail Fin (Rudder)
     const finVerts = [
-      [0, 0.3, -1.0], [0, 1.2, -1.6], [0, 0.2, -1.7], [0.06, 0.3, -1.2], [-0.06, 0.3, -1.2]
+      [0, 0.35, -0.9], [0, 1.35, -1.7], [0, 0.25, -1.8], [0.07, 0.35, -1.1], [-0.07, 0.35, -1.1]
     ];
     const finIndices = [[0, 3, 1], [0, 1, 4], [1, 3, 2], [1, 2, 4]];
     const fin = new THREE.Mesh(this.createFoldedFacetGeo(finVerts, finIndices), blueAirline);
     bodyGroup.add(fin);
 
+    // Horizontal Stabilizers (Heckflügel)
+    const horizStabGeo = new THREE.BoxGeometry(1.6, 0.05, 0.4);
+    horizStabGeo.translate(0, 0.2, -1.5);
+    const horizStab = new THREE.Mesh(horizStabGeo, whiteFuselage);
+    bodyGroup.add(horizStab);
+
     // Swept Airliner Wings with Engines
     const leftWingGroup = new THREE.Group();
-    leftWingGroup.position.set(-0.3, 0.0, 0.2);
-    const lWingVerts = [[0, 0, 0.7], [0, 0, -0.6], [-2.5, 0.2, -0.8], [-2.0, 0.35, -0.7]];
+    leftWingGroup.position.set(-0.35, 0.0, 0.3);
+    const lWingVerts = [[0, 0, 0.8], [0, 0, -0.7], [-2.8, 0.25, -0.9], [-2.3, 0.4, -0.8]];
     const lWingIndices = [[0, 2, 1], [2, 3, 1]];
     const lWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(lWingVerts, lWingIndices), whiteFuselage);
     leftWingGroup.add(lWingMesh);
 
     // Jet Engine Left
-    const lEngine = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.5, 5), engineMat);
+    const lEngine = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.65, 6), engineMat);
     lEngine.rotation.x = Math.PI / 2;
-    lEngine.position.set(-1.0, -0.2, -0.1);
+    lEngine.position.set(-1.1, -0.22, -0.1);
     leftWingGroup.add(lEngine);
 
     const rightWingGroup = new THREE.Group();
-    rightWingGroup.position.set(0.3, 0.0, 0.2);
-    const rWingVerts = [[0, 0, 0.7], [0, 0, -0.6], [2.5, 0.2, -0.8], [2.0, 0.35, -0.7]];
+    rightWingGroup.position.set(0.35, 0.0, 0.3);
+    const rWingVerts = [[0, 0, 0.8], [0, 0, -0.7], [2.8, 0.25, -0.9], [2.3, 0.4, -0.8]];
     const rWingIndices = [[0, 1, 2], [2, 1, 3]];
     const rWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(rWingVerts, rWingIndices), whiteFuselage);
     rightWingGroup.add(rWingMesh);
 
     // Jet Engine Right
-    const rEngine = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.5, 5), engineMat);
+    const rEngine = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.65, 6), engineMat);
     rEngine.rotation.x = Math.PI / 2;
-    rEngine.position.set(1.0, -0.2, -0.1);
+    rEngine.position.set(1.1, -0.22, -0.1);
     rightWingGroup.add(rEngine);
 
     bodyGroup.add(leftWingGroup, rightWingGroup);
 
-    // White Contrails
-    const contrails = new THREE.Group();
-    const trailMat = new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 0.6, gapSize: 0.3, linewidth: 2 });
-    for (const xOff of [-1.0, 1.0]) {
-      const lineGeo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(xOff, -0.2, -0.4),
-        new THREE.Vector3(xOff, -0.2, -4.5)
-      ]);
-      const line = new THREE.Line(lineGeo, trailMat);
-      line.computeLineDistances();
-      contrails.add(line);
+    // Thick, High-Visibility 3D White Contrail Trails!
+    const trailMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75 });
+    for (const xOff of [-1.1, 1.1]) {
+      const trailGeo = new THREE.CylinderGeometry(0.08, 0.02, 7.5, 4);
+      trailGeo.rotateX(Math.PI / 2);
+      trailGeo.translate(xOff, -0.22, -4.0);
+      const trailMesh = new THREE.Mesh(trailGeo, trailMat);
+      bodyGroup.add(trailMesh);
     }
-    bodyGroup.add(contrails);
 
-    return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: nose, contrails };
+    return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: nose };
   }
 
   // Origami Confetti, Paper Shreds & Luggage Explosion when hit
@@ -445,14 +455,14 @@ export class BirdManager {
       ? [0xffffff, 0xf6b93b, 0xd2dae2]
       : [0x1e272e, 0x00d2d3, 0x576574];
 
-    const shredCount = birdType === 'airplane' ? 45 : 28;
+    const shredCount = birdType === 'airplane' ? 50 : 28;
     const shreds: { mesh: THREE.Mesh; vel: THREE.Vector3; rotVel: THREE.Vector3 }[] = [];
 
     for (let i = 0; i < shredCount; i++) {
       let geo: THREE.BufferGeometry;
       if (birdType === 'airplane' && i % 3 === 0) {
         // Cute miniature origami suitcase!
-        geo = new THREE.BoxGeometry(0.3, 0.2, 0.15);
+        geo = new THREE.BoxGeometry(0.35, 0.24, 0.18);
       } else {
         const isTri = Math.random() > 0.5;
         geo = isTri 
@@ -500,7 +510,7 @@ export class BirdManager {
       flatShading: true
     });
 
-    const chuteRadius = bird.type === 'airplane' ? 3.0 : 1.5;
+    const chuteRadius = bird.type === 'airplane' ? 3.5 : 1.5;
     const canopyGeo = new THREE.ConeGeometry(chuteRadius, chuteRadius * 0.5, 8, 1, true);
     canopyGeo.rotateX(Math.PI);
     const canopy = new THREE.Mesh(canopyGeo, clothMat);
@@ -515,7 +525,7 @@ export class BirdManager {
       new THREE.Vector3(0, 0.3, 0),
       new THREE.Vector3(0, chuteRadius * 0.9, -chuteRadius * 0.75),
       new THREE.Vector3(0, 0.3, 0),
-      new THREE.Vector3(0, chuteRadius * 0.9, chuteRadius * 0.75)
+      new THREE.Vector3(0, chuteRadius * 0.9, -chuteRadius * 0.75)
     ]);
     const lines = new THREE.LineSegments(lineGeo, lineMat);
     chuteGroup.add(lines);
@@ -605,12 +615,13 @@ export class BirdManager {
           bird.parachuteMesh.scale.set(s, s, s);
         }
 
-        if (bird.mesh.position.y <= 0.5) {
+        // Quick reliable respawn after hit!
+        if (bird.mesh.position.y <= 1.5) {
           this.scene.remove(bird.mesh);
           this.birds.splice(i, 1);
           setTimeout(() => {
             this.spawnBird(bird.type, bird.baseAltitude);
-          }, 1500 + Math.random() * 1500);
+          }, 2000);
         }
       }
     }

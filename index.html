@@ -2,7 +2,7 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪿</text></svg>\" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪿</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FALTALITY – Das exponentielle Papierfalt-Spiel</title>
     <!-- Google Fonts for Untitled Goose Game & Apple Keynote aesthetic -->
@@ -62,6 +62,74 @@
         <div id="faltality-subtitle" class="faltality-subtitle">Gans erwischt!</div>
         <div id="faltality-points" class="faltality-points">+250 PUNKTE</div>
       </div>
+
+      <!-- Left Sidebar: Large Fold Tower Indicator -->
+      <aside class="fold-tower ui-interactive" id="fold-tower" title="Aktuelle Faltungsstufe und Wucht">
+        <div class="tower-header">
+          <span class="tower-tag">EXPONENTIAL-FALTMETER</span>
+          <div class="tower-num-group">
+            <span id="tower-folds-val" class="tower-huge-number">0</span>
+            <span class="tower-unit">Faltungen</span>
+          </div>
+          <div class="tower-sub-stats">
+            <span id="tower-layers-val" class="tower-pill">1 Lage</span>
+            <span id="tower-thickness-val" class="tower-pill">0.1 mm</span>
+          </div>
+        </div>
+
+        <!-- Vertical Tier Segments -->
+        <div class="tower-tiers">
+          <div class="tower-tier" id="tier-singularity" data-tier="singularity">
+            <span class="tier-icon">🕳️</span>
+            <div class="tier-info">
+              <span class="tier-name">11+ Singularity</span>
+              <span class="tier-desc">Kosmischer Kollaps</span>
+            </div>
+          </div>
+          <div class="tower-tier" id="tier-airliner" data-tier="airliner">
+            <span class="tier-icon">✈️</span>
+            <div class="tier-info">
+              <span class="tier-name">9–10 Airliner</span>
+              <span class="tier-desc">Koffer-Explosion</span>
+            </div>
+          </div>
+          <div class="tower-tier" id="tier-limit" data-tier="limit">
+            <span class="tier-icon">⚡</span>
+            <div class="tier-info">
+              <span class="tier-name">7–8 Limit</span>
+              <span class="tier-desc">Tisch vibriert</span>
+            </div>
+          </div>
+          <div class="tower-tier" id="tier-crater" data-tier="crater">
+            <span class="tier-icon">💥</span>
+            <div class="tier-info">
+              <span class="tier-name">5–6 Krater</span>
+              <span class="tier-desc">Meteor & Autoalarm</span>
+            </div>
+          </div>
+          <div class="tower-tier" id="tier-crane" data-tier="crane">
+            <span class="tier-icon">🦢</span>
+            <div class="tier-info">
+              <span class="tier-name">3–4 Kranich</span>
+              <span class="tier-desc">Hoher Weitflug</span>
+            </div>
+          </div>
+          <div class="tower-tier" id="tier-pigeon" data-tier="pigeon">
+            <span class="tier-icon">🕊️</span>
+            <div class="tier-info">
+              <span class="tier-name">1–2 Taube</span>
+              <span class="tier-desc">Flachgleiter</span>
+            </div>
+          </div>
+          <div class="tower-tier active" id="tier-sheet" data-tier="sheet">
+            <span class="tier-icon">📄</span>
+            <div class="tier-info">
+              <span class="tier-name">0 Ungefaltet</span>
+              <span class="tier-desc">Flatterblatt (~2m)</span>
+            </div>
+          </div>
+        </div>
+      </aside>
 
       <!-- Bottom Dashboard: Fold Meter & Launch Controls -->
       <footer class="bottom-dashboard ui-interactive">

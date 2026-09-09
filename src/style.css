@@ -282,6 +282,188 @@ html, body {
   100% { transform: translate(-50%, -50%) scale(1) rotate(-2deg); opacity: 1; }
 }
 
+/* ===================================================
+   LARGE FOLD TOWER INDICATOR (LEFT SIDEBAR HUD)
+   =================================================== */
+.fold-tower {
+  position: absolute;
+  left: 24px;
+  top: 96px;
+  width: 220px;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border-radius: var(--radius-lg);
+  padding: 16px 14px;
+  box-shadow: var(--shadow-card);
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 15;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fold-tower:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+}
+
+.tower-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  padding-bottom: 10px;
+}
+
+.tower-tag {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.tower-num-group {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  margin: 2px 0;
+}
+
+.tower-huge-number {
+  font-family: var(--font-serif);
+  font-size: 3.2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--color-orange);
+  text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+}
+
+.tower-huge-number.pulse {
+  transform: scale(1.25);
+  color: #e63946;
+}
+
+.tower-unit {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.tower-sub-stats {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tower-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: #f1f4ee;
+  color: #3f6828;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.tower-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tower-tier {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fbfbf9;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  opacity: 0.45;
+  transition: all 0.25s ease;
+}
+
+.tower-tier .tier-icon {
+  font-size: 1.15rem;
+}
+
+.tower-tier .tier-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.tower-tier .tier-name {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #2c3327;
+}
+
+.tower-tier .tier-desc {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+}
+
+/* Active Tier States */
+.tower-tier.active {
+  opacity: 1;
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+#tier-sheet.active {
+  background: #ffffff;
+  border-color: #ccd5c5;
+}
+
+#tier-pigeon.active {
+  background: #edf6ec;
+  border-color: #81c784;
+}
+
+#tier-crane.active {
+  background: #f1f8e9;
+  border-color: #aed581;
+}
+
+#tier-crater.active {
+  background: #fff3e0;
+  border-color: #ffb74d;
+  animation: glowPulse 2s infinite;
+}
+
+#tier-limit.active {
+  background: #fbe9e7;
+  border-color: #ff8a65;
+  animation: glowPulse 1.5s infinite;
+}
+
+#tier-airliner.active {
+  background: #e3f2fd;
+  border-color: #64b5f6;
+  animation: glowPulse 1.2s infinite;
+}
+
+#tier-singularity.active {
+  background: #263238;
+  border-color: #00d2d3;
+  color: #fff;
+  animation: glowPulse 0.8s infinite;
+}
+
+#tier-singularity.active .tier-name,
+#tier-singularity.active .tier-desc {
+  color: #00e5ff;
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 119, 0, 0.2); }
+  50% { box-shadow: 0 0 14px rgba(255, 119, 0, 0.55); }
+}
+
 /* BOTTOM DASHBOARD */
 .bottom-dashboard {
   padding: 20px 24px;
@@ -773,6 +955,12 @@ kbd {
 }
 
 /* RESPONSIVE */
+@media (max-width: 1050px) {
+  .fold-tower {
+    display: none; /* Hide side tower on smaller screens to keep canvas free */
+  }
+}
+
 @media (max-width: 900px) {
   .sky-tracker {
     display: none;
