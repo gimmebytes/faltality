@@ -53,10 +53,10 @@ export class BirdManager {
 
     // 5. COMMERCIAL AIRLINERS: Two Faltality Airlines jets cruising majestically!
     this.spawnBird('airplane', 18.5, -15, -19);
-    this.spawnBird('airplane', 23.0, 20, -22);
+    this.spawnBird('airplane', 24.0, 20, -22);
 
-    // 6. TIM COOK KEYNOTE SATELLITE: High in the exosphere, clearly placed in the forward view arc!
-    this.spawnBird('satellite', 28.5, -5, -16.5);
+    // 6. TIM COOK KEYNOTE SATELLITE: Placed center stage in upper sky arc, huge & impossible to miss!
+    this.spawnBird('satellite', 22.5, 0, -14.5);
   }
 
   public spawnBird(type: BirdType, altitude: number, startX?: number, startZ?: number): BirdData {
@@ -121,9 +121,10 @@ export class BirdManager {
       rightWing = parts.rightWing;
       head = parts.head;
       beaconMesh = parts.beacon;
-      group.scale.set(3.8, 3.8, 3.8);
-      radius = 5.0; // Large generous hit radius so it's super rewarding to nail!
-      speed = 5.0;
+      // Massive 4.8x scale so it is unmistakably visible in the sky!
+      group.scale.set(4.8, 4.8, 4.8);
+      radius = 5.5; // Very generous target radius
+      speed = 3.6;
       scoreValue = 10000;
       title = '🛰️ Tim Cook Keynote-Satellit (iSat One)';
     } else {
@@ -144,7 +145,7 @@ export class BirdManager {
     const z = startZ !== undefined ? startZ : (-14 - Math.random() * 8);
     group.position.set(x, altitude, z);
 
-    const dir = (startX !== undefined ? (Math.random() > 0.5 ? 1 : -1) : (x < 0 ? 1 : -1));
+    const dir = (startX !== undefined ? 1 : (x < 0 ? 1 : -1));
     group.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
 
     this.scene.add(group);
@@ -459,75 +460,75 @@ export class BirdManager {
   private createOrigamiSatellite() {
     const bodyGroup = new THREE.Group();
     const spaceGray = new THREE.MeshStandardMaterial({
-      color: 0x3a3d40, roughness: 0.2, metalness: 0.8, flatShading: true
+      color: 0x2d3436, roughness: 0.2, metalness: 0.8, flatShading: true
     });
     const solarMat = new THREE.MeshStandardMaterial({
-      color: 0x0f4c81, roughness: 0.3, metalness: 0.6, flatShading: true, side: THREE.DoubleSide
+      color: 0x0984e3, roughness: 0.2, metalness: 0.7, flatShading: true, side: THREE.DoubleSide
     });
     const goldFoil = new THREE.MeshStandardMaterial({
-      color: 0xf1c40f, roughness: 0.2, metalness: 0.9, flatShading: true
+      color: 0xf1c40f, roughness: 0.15, metalness: 0.95, flatShading: true
     });
     const appleWhite = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const cyanBeaconMat = new THREE.MeshBasicMaterial({ color: 0x55efff });
+    const cyanBeaconMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
 
     // Main Satellite Bus (Titanium Space Gray cube)
-    const busGeo = new THREE.BoxGeometry(1.2, 1.2, 1.4);
+    const busGeo = new THREE.BoxGeometry(1.3, 1.3, 1.5);
     const bus = new THREE.Mesh(busGeo, spaceGray);
     bodyGroup.add(bus);
 
-    // Gold thermal foil accent
-    const foilGeo = new THREE.BoxGeometry(1.24, 0.4, 1.24);
+    // Gold thermal foil accent wrap
+    const foilGeo = new THREE.BoxGeometry(1.35, 0.45, 1.35);
     const foil = new THREE.Mesh(foilGeo, goldFoil);
     bodyGroup.add(foil);
 
     // Downward Parabolic Keynote Dish (radar link to Apple Park)
-    const dishGeo = new THREE.ConeGeometry(0.9, 0.45, 12, 1, true);
+    const dishGeo = new THREE.ConeGeometry(1.0, 0.5, 12, 1, true);
     dishGeo.rotateX(-Math.PI / 2);
-    dishGeo.translate(0, -0.8, 0);
+    dishGeo.translate(0, -0.9, 0);
     const dish = new THREE.Mesh(dishGeo, goldFoil);
     bodyGroup.add(dish);
 
     // Tim Cook's Keynote Glasses on the front!
-    const glassFrameMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-    const leftLens = new THREE.Mesh(new THREE.RingGeometry(0.12, 0.17, 12), glassFrameMat);
-    leftLens.position.set(-0.25, 0.2, 0.72);
-    const rightLens = new THREE.Mesh(new THREE.RingGeometry(0.12, 0.17, 12), glassFrameMat);
-    rightLens.position.set(0.25, 0.2, 0.72);
-    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.04, 0.02), glassFrameMat);
-    bridge.position.set(0, 0.2, 0.72);
+    const glassFrameMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    const leftLens = new THREE.Mesh(new THREE.RingGeometry(0.14, 0.19, 12), glassFrameMat);
+    leftLens.position.set(-0.3, 0.22, 0.78);
+    const rightLens = new THREE.Mesh(new THREE.RingGeometry(0.14, 0.19, 12), glassFrameMat);
+    rightLens.position.set(0.3, 0.22, 0.78);
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, 0.02), glassFrameMat);
+    bridge.position.set(0, 0.22, 0.78);
     bodyGroup.add(leftLens, rightLens, bridge);
 
     // Glowing Apple Logo Silhouette on Top
-    const appleBadge = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.04), appleWhite);
-    appleBadge.position.set(0, 0.62, 0);
+    const appleBadge = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.05), appleWhite);
+    appleBadge.position.set(0, 0.7, 0);
     appleBadge.rotation.x = Math.PI / 2;
     bodyGroup.add(appleBadge);
 
     // Blinking Orbit Beacon on top
-    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), cyanBeaconMat);
-    beacon.position.set(0, 0.85, 0);
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), cyanBeaconMat);
+    beacon.position.set(0, 1.0, 0);
     bodyGroup.add(beacon);
 
     // Left Solar Panel Array (Double wing)
     const leftWingGroup = new THREE.Group();
-    leftWingGroup.position.set(-0.7, 0, 0);
-    const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.8), spaceGray);
+    leftWingGroup.position.set(-0.75, 0, 0);
+    const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.9), spaceGray);
     lArm.rotation.z = Math.PI / 2;
-    lArm.position.set(-0.4, 0, 0);
+    lArm.position.set(-0.45, 0, 0);
     leftWingGroup.add(lArm);
-    const lPanel = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.9, 0.06), solarMat);
-    lPanel.position.set(-2.0, 0, 0);
+    const lPanel = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.1, 0.08), solarMat);
+    lPanel.position.set(-2.2, 0, 0);
     leftWingGroup.add(lPanel);
 
     // Right Solar Panel Array (Double wing)
     const rightWingGroup = new THREE.Group();
-    rightWingGroup.position.set(0.7, 0, 0);
-    const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.8), spaceGray);
+    rightWingGroup.position.set(0.75, 0, 0);
+    const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.9), spaceGray);
     rArm.rotation.z = Math.PI / 2;
-    rArm.position.set(0.4, 0, 0);
+    rArm.position.set(0.45, 0, 0);
     rightWingGroup.add(rArm);
-    const rPanel = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.9, 0.06), solarMat);
-    rPanel.position.set(2.0, 0, 0);
+    const rPanel = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.1, 0.08), solarMat);
+    rPanel.position.set(2.2, 0, 0);
     rightWingGroup.add(rPanel);
 
     bodyGroup.add(leftWingGroup, rightWingGroup);
@@ -556,7 +557,7 @@ export class BirdManager {
       colors = [0x1e272e, 0x00d2d3, 0x576574];
     }
 
-    const shredCount = birdType === 'satellite' ? 65 : (birdType === 'airplane' ? 50 : 28);
+    const shredCount = birdType === 'satellite' ? 70 : (birdType === 'airplane' ? 50 : 28);
     const shreds: { mesh: THREE.Mesh; vel: THREE.Vector3; rotVel: THREE.Vector3 }[] = [];
 
     for (let i = 0; i < shredCount; i++) {
@@ -564,15 +565,15 @@ export class BirdManager {
       if (birdType === 'satellite') {
         if (i % 4 === 0) {
           // Cute miniature AirPods Pro Case!
-          geo = new THREE.BoxGeometry(0.3, 0.22, 0.15);
+          geo = new THREE.BoxGeometry(0.35, 0.26, 0.18);
         } else if (i % 4 === 1) {
           // Miniature Gold iPhone 16 Pro!
-          geo = new THREE.BoxGeometry(0.2, 0.4, 0.04);
+          geo = new THREE.BoxGeometry(0.24, 0.48, 0.05);
         } else if (i % 4 === 2) {
           // The $19 Apple Polishing Cloth!
-          geo = new THREE.PlaneGeometry(0.35, 0.35);
+          geo = new THREE.PlaneGeometry(0.42, 0.42);
         } else {
-          geo = new THREE.ConeGeometry(0.2, 0.35, 3);
+          geo = new THREE.ConeGeometry(0.25, 0.4, 3);
         }
       } else if (birdType === 'airplane' && i % 3 === 0) {
         // Cute miniature origami suitcase!
@@ -610,7 +611,7 @@ export class BirdManager {
       shreds.push({ mesh, vel, rotVel });
     }
 
-    shredGroup.userData = { shreds, age: 0, maxAge: 3.2 };
+    shredGroup.userData = { shreds, age: 0, maxAge: 3.5 };
     this.scene.add(shredGroup);
     this.paperShreds.push(shredGroup);
   }
@@ -624,7 +625,7 @@ export class BirdManager {
       flatShading: true
     });
 
-    const chuteRadius = bird.type === 'satellite' ? 4.0 : (bird.type === 'airplane' ? 3.5 : 1.5);
+    const chuteRadius = bird.type === 'satellite' ? 4.5 : (bird.type === 'airplane' ? 3.5 : 1.5);
     const canopyGeo = new THREE.ConeGeometry(chuteRadius, chuteRadius * 0.5, 8, 1, true);
     canopyGeo.rotateX(Math.PI);
     const canopy = new THREE.Mesh(canopyGeo, clothMat);
@@ -698,32 +699,50 @@ export class BirdManager {
         if (bird.type === 'satellite') {
           // Slow dignified space orbit drift and gentle solar panel tilt
           bird.mesh.rotation.y += 0.3 * delta;
-          bird.mesh.position.y = bird.baseAltitude + Math.sin(bird.mesh.position.x * 0.05) * 0.25;
+          bird.mesh.position.y = bird.baseAltitude + Math.sin(bird.mesh.position.x * 0.08) * 0.3;
           if (bird.beaconMesh) {
             const pulse = (Math.sin(Date.now() * 0.008) + 1) * 0.5;
-            bird.beaconMesh.scale.setScalar(0.8 + pulse * 0.6);
+            bird.beaconMesh.scale.setScalar(0.9 + pulse * 0.7);
+          }
+
+          // NEVER LEAVE THE SCREEN: Satellite gracefully cruises back and forth between -26 and +26!
+          if (bird.mesh.position.x > 26) {
+            bird.mesh.position.x = 26;
+            bird.speed = -Math.abs(bird.speed);
+          } else if (bird.mesh.position.x < -26) {
+            bird.mesh.position.x = -26;
+            bird.speed = Math.abs(bird.speed);
           }
         } else if (bird.type === 'airplane') {
           // Airliner gentle bank and cloud cruising
           bird.mesh.rotation.z = Math.sin(bird.mesh.position.x * 0.05) * 0.08;
           bird.mesh.position.y = bird.baseAltitude + Math.sin(bird.mesh.position.x * 0.08) * 0.4;
+
+          if (bird.mesh.position.x > 65) {
+            bird.mesh.position.x = -65;
+            bird.speed = Math.abs(bird.speed);
+            bird.mesh.rotation.y = Math.PI / 2;
+          } else if (bird.mesh.position.x < -65) {
+            bird.mesh.position.x = 65;
+            bird.speed = -Math.abs(bird.speed);
+            bird.mesh.rotation.y = -Math.PI / 2;
+          }
         } else {
           const flap = Math.sin(bird.wingAngle) * (bird.type === 'drone' ? 0.25 : 0.65);
           bird.leftWing.rotation.z = flap;
           bird.rightWing.rotation.z = -flap;
           bird.head.rotation.x = Math.sin(bird.wingAngle * 0.6) * 0.12;
           bird.mesh.position.y = bird.baseAltitude + Math.sin(bird.wingAngle * 0.7) * 0.35;
-        }
 
-        // Wrap around when flying offscreen - maintain correct forward heading!
-        if (bird.mesh.position.x > 65) {
-          bird.mesh.position.x = -65;
-          bird.speed = Math.abs(bird.speed);
-          if (bird.type !== 'satellite') bird.mesh.rotation.y = Math.PI / 2;
-        } else if (bird.mesh.position.x < -65) {
-          bird.mesh.position.x = 65;
-          bird.speed = -Math.abs(bird.speed);
-          if (bird.type !== 'satellite') bird.mesh.rotation.y = -Math.PI / 2;
+          if (bird.mesh.position.x > 65) {
+            bird.mesh.position.x = -65;
+            bird.speed = Math.abs(bird.speed);
+            bird.mesh.rotation.y = Math.PI / 2;
+          } else if (bird.mesh.position.x < -65) {
+            bird.mesh.position.x = 65;
+            bird.speed = -Math.abs(bird.speed);
+            bird.mesh.rotation.y = -Math.PI / 2;
+          }
         }
       } else {
         bird.hitVelocity.y -= 9.8 * delta * 0.7;
@@ -744,8 +763,8 @@ export class BirdManager {
           this.scene.remove(bird.mesh);
           this.birds.splice(i, 1);
           setTimeout(() => {
-            this.spawnBird(bird.type, bird.baseAltitude);
-          }, 2500);
+            this.spawnBird(bird.type, bird.baseAltitude, 0, -14.5);
+          }, 2000);
         }
       }
     }

@@ -36,7 +36,7 @@ export class FaltalityGame {
   private reticleMat: THREE.MeshBasicMaterial;
 
   // Aiming parameters
-  public pitchDeg: number = 38;
+  public pitchDeg: number = 42;
   public yawDeg: number = 0;
   public powerPercent: number = 85;
 
@@ -126,19 +126,19 @@ export class FaltalityGame {
     const reticleMat = new THREE.MeshBasicMaterial({
       color: 0x28cd41,
       transparent: true,
-      opacity: 0.92,
+      opacity: 0.95,
       side: THREE.DoubleSide
     });
 
-    const ringGeo = new THREE.RingGeometry(1.6, 1.75, 24);
+    const ringGeo = new THREE.RingGeometry(1.6, 1.8, 24);
     const ring = new THREE.Mesh(ringGeo, reticleMat);
     group.add(ring);
 
-    const tickGeo = new THREE.PlaneGeometry(0.2, 0.6);
+    const tickGeo = new THREE.PlaneGeometry(0.25, 0.7);
     for (let i = 0; i < 4; i++) {
       const angle = (i * Math.PI) / 2;
       const tick = new THREE.Mesh(tickGeo, reticleMat);
-      tick.position.set(Math.cos(angle) * 1.9, Math.sin(angle) * 1.9, 0);
+      tick.position.set(Math.cos(angle) * 2.0, Math.sin(angle) * 2.0, 0);
       tick.rotation.z = angle + Math.PI / 2;
       group.add(tick);
     }
@@ -198,8 +198,8 @@ export class FaltalityGame {
       const deltaX = clientX - startX;
       const deltaY = clientY - startY;
 
-      this.yawDeg = Math.max(-50, Math.min(50, initialYaw - deltaX * 0.25));
-      this.pitchDeg = Math.max(15, Math.min(80, initialPitch + deltaY * 0.25));
+      this.yawDeg = Math.max(-55, Math.min(55, initialYaw - deltaX * 0.25));
+      this.pitchDeg = Math.max(15, Math.min(80, initialPitch + deltaY * 0.28));
 
       this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
       if (this.onStatsChanged) this.onStatsChanged();
@@ -209,7 +209,7 @@ export class FaltalityGame {
       if (!isDragging) return;
       isDragging = false;
 
-      // Quick click/tap: check if player tapped directly on a bird/plane/satellite to lock it!
+      // Tap on a bird / satellite in the sky
       const clickDuration = performance.now() - pointerDownTime;
       if (clickDuration < 250) {
         const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : (e as MouseEvent).clientX;
@@ -227,7 +227,7 @@ export class FaltalityGame {
     window.addEventListener('touchend', onPointerUp);
   }
 
-  // Click on a target in the sky to manually acquire lock!
+  // Click directly on a target to lock it!
   private checkRaycastTarget(clientX: number, clientY: number) {
     if (this.phase !== 'aiming') return;
     this.mouse.x = (clientX / window.innerWidth) * 2 - 1;
@@ -243,7 +243,7 @@ export class FaltalityGame {
       const dx = screenPos.x - this.mouse.x;
       const dy = screenPos.y - this.mouse.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 0.22 && dist < minDist) {
+      if (dist < 0.28 && dist < minDist) {
         minDist = dist;
         bestBird = b;
       }
@@ -258,15 +258,24 @@ export class FaltalityGame {
 
   // Target Cycling: Press [T] to switch between sky targets!
   public cycleTarget() {
-    const aliveBirds = this.birdManager.birds.filter(b => b.alive && Math.abs(b.mesh.position.x) < 40);
+    const aliveBirds = this.birdManager.birds.filter(b => b.alive);
     if (aliveBirds.length === 0) return;
 
-    // Prefer ordering: satellite first if high folds, then airliners, then birds
-    const currentIndex = this.targetedBird ? aliveBirds.indexOf(this.targetedBird) : -1;
-    const nextIndex = (currentIndex + 1) % aliveBirds.length;
-    this.targetedBird = aliveBirds[nextIndex];
+    const stats = this.paper.getStats();
+    const satellite = aliveBirds.find(b => b.type === 'satellite');
 
-    this.aimAtTarget(this.targetedBird);
+    // If we are on 11+ folds and satellite is alive and not targeted, jump straight to it!
+    if (stats.folds >= 11 && satellite && this.targetedBird !== satellite) {
+      this.targetedBird = satellite;
+    } else {
+      const currentIndex = this.targetedBird ? aliveBirds.indexOf(this.targetedBird) : -1;
+      const nextIndex = (currentIndex + 1) % aliveBirds.length;
+      this.targetedBird = aliveBirds[nextIndex];
+    }
+
+    if (this.targetedBird) {
+      this.aimAtTarget(this.targetedBird);
+    }
     if (this.onStatsChanged) this.onStatsChanged();
   }
 
@@ -296,6 +305,17 @@ export class FaltalityGame {
   public enterAimingMode() {
     if (this.phase === 'flying' || this.paper.isFolding) return;
     this.phase = 'aiming';
+
+    const stats = this.paper.getStats();
+    // Auto-acquire satellite if high fold stage!
+    if (stats.folds >= 11) {
+      const satellite = this.birdManager.birds.find(b => b.alive && b.type === 'satellite');
+      if (satellite) {
+        this.targetedBird = satellite;
+        this.aimAtTarget(satellite);
+      }
+    }
+
     this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
     if (this.onPhaseChange) this.onPhaseChange(this.phase);
     if (this.onStatsChanged) this.onStatsChanged();
@@ -417,7 +437,7 @@ export class FaltalityGame {
   private handleArrowKeyAiming(delta: number) {
     if (this.phase !== 'aiming') return;
 
-    const aimSpeed = 45.0 * delta;
+    const aimSpeed = 48.0 * delta;
     let changed = false;
 
     if (this.keysPressed['ArrowUp']) {
@@ -429,11 +449,11 @@ export class FaltalityGame {
       changed = true;
     }
     if (this.keysPressed['ArrowLeft']) {
-      this.yawDeg = Math.min(50, this.yawDeg + aimSpeed);
+      this.yawDeg = Math.min(55, this.yawDeg + aimSpeed);
       changed = true;
     }
     if (this.keysPressed['ArrowRight']) {
-      this.yawDeg = Math.max(-50, this.yawDeg - aimSpeed);
+      this.yawDeg = Math.max(-55, this.yawDeg - aimSpeed);
       changed = true;
     }
 
@@ -451,26 +471,21 @@ export class FaltalityGame {
 
     const stats = this.paper.getStats();
 
-    // INTELLIGENT TARGET ACQUISITION:
-    // If we don't have a targeted bird, or if it died or left visible screen:
-    if (!this.targetedBird || !this.targetedBird.alive || Math.abs(this.targetedBird.mesh.position.x) > 35) {
+    // Only pick a new target if we don't have one or if the current one died
+    if (!this.targetedBird || !this.targetedBird.alive) {
       const reachableBirds = this.birdManager.birds.filter((b: BirdData) => {
         if (!b.alive) return false;
-        if (Math.abs(b.mesh.position.x) > 32) return false;
         return b.baseAltitude <= stats.maxAltitudeM * 1.25;
       });
 
       if (reachableBirds.length > 0) {
-        // High folds (>= 11) or aiming steep upwards (pitch >= 48) -> PRIORITIZE TIM COOK SATELLITE!
         const satellite = reachableBirds.find(b => b.type === 'satellite');
         if (satellite && (stats.folds >= 11 || this.pitchDeg >= 48)) {
           this.targetedBird = satellite;
         } else if (stats.folds >= 9 && stats.folds <= 10) {
-          // At 9-10 folds, prioritize airliner!
           const plane = reachableBirds.find(b => b.type === 'airplane');
           this.targetedBird = plane || reachableBirds[0];
         } else {
-          // Otherwise pick target closest to center line
           reachableBirds.sort((a: BirdData, b: BirdData) => Math.abs(a.mesh.position.x) - Math.abs(b.mesh.position.x));
           this.targetedBird = reachableBirds[0];
         }
@@ -484,8 +499,8 @@ export class FaltalityGame {
 
       // Color code reticle by target type!
       if (bird.type === 'satellite') {
-        this.reticleMat.color.setHex(0xffd700); // Gold / Keynote Chime!
-        this.lockOnReticle.scale.set(1.4, 1.4, 1.4);
+        this.reticleMat.color.setHex(0xffd700); // Brilliant Gold
+        this.lockOnReticle.scale.set(1.5, 1.5, 1.5);
       } else if (bird.type === 'airplane') {
         this.reticleMat.color.setHex(0x0984e3); // Sky Blue
         this.lockOnReticle.scale.set(1.2, 1.2, 1.2);
@@ -497,7 +512,7 @@ export class FaltalityGame {
       this.lockOnReticle.visible = true;
       this.lockOnReticle.position.copy(bird.mesh.position);
       this.lockOnReticle.lookAt(this.camera.position);
-      this.lockOnReticle.rotation.z += 2.0 * delta;
+      this.lockOnReticle.rotation.z += 2.2 * delta;
 
       // Smooth auto-track if player is not actively pressing arrow keys
       if (!this.paper.isFlying && !this.keysPressed['ArrowUp'] && !this.keysPressed['ArrowDown'] && !this.keysPressed['ArrowLeft'] && !this.keysPressed['ArrowRight']) {
@@ -519,8 +534,8 @@ export class FaltalityGame {
         const targetYaw = THREE.MathUtils.radToDeg(Math.atan2(-dx, -dz));
         const targetPitch = Math.min(78, Math.max(18, THREE.MathUtils.radToDeg(Math.atan2(dy, horizontalDist))));
 
-        this.yawDeg = THREE.MathUtils.lerp(this.yawDeg, targetYaw, 0.18);
-        this.pitchDeg = THREE.MathUtils.lerp(this.pitchDeg, targetPitch, 0.18);
+        this.yawDeg = THREE.MathUtils.lerp(this.yawDeg, targetYaw, 0.2);
+        this.pitchDeg = THREE.MathUtils.lerp(this.pitchDeg, targetPitch, 0.2);
 
         this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, true);
       }
@@ -586,27 +601,28 @@ export class FaltalityGame {
       if (flightFinished) {
         this.handleFlightFinished();
       }
+    }
 
-      // MOORHUHN STYLE: Stationary PoV
+    // DYNAMIC FIRST-PERSON CAMERA AIMING:
+    // Full spherical projection based on pitchDeg and yawDeg!
+    if (this.phase === 'aiming' || this.phase === 'flying') {
       this.targetCamPos.copy(this.aimCamPos);
+
+      const pitchRad = THREE.MathUtils.degToRad(this.pitchDeg);
+      const yawRad = THREE.MathUtils.degToRad(this.yawDeg);
+      const lookDist = 25.0;
+
       this.targetCamLookAt.set(
-        -Math.sin(THREE.MathUtils.degToRad(this.yawDeg)) * 14,
-        4.8 + (this.pitchDeg - 35) * 0.12,
-        -15.0
-      );
-    } else if (this.phase === 'aiming') {
-      this.targetCamPos.copy(this.aimCamPos);
-      this.targetCamLookAt.set(
-        -Math.sin(THREE.MathUtils.degToRad(this.yawDeg)) * 14,
-        4.8 + (this.pitchDeg - 35) * 0.12,
-        -15.0
+        this.aimCamPos.x - Math.sin(yawRad) * Math.cos(pitchRad) * lookDist,
+        this.aimCamPos.y + Math.sin(pitchRad) * lookDist,
+        this.aimCamPos.z - Math.cos(yawRad) * Math.cos(pitchRad) * lookDist
       );
     } else {
       this.targetCamPos.copy(this.foldCamPos);
       this.targetCamLookAt.copy(this.foldCamTarget);
     }
 
-    const camLerpSpeed = this.phase === 'flying' ? 0.2 : 0.08;
+    const camLerpSpeed = this.phase === 'flying' ? 0.25 : 0.15;
     this.camera.position.lerp(this.targetCamPos, camLerpSpeed);
 
     // Apply screen shake if active
