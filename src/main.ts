@@ -121,7 +121,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const seagulls = livingBirds.filter((b: BirdData) => b.type === 'seagull').length;
     const drones = livingBirds.filter((b: BirdData) => b.type === 'drone').length;
     const airliners = livingBirds.filter((b: BirdData) => b.type === 'airplane').length;
-    skyBirdsInfo.textContent = `${geese} Kraniche, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}`;
+    const satellites = livingBirds.filter((b: BirdData) => b.type === 'satellite').length;
+
+    skyBirdsInfo.textContent = `${geese} Kraniche, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}${satellites > 0 ? `, 🛰️ ${satellites} Tim Cook Satellit` : ''}`;
 
     foldName.textContent = stats.foldName;
     const formattedThickness = stats.thicknessMm >= 1000 
@@ -207,13 +209,13 @@ window.addEventListener('DOMContentLoaded', () => {
       escalationIcon.textContent = '✈️';
       escalationStatus.textContent = 'NEU: AIRLINER-JAGD BEREIT!';
       escalationNow.innerHTML = '<strong>Stratosphären-Punch</strong>: Kann Passagierflugzeug FL-404 treffen (Koffer-Regen)!';
-      escalationNext.innerHTML = '⏩ <em>Ab Faltung 11:</em> 🕳️ <strong>Zellulose-Singularität</strong> droht!';
+      escalationNext.innerHTML = '⏩ <em>Ab Faltung 11+:</em> 🛰️ <strong>Tim Cook Keynote-Satellit im Orbit</strong> abschießen!';
     } else {
       escalationCard.classList.add('singularity-stage');
-      escalationIcon.textContent = '🕳️';
-      escalationStatus.textContent = 'WARNUNG: CHANDRASEKHAR-LIMIT!';
-      escalationNow.innerHTML = '<strong>Papier-Singularität</strong>: Dichte nähert sich schwarzem Loch! Tisch vibriert extrem!';
-      escalationNext.innerHTML = '⏩ Kosmische Zerstörungskraft beim nächsten Wurf!';
+      escalationIcon.textContent = '🛰️';
+      escalationStatus.textContent = 'ORBIT-DURCHBRUCH: TIM COOK SATELLIT!';
+      escalationNow.innerHTML = '<strong>Exosphäre erreicht</strong>: Schieße Tim Cooks geheimen Keynote-Satelliten im All ab!';
+      escalationNext.innerHTML = '⏩ <em>Belohnung:</em> Mac-Startup-Chime & fliegende AirPods und Polishing Cloths!';
     }
 
     pitchSlider.value = Math.round(game.pitchDeg).toString();
@@ -274,7 +276,10 @@ window.addEventListener('DOMContentLoaded', () => {
   game.onFaltality = (bird: BirdData, folds: number, scoreAward: number) => {
     updateUI();
 
-    if (bird.type === 'airplane') {
+    if (bird.type === 'satellite') {
+      faltalitySubtitle.textContent = '🍏 ONE MORE THING! Tim Cooks Keynote-Satellit abgeschossen!';
+      faltalityPoints.textContent = `🛰️ +${scoreAward.toLocaleString()} PUNKTE & POLIER-TÜCHER!`;
+    } else if (bird.type === 'airplane') {
       faltalitySubtitle.textContent = '🚨 FLUGVERSPÄTUNG DES TODES! Koffer & Duty-Free regnen herab!';
       faltalityPoints.textContent = `✈️ +${scoreAward.toLocaleString()} PUNKTE!`;
     } else {
@@ -287,7 +292,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (bannerTimeout) clearTimeout(bannerTimeout);
     bannerTimeout = window.setTimeout(() => {
       faltalityBanner.classList.add('hidden');
-    }, 2800);
+    }, 3200);
   };
 
   game.onOverkillCrater = (folds: number) => {

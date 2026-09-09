@@ -1,9 +1,11 @@
-// Web Audio API Procedural Synthesizer for Faltality
-// Generates snappy crisp paper sounds, flight whooshes, honks and fanfares without external audio files!
+// Web Audio API Synthesizer for FALTALITY
+// Creates snappy, paper, piano, geese, car alarms, aircraft and Mac Keynote effects without external sound assets.
 
 class SoundEngine {
   private ctx: AudioContext | null = null;
   public enabled: boolean = true;
+
+  constructor() {}
 
   private initCtx() {
     if (!this.ctx && typeof window !== 'undefined') {
@@ -15,94 +17,100 @@ class SoundEngine {
     }
   }
 
-  // Snappy paper folding sound with rising pitch per fold
-  public playFold(foldNumber: number) {
+  // Play generative Debussy/Satie-style tranquil piano tone when folding
+  public playPianoNote(foldStep: number) {
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;
 
+    // Pentatonic scale in Db Major (warm, dreamy, impressionist vibe)
+    const scale = [
+      138.59, // Db3
+      155.56, // Eb3
+      185.00, // Gb3
+      207.65, // Ab3
+      233.08, // Bb3
+      277.18, // Db4
+      311.13, // Eb4
+      369.99, // Gb4
+      415.30, // Ab4
+      466.16, // Bb4
+      554.37, // Db5
+      622.25, // Eb5
+      739.99, // Gb5
+    ];
+
+    const freq = scale[foldStep % scale.length];
     const t = this.ctx.currentTime;
-    const baseFreq = 300 + Math.min(foldNumber * 90, 900);
 
-    // Noise crackle for crisp paper texture
-    this.playPaperNoise(0.08, 0.45);
-
-    // Tone snap
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(baseFreq, t);
-    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.4, t + 0.1);
+    osc.frequency.setValueAtTime(freq, t);
 
-    gain.gain.setValueAtTime(0.35, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    // Dynamic envelope imitating soft grand piano hammer
+    gain.gain.setValueAtTime(0.001, t);
+    gain.gain.linearRampToValueAtTime(0.22, t + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
 
-    osc.connect(gain);
+    // Warm lowpass filter
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1200, t);
+    filter.frequency.exponentialRampToValueAtTime(400, t + 1.0);
+
+    osc.connect(filter);
+    filter.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(t);
-    osc.stop(t + 0.12);
+    osc.stop(t + 1.3);
+
+    // Accompanying crisp paper creasing noise
+    this.playPaperNoise(0.08, 0.3);
   }
 
-  // Soft Debussy-esque piano note for satisfying folding feedback
-  public playPianoNote(foldIndex: number) {
+  public playFold(step: number) {
+    this.playPianoNote(step);
+  }
+
+  // Realistic paper rustle / crease sound using white noise
+  public playPaperNoise(duration: number = 0.1, intensity: number = 0.5) {
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;
 
-    // Pentatonic scale in Eb major (cozy garden feeling)
-    const scale = [311.13, 349.23, 392.00, 466.16, 523.25, 622.25, 698.46, 783.99, 932.33, 1046.50];
-    const freq = scale[foldIndex % scale.length];
-
     const t = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, t);
-
-    gain.gain.setValueAtTime(0.2, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(t);
-    osc.stop(t + 0.65);
-  }
-
-  private playPaperNoise(duration: number, volume: number) {
-    if (!this.ctx) return;
     const bufferSize = this.ctx.sampleRate * duration;
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
 
     for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.4));
     }
 
-    const noiseSource = this.ctx.createBufferSource();
-    noiseSource.buffer = buffer;
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
 
     const filter = this.ctx.createBiquadFilter();
-    filter.type = 'highpass';
-    filter.frequency.setValueAtTime(1200, this.ctx.currentTime);
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(2400, t);
+    filter.Q.setValueAtTime(2.0, t);
 
     const gain = this.ctx.createGain();
-    const t = this.ctx.currentTime;
-    gain.gain.setValueAtTime(volume, t);
+    gain.gain.setValueAtTime(intensity * 0.4, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
 
-    noiseSource.connect(filter);
+    noise.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
 
-    noiseSource.start(t);
+    noise.start(t);
   }
 
-  // Whoosh sound when launching the paper projectile
-  public playLaunch(power: number) {
+  // Whoosh sound when paper is hurled into the sky
+  public playLaunch(power: number = 0.8) {
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;
@@ -138,8 +146,8 @@ class SoundEngine {
     noise.start(t);
   }
 
-  // The iconic Goose HONK!
-  public playHonk(pitchMultiplier = 1.0) {
+  // Untitled Goose Game style HONK!
+  public playHonk(pitchMod: number = 1.0) {
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;
@@ -148,29 +156,27 @@ class SoundEngine {
     const osc1 = this.ctx.createOscillator();
     const osc2 = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
 
     osc1.type = 'sawtooth';
     osc2.type = 'square';
 
-    const f1 = 380 * pitchMultiplier;
-    const f2 = 540 * pitchMultiplier;
+    const baseFreq = 420 * pitchMod;
+    osc1.frequency.setValueAtTime(baseFreq, t);
+    osc1.frequency.linearRampToValueAtTime(baseFreq * 1.35, t + 0.06);
+    osc1.frequency.exponentialRampToValueAtTime(baseFreq * 0.9, t + 0.22);
 
-    osc1.frequency.setValueAtTime(f1, t);
-    osc1.frequency.exponentialRampToValueAtTime(f1 * 1.25, t + 0.05);
-    osc1.frequency.exponentialRampToValueAtTime(f1 * 0.85, t + 0.22);
+    osc2.frequency.setValueAtTime(baseFreq * 1.02, t);
+    osc2.frequency.linearRampToValueAtTime(baseFreq * 1.38, t + 0.06);
+    osc2.frequency.exponentialRampToValueAtTime(baseFreq * 0.92, t + 0.22);
 
-    osc2.frequency.setValueAtTime(f2 * 0.9, t);
-    osc2.frequency.exponentialRampToValueAtTime(f2 * 1.3, t + 0.06);
-    osc2.frequency.exponentialRampToValueAtTime(f2, t + 0.22);
-
+    const filter = this.ctx.createBiquadFilter();
     filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(750 * pitchMultiplier, t);
-    filter.Q.setValueAtTime(4.5, t);
+    filter.frequency.setValueAtTime(900 * pitchMod, t);
+    filter.Q.setValueAtTime(4.0, t);
 
     gain.gain.setValueAtTime(0.01, t);
-    gain.gain.linearRampToValueAtTime(0.4, t + 0.04);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    gain.gain.linearRampToValueAtTime(0.35, t + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
 
     osc1.connect(filter);
     osc2.connect(filter);
@@ -179,11 +185,11 @@ class SoundEngine {
 
     osc1.start(t);
     osc2.start(t);
-    osc1.stop(t + 0.26);
-    osc2.stop(t + 0.26);
+    osc1.stop(t + 0.25);
+    osc2.stop(t + 0.25);
   }
 
-  // Dove / Pigeon coo sound
+  // Cute Pigeon gentle cooing
   public playPigeonCoo() {
     if (!this.enabled) return;
     this.initCtx();
@@ -195,8 +201,8 @@ class SoundEngine {
 
     osc.type = 'sine';
     osc.frequency.setValueAtTime(320, t);
-    osc.frequency.linearRampToValueAtTime(410, t + 0.08);
-    osc.frequency.linearRampToValueAtTime(300, t + 0.2);
+    osc.frequency.linearRampToValueAtTime(360, t + 0.08);
+    osc.frequency.exponentialRampToValueAtTime(290, t + 0.24);
 
     gain.gain.setValueAtTime(0.01, t);
     gain.gain.linearRampToValueAtTime(0.25, t + 0.06);
@@ -262,17 +268,20 @@ class SoundEngine {
 
     osc.start(t);
     osc.stop(t + 0.6);
+
+    this.playPaperNoise(0.4, 0.8);
   }
 
-  // Neighbor's car alarm in the distance after heavy impact
+  // Neighbor frantic car alarm when lawn/fence is crushed
   public playCarAlarm() {
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;
 
-    // 4 frantic honk pulses
-    for (let i = 0; i < 5; i++) {
-      const t = this.ctx.currentTime + 0.4 + i * 0.28;
+    const startT = this.ctx.currentTime + 0.3;
+    const beeps = 8;
+    for (let i = 0; i < beeps; i++) {
+      const t = startT + i * 0.18;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
 
@@ -313,6 +322,40 @@ class SoundEngine {
 
     osc.start(t);
     osc.stop(t + 0.7);
+  }
+
+  // Iconic Mac Keynote / Apple Startup Chime (C-Major rich harmonic chord)
+  public playMacStartupChime() {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    // Rich Apple Startup Chord (F# major / C-major resonant chime)
+    const freqs = [185.0, 277.18, 369.99, 554.37, 739.99]; // F#2, C#3, F#3, C#4, F#4
+    const startT = this.ctx.currentTime;
+
+    freqs.forEach(freq => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, startT);
+
+      gain.gain.setValueAtTime(0.001, startT);
+      gain.gain.linearRampToValueAtTime(0.18, startT + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startT + 2.2);
+
+      const filter = this.ctx!.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1800, startT);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx!.destination);
+
+      osc.start(startT);
+      osc.stop(startT + 2.3);
+    });
   }
 
   // Big FALTALITY fanfare (Mortal Kombat vibe meets jaunty garden piano)
