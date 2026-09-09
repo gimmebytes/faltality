@@ -17,12 +17,12 @@ In **FALTALITY** startest du mit einem frischen Blatt Papier auf einem gemütlic
 
 2. **Phase 2: Zielmodus (Himmelsperspektive)**
    - Die Kamera schwenkt majestätisch hoch in den Himmel über den Garten.
-   - Am Himmel ziehen Stadttauben, die britische Garten-Gans mit ihrer roten Schleife, Küstenmöwen und die legendäre *iFold Apple Delivery Drone* ihre Bahnen.
+   - Am Himmel ziehen gefaltete japanische Origami-Kraniche, Origami-Tauben, Möwen und die gefürchtete *iFold Origami Stealth Dart* ihre Bahnen.
    - Steuere deinen Schuss flüssig mit den **Pfeiltasten [↑ ↓ ← →]** oder der Maus.
-   - Drücke die **Leertaste** zum Abschuss!
+   - Drücke die **Leertaste** zum blitzschnellen Moorhuhn-Abschuss!
 
 3. **Phase 3: Flug & Faltality**
-   - Sobald du einen Vogel triffst, schaltet das Spiel in filmische Zeitlupe, die ikonische **F A L T A L I T Y !**-Fanfare ertönt, Konfetti regnet und der Vogel schwebt mit einem Fallschirmchen zu Boden. Nach jedem Wurf slappt ein neues Blatt auf den Tisch!
+   - Das Papier pfeift zischend durch den Himmel! Bei einem Treffer schaltet das Spiel in filmische Zeitlupe, bunte Origami-Papierschnipsel wirbeln umher, die **F A L T A L I T Y !**-Fanfare ertönt und der Vogel schwebt mit einem Fallschirmchen zu Boden.
 
 ---
 
@@ -43,10 +43,10 @@ In **FALTALITY** startest du mit einem frischen Blatt Papier auf einem gemütlic
 
 ## 🛠️ Technologie
 
-- **WebGL & Three.js** mit custom Flat-Shading, dynamischer Beleuchtung und weichen Schatten
+- **WebGL & Three.js** mit geometrischen Origami-3D-Skulpturen, custom Flat-Shading und weichen Schatten
 - **Vite & TypeScript** für blitzschnelle Performance und HMR
 - **Web Audio API Synth**: Knusprige Papier-Faltgeräusche, dynamische Flug-Whooshes, Gans-Honks und generative Debussy-Klaviertöne ohne externe Asset-Downloads
-- **Canvas-Confetti** für den Triumph-Moment bei einem Treffer
+- **Canvas-Confetti & Origami-Partikel** für den Triumph-Moment bei einem Treffer
 
 ---
 
@@ -61,4 +61,16 @@ npm run dev
 
 # Produktions-Build erstellen
 npm run build
+```
+
+---
+
+## 🐳 Docker Deployment
+
+Das Spiel ist vollständig containerisiert und kann als leichtgewichtiger Nginx-Container betrieben werden.
+
+### Lokaler Docker-Start
+```bash
+docker build -t faltality:latest .
+docker run -p 8080:8080 faltality:latest
 ```
