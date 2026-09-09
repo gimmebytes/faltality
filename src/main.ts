@@ -54,8 +54,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const introScreen = document.getElementById('intro-screen')!;
   const introTitle = document.getElementById('intro-title')!;
   const introSubtitle = document.getElementById('intro-subtitle')!;
-  const introLangBtn = document.getElementById('intro-lang-btn')!;
-  const introLangLabel = document.getElementById('intro-lang-label')!;
+  const introLangBtn = document.getElementById('intro-lang-btn');
+  const introLangLabel = document.getElementById('intro-lang-label');
   const introStartBtn = document.getElementById('intro-start-btn')!;
   const introPressEnter = document.getElementById('intro-press-enter')!;
   const introHintF = document.getElementById('intro-hint-f')!;
@@ -100,14 +100,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const tierSheetName = document.getElementById('tier-sheet-name')!;
   const tierSheetDesc = document.getElementById('tier-sheet-desc')!;
 
-  // Bottom Dashboard & Controls
+  // Bottom Dashboard & Controls (Cupertino Minimal Pill Action Bar)
   const foldBtn = document.getElementById('fold-btn')!;
   const foldMainText = document.getElementById('fold-main-text')!;
-  const foldSubtext = document.getElementById('fold-subtext')!;
+  const foldKbd = document.getElementById('fold-kbd');
   const actionBtn = document.getElementById('action-btn')!;
   const actionBtnIcon = document.getElementById('action-btn-icon')!;
   const actionMainText = document.getElementById('action-main-text')!;
-  const actionSubtext = document.getElementById('action-subtext')!;
+  const actionKbd = document.getElementById('action-kbd');
   const newSheetBtn = document.getElementById('new-sheet-btn')!;
   const newSheetText = document.getElementById('new-sheet-text')!;
 
@@ -180,9 +180,11 @@ window.addEventListener('DOMContentLoaded', () => {
     updateUI();
   };
 
-  introLangBtn.addEventListener('click', () => {
-    setLanguage(currentLang === 'de' ? 'en' : 'de');
-  });
+  if (introLangBtn) {
+    introLangBtn.addEventListener('click', () => {
+      setLanguage(currentLang === 'de' ? 'en' : 'de');
+    });
+  }
 
   langBtnDe.addEventListener('click', () => setLanguage('de'));
   langBtnEn.addEventListener('click', () => setLanguage('en'));
@@ -311,7 +313,7 @@ window.addEventListener('DOMContentLoaded', () => {
       { icon: '📱', label: 'iPhone 16 Pro (Titanium)', price: '$1,199' },
       { icon: '🧣', label: 'Apple Polishing Cloth', price: '$19' },
       { icon: '💵', label: '$19.00 USD', price: '' },
-      { icon: '🍏', label: 'One More Thing', price: 'Priceless' }
+      { icon: '🍎', label: 'One More Thing', price: 'Priceless' }
     ];
 
     const count = 28;
@@ -360,7 +362,9 @@ window.addEventListener('DOMContentLoaded', () => {
     // Intro Screen Translations
     introTitle.textContent = t.gameTitle;
     introSubtitle.textContent = t.introSubtitle;
-    introLangLabel.textContent = currentLang === 'de' ? 'Sprache: 🇩🇪 Deutsch' : 'Language: 🇬🇧 English';
+    if (introLangLabel) {
+      introLangLabel.textContent = currentLang === 'de' ? 'Sprache: 🇩🇪 Deutsch' : 'Language: 🇬🇧 English';
+    }
     introStartBtn.textContent = t.introStartBtn;
     introPressEnter.textContent = t.introPressEnter;
     introHintF.innerHTML = t.introHintF;
@@ -479,26 +483,31 @@ window.addEventListener('DOMContentLoaded', () => {
     if (keymapDescEsc) keymapDescEsc.innerHTML = t.keymapEsc;
     if (keymapOkBtn) keymapOkBtn.textContent = t.keymapOk;
 
-    // Action Buttons State
+    // Action Buttons State (Minimal Cupertino Action Bar)
     if (game.phase === 'flying') {
       foldBtn.setAttribute('disabled', 'true');
       actionBtn.setAttribute('disabled', 'true');
       foldMainText.textContent = t.btnFoldMain;
-      foldSubtext.textContent = t.btnFoldFlyingSub;
+      if (foldKbd) foldKbd.textContent = 'F';
+
+      actionBtnIcon.textContent = '✈️';
       actionMainText.textContent = t.btnFlyingMain;
-      actionSubtext.textContent = t.btnFlyingSub;
+      if (actionKbd) actionKbd.classList.add('hidden');
       aimSliders.classList.add('hidden');
     } else if (game.phase === 'aiming') {
       foldBtn.removeAttribute('disabled');
       actionBtn.removeAttribute('disabled');
       actionBtn.classList.add('aiming-mode');
 
-      foldMainText.textContent = currentLang === 'de' ? 'TISCH' : 'TABLE';
-      foldSubtext.textContent = t.btnFoldAimingSub;
+      foldMainText.textContent = t.btnTable;
+      if (foldKbd) foldKbd.textContent = 'Esc';
 
       actionBtnIcon.textContent = '🚀';
       actionMainText.textContent = t.btnLaunchMain;
-      actionSubtext.textContent = t.btnLaunchSub;
+      if (actionKbd) {
+        actionKbd.classList.remove('hidden');
+        actionKbd.textContent = currentLang === 'de' ? 'Leertaste' : 'Space';
+      }
 
       aimSliders.classList.remove('hidden');
     } else {
@@ -507,14 +516,15 @@ window.addEventListener('DOMContentLoaded', () => {
       actionBtn.removeAttribute('disabled');
       actionBtn.classList.remove('aiming-mode');
 
-      const nextThickness = stats.thicknessMm * 2;
-      const nextStr = nextThickness >= 10 ? (nextThickness / 10).toFixed(1) + ' cm' : nextThickness.toFixed(1) + ' mm';
       foldMainText.textContent = t.btnFoldMain;
-      foldSubtext.textContent = t.btnFoldSub(nextStr);
+      if (foldKbd) foldKbd.textContent = 'F';
 
       actionBtnIcon.textContent = '🎯';
       actionMainText.textContent = t.btnAimMain;
-      actionSubtext.textContent = t.btnAimSub;
+      if (actionKbd) {
+        actionKbd.classList.remove('hidden');
+        actionKbd.textContent = currentLang === 'de' ? 'Leertaste' : 'Space';
+      }
 
       aimSliders.classList.add('hidden');
     }

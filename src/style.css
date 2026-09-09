@@ -866,23 +866,26 @@ html, body {
   flex: 1; /* Leaves the garden completely open and unobstructed */
 }
 
-/* CONTROLS ACTION PANEL */
+/* CONTROLS ACTION PANEL (Apple Event Aesthetic) */
 .actions-panel {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 16px;
+  gap: 12px;
 }
 
 .slider-controls {
   display: flex;
+  align-items: center;
   gap: 16px;
-  background: var(--bg-card);
-  padding: 10px 18px;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  transition: opacity 0.3s ease;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 8px 18px;
+  border-radius: 980px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .slider-controls.hidden {
@@ -892,108 +895,169 @@ html, body {
 .slider-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .slider-group label {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-muted);
+  letter-spacing: -0.01em;
 }
 
 .slider-group input[type='range'] {
-  width: 130px;
+  width: 120px;
   accent-color: var(--color-orange);
   cursor: pointer;
 }
 
 .button-group {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
 }
 
+/* Cupertino Sleek Minimal Action Pills */
 .btn {
-  font-family: var(--font-sans);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
   border: none;
-  border-radius: var(--radius-md);
-  padding: 12px 24px;
+  border-radius: 980px;
+  height: 40px;
+  padding: 0 16px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  box-shadow: var(--shadow-btn);
-  transition: transform 0.15s ease, background-color 0.15s, box-shadow 0.15s;
+  justify-content: center;
+  gap: 7px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  user-select: none;
+  white-space: nowrap;
 }
 
 .btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
 }
 
 .btn:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: scale(0.96);
 }
 
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.42;
   cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .btn-icon {
-  font-size: 1.6rem;
-}
-
-.btn-text {
+  font-size: 1.05rem;
+  line-height: 1;
   display: flex;
-  flex-direction: column;
-  text-align: left;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-main-text {
-  font-weight: 800;
-  font-size: 1.1rem;
-  letter-spacing: 0.5px;
+  font-weight: 600;
+  font-size: 0.86rem;
+  line-height: 1;
+  letter-spacing: -0.01em;
 }
 
-.btn-sub-text {
-  font-size: 0.7rem;
-  opacity: 0.85;
+/* Subtle Apple-style Keycap Badge */
+.btn-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2.5px 5.5px;
+  border-radius: 5px;
+  margin-left: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
+.btn-kbd.hidden {
+  display: none;
+}
+
+/* 1. Falten / Tisch: Frosted Cupertino Glass Pill */
 .btn-fold {
-  background: #ffffff;
-  color: #1a2215;
-  border: 2px solid #e0dbcb;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  color: #1d1d1f;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.btn-fold:hover {
-  background: #faf7ed;
-  border-color: #d1c8b3;
+.btn-fold .btn-kbd {
+  background: rgba(0, 0, 0, 0.06);
+  color: #515154;
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.btn-fold:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+/* 2. Zielen / Werfen: Apple Vibrant Accent Pill */
 .btn-launch {
-  background: var(--color-orange);
+  background: linear-gradient(180deg, #ff7a45 0%, #ff5e28 100%);
   color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 3px 12px rgba(255, 107, 53, 0.35), 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.btn-launch:hover {
-  background: var(--color-orange-hover);
+.btn-launch .btn-kbd {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.btn-launch:hover:not(:disabled) {
+  background: linear-gradient(180deg, #ff8957 0%, #ff6b38 100%);
+  box-shadow: 0 5px 18px rgba(255, 107, 53, 0.45);
 }
 
 .btn-launch.aiming-mode {
-  background: #e63946;
+  background: linear-gradient(180deg, #ff3b30 0%, #e0281e 100%);
+  box-shadow: 0 3px 12px rgba(230, 57, 70, 0.35);
 }
 
-.btn-launch.aiming-mode:hover {
-  background: #c92a37;
+.btn-launch.aiming-mode:hover:not(:disabled) {
+  background: linear-gradient(180deg, #ff4d43 0%, #eb342a 100%);
+  box-shadow: 0 5px 18px rgba(230, 57, 70, 0.45);
 }
 
+/* 3. Reset Capsule */
 .btn-secondary {
-  background: var(--bg-card);
-  color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.9rem;
-  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #515154;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.btn-secondary .btn-kbd {
+  background: rgba(0, 0, 0, 0.05);
+  color: #6e6e73;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.88);
+  color: #1d1d1f;
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* ===================================================

@@ -1,247 +1,256 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪿</text></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title id="meta-page-title">FALTALITY – Das exponentielle Papierfalt-Spiel</title>
-    <!-- Google Fonts for Retro 80s/90s, Goose Game & Apple Keynote aesthetic -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;600;700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./src/style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FALTALITY – Das exponentielle Papierfalt-Spektakel</title>
+    <meta name="description" content="Ein gemütliches, wunderschönes 3D Low-Poly Falt- und Wurfspiel auf einem sonnigen Gartentisch mit exponentieller Zerstörungskraft." />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <!-- Apple aesthetic fonts & retro arcade typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Outfit:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Press+Start+2P&family=Rubik:wght@500;700;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <!-- 3D Canvas Container -->
-    <div id="game-canvas"></div>
+    <!-- 3D WebGL Canvas -->
+    <canvas id="bg-canvas"></canvas>
 
-    <!-- UI Overlay Layer -->
-    <div id="ui-overlay">
-      <!-- 🎬 BRUTAL 80s/90s RETRO INTRO SCREEN OVERLAY -->
-      <div id="intro-screen" class="intro-screen">
-        <div class="retro-grid-bg"></div>
-        <div class="intro-content">
-          <!-- Stylized Origami Paper Fold Animation -->
-          <div class="intro-paper-art">
-            <div class="origami-sheet-anim">
-              <div class="origami-crease-diag"></div>
-              <div class="origami-crease-cross"></div>
-              <span class="origami-icon-glow">📄</span>
+    <!-- 💥 RETRO 80s/90s INTRO SPLASH OVERLAY -->
+    <div id="intro-screen" class="intro-screen ui-interactive">
+      <div class="intro-backdrop-grid"></div>
+      <div class="intro-sun"></div>
+      
+      <div class="intro-content">
+        <!-- 3D Origami Folding Sheet Animation Container -->
+        <div class="intro-origami-container">
+          <div class="origami-sheet-3d">
+            <div class="origami-face front"></div>
+            <div class="origami-face fold-left"></div>
+            <div class="origami-face fold-right"></div>
+            <div class="origami-crease-glow"></div>
+          </div>
+        </div>
+
+        <!-- Brutal Synthwave Chrome Gradient Title -->
+        <div class="intro-title-wrapper">
+          <span class="intro-arcade-tag">★ ARCADE EDITION ★</span>
+          <h1 id="intro-title" class="intro-title-brutal" data-text="FALTALITY">FALTALITY</h1>
+          <div class="intro-subtitle-neon" id="intro-subtitle">★ DAS EXPONENTIELLE PAPIERFALT-SPEKTAKEL ★</div>
+        </div>
+
+        <!-- First-time Keyboard Shortcuts Reference Bar -->
+        <div class="intro-controls-card">
+          <div class="intro-card-header">STEUERUNG / CONTROLS</div>
+          <div class="intro-controls-grid">
+            <div class="intro-control-pill">
+              <kbd>F</kbd>
+              <span id="intro-hint-f">Papier falten (Verdoppeln)</span>
+            </div>
+            <div class="intro-control-pill">
+              <kbd>Leertaste</kbd>
+              <span id="intro-hint-space">Zielen & Werfen</span>
+            </div>
+            <div class="intro-control-pill">
+              <kbd>T</kbd>
+              <span id="intro-hint-t">Ziel wechseln (Lock-On)</span>
+            </div>
+            <div class="intro-control-pill">
+              <kbd>↑ ↓ ← →</kbd>
+              <span id="intro-hint-arrows">Kamera & Winkel steuern</span>
             </div>
           </div>
+        </div>
 
-          <!-- 80s/90s Brutal Metallic Title -->
-          <h1 id="intro-title" class="retro-arcade-title">FALTALITY</h1>
-          <p id="intro-subtitle" class="retro-arcade-subtitle">★ DAS EXPONENTIELLE PAPIERFALT-SPEKTAKEL ★</p>
-
-          <!-- Language Selector directly on Intro -->
-          <div class="intro-lang-picker">
-            <button id="intro-lang-btn" class="intro-lang-btn" title="Switch Language / Sprache wechseln">
-              🌐 <span id="intro-lang-label">Deutsch / English</span>
-            </button>
-          </div>
-
-          <!-- Blinking Press Enter Prompt & Start Button -->
-          <div class="intro-action-group">
-            <button id="intro-start-btn" class="retro-start-btn">SPIEL STARTEN</button>
-            <div id="intro-press-enter" class="retro-press-enter">▶ DRÜCKE [ENTER] ODER [LEERTASTE] ZUM STARTEN ◀</div>
-          </div>
-
-          <!-- Quick Controls Hint on First Start -->
-          <div class="intro-controls-card">
-            <div class="intro-controls-title">⌨️ SCHNELLSTART-STEUERUNG (CONTROLS)</div>
-            <div class="intro-controls-grid">
-              <div class="intro-control-item" id="intro-hint-f">
-                <kbd>F</kbd> Papier falten (Dicke & Weite verdoppeln)
-              </div>
-              <div class="intro-control-item" id="intro-hint-space">
-                <kbd>Leertaste</kbd> Zielen & Werfen
-              </div>
-              <div class="intro-control-item" id="intro-hint-t">
-                <kbd>T</kbd> Ziel wechseln (Taube, Kranich, Jet, Satellit)
-              </div>
-              <div class="intro-control-item" id="intro-hint-arrows">
-                <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> Kamera & Flugwinkel steuern
-              </div>
-            </div>
+        <!-- Blinking Prompt & Play Button -->
+        <div class="intro-action-area">
+          <button id="intro-start-btn" class="intro-start-button">
+            <span class="btn-sparkle">✨</span>
+            <span id="intro-start-text">SPIEL STARTEN</span>
+            <span class="btn-sparkle">✨</span>
+          </button>
+          <div class="intro-press-enter" id="intro-press-enter">
+            ▶ DRÜCKE [ENTER] ODER [LEERTASTE] ZUM STARTEN ◀
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Top Header: Clean Logo, Scoreboard & Hamburger Menu -->
-      <header class="top-header">
-        <div class="logo-group">
-          <h1 id="logo-title" class="logo-title">FALTALITY</h1>
-          <span id="logo-badge" class="logo-badge">iFold Edition</span>
-        </div>
-
-        <div class="header-right ui-interactive">
-          <!-- Compact Clean Scoreboard -->
-          <div class="scoreboard">
-            <div class="score-card">
-              <span id="label-score" class="score-label">PUNKTE</span>
-              <span id="score-val" class="score-number">0</span>
-            </div>
-            <div class="score-card">
-              <span id="label-birds-hit" class="score-label">VÖGEL</span>
-              <span id="birds-hit-val" class="score-number">0</span>
-            </div>
-            <div class="score-card">
-              <span id="label-combo" class="score-label">COMBO</span>
-              <span id="combo-val" class="score-number">x0</span>
+    <!-- UI Overlay Layer (Pointer events pass through unless on cards) -->
+    <div id="ui-container">
+      
+      <!-- Top Navigation Header -->
+      <header class="top-header ui-interactive">
+        <div class="header-left">
+          <div class="brand-group">
+            <span class="game-logo">📄</span>
+            <div>
+              <h1 id="brand-title" class="logo-title">FALTALITY</h1>
+              <p id="brand-subtitle" class="logo-tagline">PRODUKTIVES PAPIERFALTEN</p>
             </div>
           </div>
+        </div>
 
-          <!-- Hamburger Button (☰) -->
-          <button id="menu-toggle-btn" class="hamburger-btn" title="Menü öffnen [M]">
-            <span class="hamburger-bar"></span>
-            <span class="hamburger-bar"></span>
-            <span class="hamburger-bar"></span>
+        <!-- Center: Game Score & Combo HUD -->
+        <div class="header-center">
+          <div class="score-card">
+            <div class="stat-pill score-pill">
+              <span id="label-score" class="stat-label">PUNKTE</span>
+              <span id="score-display" class="stat-number">0</span>
+            </div>
+            <div class="stat-pill hits-pill">
+              <span id="label-hits" class="stat-label">GETROFFEN</span>
+              <span id="hits-display" class="stat-number">0</span>
+            </div>
+            <div id="combo-pill" class="stat-pill combo-pill hidden">
+              <span id="label-combo" class="stat-label">COMBO</span>
+              <span id="combo-display" class="stat-number">x1</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Apple Target Indicator & Sleek Hamburger Button -->
+        <div class="header-right">
+          <!-- Target Lock-on Indicator Pill -->
+          <div id="target-pill" class="header-target-pill" title="Aktuelles Ziel (Taste T zum Wechseln)">
+            <span class="target-indicator-dot"></span>
+            <span id="target-pill-text" class="target-pill-text">🎯 Taube</span>
+          </div>
+
+          <!-- Hamburger Menu Button -->
+          <button id="menu-btn" class="hamburger-btn" title="Menü öffnen" aria-label="Menü öffnen">
+            <span class="hamburger-icon">☰</span>
           </button>
         </div>
       </header>
 
-      <!-- ☰ SLIDE-OVER HAMBURGER MENU DRAWER -->
-      <div id="menu-drawer-backdrop" class="drawer-backdrop hidden ui-interactive">
-        <aside class="menu-drawer" id="menu-drawer">
-          <div class="drawer-header">
-            <div class="drawer-title-group">
-              <span class="drawer-icon">🍔</span>
-              <h2 id="menu-title">MENÜ</h2>
+      <!-- 🍔 SLIDE-OVER HAMBURGER DRAWER -->
+      <div id="menu-backdrop" class="menu-backdrop hidden ui-interactive"></div>
+      <aside id="menu-drawer" class="menu-drawer hidden ui-interactive">
+        <div class="drawer-header">
+          <div class="drawer-title-group">
+            <span class="drawer-icon">📄</span>
+            <h2 id="menu-title">MENÜ</h2>
+          </div>
+          <button id="menu-close-btn" class="drawer-close-btn" title="Menü schließen">✕</button>
+        </div>
+
+        <div class="drawer-content">
+          <!-- Language Selector -->
+          <div class="drawer-section">
+            <label class="drawer-section-label" id="menu-lang-label">🌐 Sprache wechseln / Language:</label>
+            <div class="lang-switch-capsule">
+              <button id="lang-btn-de" class="lang-btn active">🇩🇪 Faltality (DE)</button>
+              <button id="lang-btn-en" class="lang-btn">🇬🇧 Foldtality (EN)</button>
             </div>
-            <button id="menu-close-btn" class="icon-btn" title="Menü schließen [Esc]">✕</button>
           </div>
 
-          <div class="drawer-content">
-            <!-- Language Switcher -->
-            <div class="menu-section">
-              <span id="menu-lang-label" class="menu-label">🌐 Sprache / Language:</span>
-              <div class="menu-btn-row">
-                <button id="lang-btn-de" class="menu-opt-btn active">🇩🇪 Deutsch (Faltality)</button>
-                <button id="lang-btn-en" class="menu-opt-btn">🇬🇧 English (Foldtality)</button>
-              </div>
-            </div>
+          <!-- Quick Encyclopedia Link -->
+          <div class="drawer-section">
+            <button id="menu-open-pedia-btn" class="drawer-action-btn primary-action">
+              <span class="action-btn-icon">📖</span>
+              <span id="menu-pedia-btn-text">FALT-PEDIA Enzyklopädie öffnen</span>
+            </button>
+          </div>
 
-            <!-- FALT-PEDIA Button -->
-            <div class="menu-section">
-              <button id="drawer-pedia-btn" class="menu-highlight-btn">
-                📖 <span id="menu-pedia-label">FALT-PEDIA Enzyklopädie</span>
+          <!-- Target & Assist -->
+          <div class="drawer-section">
+            <label class="drawer-section-label" id="menu-aim-label">🎯 Apple iAim Auto-Targeting:</label>
+            <div class="drawer-btn-row">
+              <button id="aim-toggle-btn" class="drawer-toggle-btn active">
+                <span id="aim-btn-text">🎯 iAim: AN</span>
+              </button>
+              <button id="cycle-target-btn" class="drawer-secondary-btn" title="Nächstes Ziel [T]">
+                <span id="cycle-target-text">🎯 Ziel wechseln [T]</span>
               </button>
             </div>
+          </div>
 
-            <!-- Targeting Options -->
-            <div class="menu-section">
-              <span id="menu-aim-label" class="menu-label">🎯 Apple iAim & Zielsuche:</span>
-              <div class="menu-btn-col">
-                <button id="menu-iaim-btn" class="menu-action-btn">🎯 iAim: AN</button>
-                <button id="menu-cycle-target-btn" class="menu-action-btn">🎯 Nächstes Ziel [Taste T]</button>
+          <!-- Sound Controls -->
+          <div class="drawer-section">
+            <label class="drawer-section-label" id="menu-sound-label">🔊 Sound & Musik:</label>
+            <button id="sound-toggle-btn" class="drawer-toggle-btn active">
+              <span id="sound-btn-text">🔊 Ton: AN</span>
+            </button>
+          </div>
+
+          <!-- Keyboard Shortcuts & Tutorial -->
+          <div class="drawer-section">
+            <button id="open-keymap-btn" class="drawer-action-btn">
+              <span class="action-btn-icon">⌨️</span>
+              <span id="menu-keymap-text">Tastenbelegung (Key Map) [K]</span>
+            </button>
+            <button id="replay-intro-btn" class="drawer-action-btn secondary">
+              <span class="action-btn-icon">🎬</span>
+              <span id="menu-replay-intro-text">Intro-Animation erneut abspielen</span>
+            </button>
+          </div>
+
+          <!-- Sky targets overview -->
+          <div class="drawer-section sky-overview-section">
+            <label class="drawer-section-label" id="menu-sky-status-label">🪶 Aktuell über dem Garten aktiv:</label>
+            <p id="sky-birds-indicator" class="drawer-sky-text">🕊️ Tauben, 🦢 Kraniche, 🦆 Enten</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center Dynamic FALTALITY / OVERKILL Banner -->
+      <div id="faltality-banner" class="banner-container hidden">
+        <div class="banner-box">
+          <div class="banner-glow"></div>
+          <h2 id="faltality-title" class="faltality-title">FALTALITY!</h2>
+          <p id="faltality-subtitle" class="faltality-subtitle">MAJESTÄTISCHER VOLLTREFFER</p>
+          <div id="faltality-points" class="faltality-points">+1.000 PUNKTE</div>
+        </div>
+      </div>
+
+      <!-- Left HUD: Falt-O-Meter Exponential Tower -->
+      <aside class="left-hud ui-interactive">
+        <div class="fold-tower">
+          <div class="tower-header">
+            <div class="tower-tag" id="fold-tower-tag">FALT-O-METER</div>
+            <div class="fold-number-wrap">
+              <span id="fold-count" class="big-fold-number">0</span>
+              <span id="fold-unit" class="fold-unit">FALTUNGEN</span>
+            </div>
+            <div class="layers-badge" id="layer-pill">1 Lage</div>
+          </div>
+
+          <div class="tower-content">
+            <!-- Active Tier Details -->
+            <div class="tier-card" id="tier-card">
+              <div class="tier-header-line">
+                <span class="tier-icon" id="tier-icon">📄</span>
+                <div>
+                  <div class="tier-title" id="tier-sheet-name">Ungefalteter Bogen</div>
+                  <div class="tier-desc" id="tier-sheet-desc">Flattert sanft zu Boden</div>
+                </div>
               </div>
             </div>
 
-            <!-- Sky Status Overview -->
-            <div class="menu-section sky-status-card">
-              <span id="menu-sky-label" class="menu-label">🪿 Aktuell über dem Garten:</span>
-              <p id="menu-sky-text" class="menu-sky-details">Kraniche, Tauben & Möwen</p>
-            </div>
-
-            <!-- Audio & Keymap Controls -->
-            <div class="menu-section">
-              <div class="menu-btn-col">
-                <button id="menu-sound-btn" class="menu-action-btn">🔊 Ton: AN</button>
-                <button id="menu-keymap-btn" class="menu-action-btn">⌨️ Tastenbelegung [K]</button>
-                <button id="menu-replay-intro-btn" class="menu-action-btn secondary">🎬 Intro-Animation ansehen</button>
+            <!-- Mathematical Stats Mini-Table -->
+            <div class="stats-table">
+              <div class="stat-row">
+                <span class="stat-name">Dicke</span>
+                <span class="stat-val" id="stat-thickness">0.1 mm</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-name">Maße</span>
+                <span class="stat-val" id="stat-dimensions">21 × 30 cm</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-name">Max. Reichweite</span>
+                <span class="stat-val highlight" id="stat-range">~3 Meter</span>
               </div>
             </div>
           </div>
 
-          <div class="drawer-footer">
-            <span class="drawer-footer-text">FALTALITY • High Performance Paper Physics</span>
+          <!-- Direct FALT-PEDIA button in Fold Tower -->
+          <div class="tower-footer">
+            <button id="open-pedia-pill-btn" class="pedia-pill-btn" title="Falt-Pedia öffnen">
+              <span id="open-pedia-pill-text">📖 FALT-PEDIA</span>
+            </button>
           </div>
-        </aside>
-      </div>
-
-      <!-- FALTALITY BANNER OVERLAY -->
-      <div id="faltality-banner" class="faltality-banner hidden">
-        <div id="faltality-title" class="faltality-title">F A L T A L I T Y !</div>
-        <div id="faltality-subtitle" class="faltality-subtitle">Gans erwischt!</div>
-        <div id="faltality-points" class="faltality-points">+250 PUNKTE</div>
-      </div>
-
-      <!-- Container for flying 2D loot rain drops -->
-      <div id="loot-shower-container" class="loot-shower-container"></div>
-
-      <!-- Left Sidebar: Large Fold Tower Indicator (FALT-O-METER) -->
-      <aside class="fold-tower ui-interactive" id="fold-tower" title="Aktuelle Faltungsstufe und Wucht">
-        <div class="tower-header">
-          <span id="tower-tag" class="tower-tag">EXPONENTIAL-FALTMETER</span>
-          <div class="tower-num-group">
-            <span id="tower-folds-val" class="tower-huge-number">0</span>
-            <span id="tower-unit" class="tower-unit">Faltungen</span>
-          </div>
-          <div class="tower-sub-stats">
-            <span id="tower-layers-val" class="tower-pill">1 Lage</span>
-            <span id="tower-thickness-val" class="tower-pill">0.1 mm</span>
-          </div>
-        </div>
-
-        <!-- Vertical Tier Segments -->
-        <div class="tower-tiers">
-          <div class="tower-tier" id="tier-singularity" data-tier="singularity">
-            <span class="tier-icon">🛰️</span>
-            <div class="tier-info">
-              <span id="tier-singularity-name" class="tier-name">11+ Tim Cook Satellit</span>
-              <span id="tier-singularity-desc" class="tier-desc">Keynote Orbit & iSat</span>
-            </div>
-          </div>
-          <div class="tower-tier" id="tier-airliner" data-tier="airliner">
-            <span class="tier-icon">✈️</span>
-            <div class="tier-info">
-              <span id="tier-airliner-name" class="tier-name">9–10 Airliner</span>
-              <span id="tier-airliner-desc" class="tier-desc">Koffer-Explosion</span>
-            </div>
-          </div>
-          <div class="tower-tier" id="tier-limit" data-tier="limit">
-            <span class="tier-icon">⚡</span>
-            <div class="tier-info">
-              <span id="tier-limit-name" class="tier-name">7–8 Limit</span>
-              <span id="tier-limit-desc" class="tier-desc">Tisch vibriert</span>
-            </div>
-          </div>
-          <div class="tower-tier" id="tier-crater" data-tier="crater">
-            <span class="tier-icon">💥</span>
-            <div class="tier-info">
-              <span id="tier-crater-name" class="tier-name">5–6 Krater</span>
-              <span id="tier-crater-desc" class="tier-desc">Meteor & Autoalarm</span>
-            </div>
-          </div>
-          <div class="tower-tier" id="tier-crane" data-tier="crane">
-            <span class="tier-icon">🦢</span>
-            <div class="tier-info">
-              <span id="tier-crane-name" class="tier-name">3–4 Kranich</span>
-              <span id="tier-crane-desc" class="tier-desc">Hoher Weitflug</span>
-            </div>
-          </div>
-          <div class="tower-tier" id="tier-pigeon" data-tier="pigeon">
-            <span class="tier-icon">🕊️</span>
-            <div class="tier-info">
-              <span id="tier-pigeon-name" class="tier-name">1–2 Taube</span>
-              <span id="tier-pigeon-desc" class="tier-desc">Flachgleiter</span>
-            </div>
-          </div>
-          <div class="tower-tier active" id="tier-sheet" data-tier="sheet">
-            <span class="tier-icon">📄</span>
-            <div class="tier-info">
-              <span id="tier-sheet-name" class="tier-name">0 Ungefaltet</span>
-              <span id="tier-sheet-desc" class="tier-desc">Flatterblatt (~3m)</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Direct FALT-PEDIA button in Fold Tower -->
-        <div class="tower-footer">
-          <button id="open-pedia-pill-btn" class="pedia-pill-btn" title="Falt-Pedia öffnen">
-            <span id="open-pedia-pill-text">📖 FALT-PEDIA</span>
-          </button>
         </div>
       </aside>
 
@@ -263,26 +272,24 @@
             </div>
           </div>
 
-          <!-- Main Action Buttons -->
+          <!-- Main Action Buttons (Cupertino Minimal Pill Style) -->
           <div class="button-group">
-            <button id="fold-btn" class="btn btn-fold">
+            <button id="fold-btn" class="btn btn-fold" title="Blatt falten [F]">
               <span class="btn-icon">📄</span>
-              <div class="btn-text">
-                <span id="fold-main-text" class="btn-main-text">FALTEN</span>
-                <span id="fold-subtext" class="btn-sub-text">[Taste F] Verdoppeln</span>
-              </div>
+              <span id="fold-main-text" class="btn-main-text">Falten</span>
+              <kbd id="fold-kbd" class="btn-kbd">F</kbd>
             </button>
 
-            <button id="action-btn" class="btn btn-launch">
+            <button id="action-btn" class="btn btn-launch" title="Zielen & Werfen [Leertaste]">
               <span id="action-btn-icon" class="btn-icon">🎯</span>
-              <div class="btn-text">
-                <span id="action-main-text" class="btn-main-text">ZIELEN</span>
-                <span id="action-subtext" class="btn-sub-text">[Leertaste]</span>
-              </div>
+              <span id="action-main-text" class="btn-main-text">Zielen</span>
+              <kbd id="action-kbd" class="btn-kbd">Space</kbd>
             </button>
 
-            <button id="new-sheet-btn" class="btn btn-secondary" title="Frisches Blatt nehmen">
-              <span id="new-sheet-text">🔄 Reset [R]</span>
+            <button id="new-sheet-btn" class="btn btn-secondary" title="Frisches Blatt nehmen [R]">
+              <span class="btn-icon">🔄</span>
+              <span id="new-sheet-text" class="btn-main-text">Reset</span>
+              <kbd class="btn-kbd">R</kbd>
             </button>
           </div>
         </div>
@@ -304,70 +311,67 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button id="pedia-ok-btn" class="btn btn-primary">Schließen</button>
+            <button id="pedia-ok-btn" class="btn btn-launch">Schließen</button>
           </div>
         </div>
       </div>
 
-      <!-- ⌨️ Keyboard Shortcuts Modal [Key K] -->
+      <!-- ⌨️ KEYBOARD SHORTCUTS MODAL -->
       <div id="keymap-modal" class="modal-backdrop hidden ui-interactive">
         <div class="modal-card keymap-card">
           <div class="modal-header">
             <h2 id="keymap-modal-title">⌨️ Tastenbelegung (Key Map)</h2>
             <button id="keymap-close-btn" class="icon-btn">✕</button>
           </div>
-          <div class="modal-content">
-            <div class="keymap-grid">
-              <div class="keymap-row">
-                <div class="keys"><kbd>F</kbd></div>
-                <div id="keymap-desc-f" class="desc"><strong>Papier falten</strong> (Dicke & Reichweite verdoppeln) / Zurück zum Tisch</div>
+          <div class="modal-content keymap-content">
+            <div class="shortcut-list">
+              <div class="shortcut-item">
+                <kbd>F</kbd>
+                <span id="keymap-desc-f"><strong>Papier falten</strong> (Dicke & Reichweite verdoppeln) / Zurück zum Tisch</span>
               </div>
-              <div class="keymap-row">
-                <div class="keys"><kbd>Leertaste</kbd></div>
-                <div id="keymap-desc-space" class="desc"><strong>Zielmodus aktivieren</strong> bzw. <strong>Papier abschiessen</strong></div>
+              <div class="shortcut-item">
+                <kbd>Leertaste</kbd>
+                <span id="keymap-desc-space"><strong>Zielmodus aktivieren</strong> bzw. <strong>Papier abschiessen</strong></span>
               </div>
-              <div class="keymap-row">
-                <div class="keys"><kbd>T</kbd> / Klick</div>
-                <div id="keymap-desc-t" class="desc"><strong>Ziel wechseln</strong> (Schaltet durch Tauben, Flugzeuge & Tim Cook Satellit)</div>
+              <div class="shortcut-item">
+                <kbd>T</kbd>
+                <span id="keymap-desc-t"><strong>Ziel wechseln</strong> (Schaltet durch Tauben, Flugzeuge & Tim Cook Satellit)</span>
               </div>
-              <div class="keymap-row">
-                <div class="keys"><kbd>↑</kbd> <kbd>↓</kbd></div>
-                <div id="keymap-desc-pitch" class="desc"><strong>Steigung (Pitch)</strong> erhöhen / senken</div>
+              <div class="shortcut-item">
+                <kbd>↑ / ↓</kbd>
+                <span id="keymap-desc-pitch"><strong>Steigung (Pitch)</strong> erhöhen / senken</span>
               </div>
-              <div class="keymap-row">
-                <div class="keys"><kbd>←</kbd> <kbd>→</kbd></div>
-                <div id="keymap-desc-yaw" class="desc"><strong>Richtung (Yaw)</strong> nach links / rechts steuern</div>
+              <div class="shortcut-item">
+                <kbd>← / →</kbd>
+                <span id="keymap-desc-yaw"><strong>Richtung (Yaw)</strong> nach links / rechts steuern</span>
               </div>
-              <div class="keymap-row">
-                <div class="keys"><kbd>A</kbd></div>
-                <div id="keymap-desc-a" class="desc"><strong>Apple iAim</strong> Auto-Lock an-/ausschalten</div>
+              <div class="shortcut-item">
+                <kbd>A</kbd>
+                <span id="keymap-desc-a"><strong>Apple iAim</strong> Auto-Lock an-/ausschalten</span>
               </div>
-              <div class="keymap-row">
-                <div class="keys"><kbd>M</kbd></div>
-                <div id="keymap-desc-m" class="desc"><strong>Menü öffnen / schließen</strong></div>
+              <div class="shortcut-item">
+                <kbd>K</kbd>
+                <span id="keymap-desc-k">Dieses <strong>Tastenbelegungs-Fenster</strong> öffnen / schließen</span>
               </div>
-              <div class="keymap-row">
-                <div class="keys"><kbd>K</kbd></div>
-                <div id="keymap-desc-k" class="desc">Dieses <strong>Tastenbelegungs-Fenster</strong> öffnen / schließen</div>
+              <div class="shortcut-item">
+                <kbd>R</kbd>
+                <span id="keymap-desc-r"><strong>Frisches Blatt Papier</strong> auf den Tisch legen (Reset)</span>
               </div>
-              <div class="keymap-row">
-                <div class="keys"><kbd>R</kbd></div>
-                <div id="keymap-desc-r" class="desc"><strong>Frisches Blatt Papier</strong> auf den Tisch legen (Reset)</div>
-              </div>
-              <div class="keymap-row">
-                <div class="keys"><kbd>Esc</kbd></div>
-                <div id="keymap-desc-esc" class="desc">Fenster & Overlays schließen</div>
+              <div class="shortcut-item">
+                <kbd>Esc</kbd>
+                <span id="keymap-desc-esc">Fenster & Overlays schließen</span>
               </div>
             </div>
-            <div class="keymap-footer">
-              <button id="keymap-ok-btn" class="btn btn-primary">Verstanden, weiterspielen!</button>
-            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="keymap-ok-btn" class="btn btn-launch">Verstanden, weiterspielen!</button>
           </div>
         </div>
       </div>
+
     </div>
 
-    <!-- Main Game Bundle -->
-    <script type="module" src="./src/main.ts"></script>
+    <!-- Main Entry Module -->
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
