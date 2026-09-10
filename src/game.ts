@@ -4,8 +4,11 @@ import { Environment } from './models/environment';
 import { BirdManager } from './models/birds';
 import type { BirdData } from './models/birds';
 import { PaperSheet } from './models/paper';
+import type { CreaseQuality } from './models/paper';
 import { GOOSE_PALETTE } from './materials';
 import { sound } from './sound';
+import { CAMPAIGN_LEVELS, CampaignProgressManager } from './levels';
+import type { CampaignLevel } from './levels';
 
 export type GamePhase = 'folding' | 'aiming' | 'flying';
 
@@ -21,7 +24,7 @@ export class FaltalityGame {
   private container: HTMLElement;
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
-  private renderer: THREE.WebGLRenderer;
+  public renderer: THREE.WebGLRenderer;
 
   public environment: Environment;
   public birdManager: BirdManager;
@@ -30,7 +33,7 @@ export class FaltalityGame {
   // 2-Phase Game Loop: 'folding' -> 'aiming' -> 'flying'
   public phase: GamePhase = 'folding';
 
-  // Auto-Aim & Target Lock
+  // 90s Arcade Auto-Aim & Fast Reaction Lock (Default ON for fast-paced arcade action!)
   public autoAim: boolean = true;
   public targetedBird: BirdData | null = null;
   private lockOnReticle: THREE.Group;
@@ -42,17 +45,25 @@ export class FaltalityGame {
   public powerPercent: number = 85;
 
   // Camera animation positions
-  // 1. Folding mode: cozy overhead table angle, focusing on folding paper
-  private foldCamPos = new THREE.Vector3(0, 2.7, 2.4);
-  private foldCamTarget = new THREE.Vector3(0, 1.2, 0.0);
+  // 1. Folding mode: warm, readable table framing with wide FOV (O'Reilly book & coffee in full view!)
+  private foldCamPos = new THREE.Vector3(0, 2.30, 2.15);
+  private foldCamTarget = new THREE.Vector3(0, 1.22, 0.05);
 
-  // 2. Aiming & Shooting mode (Moorhuhn Style): stationary PoV overlooking the garden sky
+  // 2. Aiming & Shooting mode (Moorhuhn Style): stationary PoV overlooking the sky
   private aimCamPos = new THREE.Vector3(0, 2.05, 3.8);
 
   // 3. Chaos Wide Pan-Out Cam: Elevated overview of garden, neighbor car and fainting sheep!
   private chaosCamPos = new THREE.Vector3(0, 5.8, 9.2);
   private chaosCamTarget = new THREE.Vector3(0.5, 1.2, -18.0);
   public isChaosSpectating: boolean = false;
+
+  // Level Progression: Level 1 -> Level 2
+  public static readonly LEVEL1_TARGET_SCORE = 3000;
+  public currentLevelId: number = 1;
+  public level2Unlocked: boolean = false;
+  public onLevelUnlocked?: (levelId: number) => void;
+  public onLevelSwitch?: (levelId: number) => void;
+  public onBoatHit?: (points: number) => void;
 
   private targetCamPos = new THREE.Vector3();
   private targetCamLookAt = new THREE.Vector3();
@@ -65,6 +76,8 @@ export class FaltalityGame {
   private slowMoTimer: number = 0;
   private isResettingCam: boolean = false;
   private hitTargetThisFlight: boolean = false;
+  private hitEndFlightTimer: number | null = null;
+  private flightResetTimer: number | null = null;
 
   public state: GameState = {
     score: 0,
@@ -96,6 +109,54 @@ export class FaltalityGame {
   public onFlightEnd?: () => void;
   public onPhaseChange?: (phase: GamePhase) => void;
 
+  // Boss: iPhone Duo callbacks
+  public bossSpawnedOnce: boolean = false;
+  public onBossSpawn?: (boss: BirdData) => void;
+  public onBossDamage?: (boss: BirdData, currentHp: number, maxHp: number, isCritical?: boolean) => void;
+  public onBossDefeat?: (boss: BirdData) => void;
+  public onShieldDeflect?: (bird: BirdData) => void;
+
+  // Active Crease Timing Minigame (Gears / Mario Golf Style)
+  public isCreasing: boolean = false;
+  public creaseStartTime: number = 0;
+  public creaseDuration: number = 650; // ms per sweep
+  public sweetspotStart: number = 0.52; // 52% of gauge
+  public sweetspotEnd: number = 0.78;   // 78% of gauge
+  public onCreaseStart?: (data: { duration: number; sweetspotStart: number; sweetspotEnd: number }) => void;
+  public onCreaseProgress?: (progress: number) => void;
+  public onCreaseResult?: (quality: CreaseQuality, perfectCount: number) => void;
+
+  // Campaign Mode State & Progression
+  public gameMode: 'sandbox' | 'campaign' = 'sandbox';
+  public currentLevel: CampaignLevel | null = null;
+  public levelSheetsRemaining: number = 0;
+  public levelSheetsUsed: number = 0;
+  public levelTargetsHit: number = 0;
+  public levelObjectiveMet: boolean = false;
+  public levelMaxFoldsUsed: number = 0;
+  public levelScoreStart: number = 0;
+
+  public onLevelComplete?: (level: CampaignLevel, stars: number, score: number, isNewRecord: boolean, newlyUnlocked?: number) => void;
+  public onLevelFailed?: (level: CampaignLevel, reason: string) => void;
+  public onGameModeChange?: (mode: 'sandbox' | 'campaign', level?: CampaignLevel | null) => void;
+
+  // Direct Look & Hold-to-Charge Slingshot State
+  public isCharging: boolean = false;
+  public chargePower: number = 20;
+  public chargeScreenX: number = 0;
+  public chargeScreenY: number = 0;
+
+  // Backyard Chaos hit callbacks
+  public onCatHit?: (points: number) => void;
+  public onGrillHit?: (points: number) => void;
+  public onCarHit?: (points: number) => void;
+
+  // Slingshot State & Listeners
+  public isSlingshotDragging: boolean = false;
+  public slingshotTension: number = 0; // 0.0 to 1.0
+  public onSlingshotDrag?: (data: { active: boolean; tension: number; power: number; pitch: number; yaw: number; screenX: number; screenY: number }) => void;
+  public flightDuration: number = 0;
+
   private lastTime: number = 0;
   private raycaster = new THREE.Raycaster();
   private mouse = new THREE.Vector2();
@@ -107,7 +168,7 @@ export class FaltalityGame {
     this.scene.background = new THREE.Color(GOOSE_PALETTE.sky);
     this.scene.fog = new THREE.Fog(GOOSE_PALETTE.fog, 65, 260);
 
-    this.camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 600);
+    this.camera = new THREE.PerspectiveCamera(68, window.innerWidth / window.innerHeight, 0.1, 600);
     this.camera.position.copy(this.foldCamPos);
     this.targetCamPos.copy(this.foldCamPos);
     this.targetCamLookAt.copy(this.foldCamTarget);
@@ -129,6 +190,12 @@ export class FaltalityGame {
     this.birdManager = new BirdManager(this.scene);
     this.birdManager.initFlocks();
     this.paper = new PaperSheet(this.scene);
+
+    // Table physical reaction on thick folds
+    this.paper.onHeavyFold = (folds) => {
+      this.screenShake = folds >= 9 ? 0.48 : 0.24;
+      this.environment.shakeMug(folds >= 9 ? 1.6 : 1.1);
+    };
 
     const { reticleGroup, reticleMat } = this.createLockOnReticle();
     this.lockOnReticle = reticleGroup;
@@ -289,6 +356,7 @@ export class FaltalityGame {
     this.foldYawOffset = 0;
     this.foldPitchOffset = 0;
     this.isManualAiming = false;
+    this.isChaosSpectating = false;
     if (this.phase === 'aiming') {
       this.enterFoldingMode();
     } else {
@@ -296,23 +364,66 @@ export class FaltalityGame {
     }
   }
 
-  public cycleTarget() {
+  public summonBoss(): BirdData {
+    // Clear chaos camera immediately so player is not stuck in garden overview
+    this.isChaosSpectating = false;
+
+    // Cancel pending flight timers
+    if (this.flightResetTimer) {
+      clearTimeout(this.flightResetTimer);
+      this.flightResetTimer = null;
+    }
+    if (this.hitEndFlightTimer) {
+      clearTimeout(this.hitEndFlightTimer);
+      this.hitEndFlightTimer = null;
+    }
+    this.isResettingCam = false;
+
+    // If paper was in flight, cleanly reset it to table
+    if (this.paper.isFlying) {
+      this.paper.isFlying = false;
+      this.paper.mesh.position.copy(this.paper.initialTablePos);
+      this.paper.velocity.set(0, 0, 0);
+    }
+
+    const boss = this.birdManager.ensureBossSpawned();
+    this.targetedBird = boss;
+    this.bossSpawnedOnce = true;
+    sound.playOneMoreThingIntro();
+
+    // Directly enter aiming mode and lock onto boss in the sky!
+    this.phase = 'aiming';
+    this.foldYawOffset = 0;
+    this.foldPitchOffset = 0;
+    this.isManualAiming = false;
+    this.aimAtTarget(boss);
+
+    if (this.onBossSpawn) this.onBossSpawn(boss);
+    if (this.onPhaseChange) this.onPhaseChange(this.phase);
+    if (this.onStatsChanged) this.onStatsChanged();
+    return boss;
+  }
+
+  public cycleTarget(direction: number = 1) {
     const aliveBirds = this.birdManager.birds.filter(b => b.alive);
     if (aliveBirds.length === 0) return;
 
     const stats = this.paper.getStats();
+    const boss = aliveBirds.find(b => b.type === 'iphone_duo');
     const satellite = aliveBirds.find(b => b.type === 'satellite');
 
-    // If we are on 11+ folds and satellite is alive and not targeted, jump straight to it!
-    if (stats.folds >= 11 && satellite && this.targetedBird !== satellite) {
+    if (boss && this.targetedBird !== boss && this.targetedBird === null) {
+      this.targetedBird = boss;
+    } else if (stats.folds >= 11 && satellite && this.targetedBird !== satellite && !boss) {
       this.targetedBird = satellite;
     } else {
       const currentIndex = this.targetedBird ? aliveBirds.indexOf(this.targetedBird) : -1;
-      const nextIndex = (currentIndex + 1) % aliveBirds.length;
+      const nextIndex = (currentIndex + direction + aliveBirds.length) % aliveBirds.length;
       this.targetedBird = aliveBirds[nextIndex];
     }
 
     if (this.targetedBird) {
+      sound.playLockOn();
       this.aimAtTarget(this.targetedBird);
     }
     if (this.onStatsChanged) this.onStatsChanged();
@@ -343,6 +454,7 @@ export class FaltalityGame {
 
   public enterAimingMode() {
     if (this.phase === 'flying' || this.paper.isFolding) return;
+    this.isCreasing = false;
     this.isChaosSpectating = false;
     this.phase = 'aiming';
     this.foldYawOffset = 0;
@@ -350,19 +462,38 @@ export class FaltalityGame {
     this.isManualAiming = false;
 
     const stats = this.paper.getStats();
-    // Only spawn and auto-acquire satellite if high fold stage (11+)!
-    if (stats.folds >= 11) {
+    const boss = this.birdManager.birds.find(b => b.alive && b.type === 'iphone_duo');
+
+    if (boss) {
+      // Prioritize boss if summoned!
+      this.targetedBird = boss;
+      sound.playLockOn();
+      this.aimAtTarget(boss);
+    } else if (stats.folds >= 11) {
+      // Auto-acquire satellite if high fold stage (11+)!
       const satellite = this.birdManager.ensureSatelliteSpawned();
       this.targetedBird = satellite;
+      sound.playLockOn();
       this.aimAtTarget(satellite);
     } else {
       // Ensure satellite is NOT present if folds < 11
       this.birdManager.despawnSatellite();
-      if (this.targetedBird?.type === 'satellite') {
+      if (this.targetedBird?.type === 'satellite' || (this.targetedBird && !this.targetedBird.alive)) {
         this.targetedBird = null;
+      }
+      // 90s Arcade Auto-Aim: Automatically acquire nearest living target!
+      if (this.autoAim && this.targetedBird === null) {
+        const aliveBirds = this.birdManager.birds.filter(b => b.alive);
+        if (aliveBirds.length > 0) {
+          aliveBirds.sort((a, b) => Math.abs(a.mesh.position.x) - Math.abs(b.mesh.position.x));
+          this.targetedBird = aliveBirds[0];
+          sound.playLockOn();
+          this.aimAtTarget(this.targetedBird);
+        }
       }
     }
 
+    this.paper.setSlingshotVisible(true);
     this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
     if (this.onPhaseChange) this.onPhaseChange(this.phase);
     if (this.onStatsChanged) this.onStatsChanged();
@@ -370,9 +501,11 @@ export class FaltalityGame {
 
   public enterFoldingMode() {
     if (this.phase === 'flying') return;
+    this.cancelSlingshotDrag();
     this.isChaosSpectating = false;
     this.phase = 'folding';
     this.paper.trajectoryLine.visible = false;
+    this.paper.setSlingshotVisible(false);
     this.lockOnReticle.visible = false;
     this.foldYawOffset = 0;
     this.foldPitchOffset = 0;
@@ -408,20 +541,92 @@ export class FaltalityGame {
     return this.paper.materialType;
   }
 
-  public foldPaper() {
+  public triggerFoldAction() {
     if (this.phase === 'flying' || this.paper.isFolding) return;
 
     if (this.phase === 'aiming') {
       this.enterFoldingMode();
+      return;
     }
 
-    if (this.paper.materialType === 'foil') {
-      sound.playFoilCrinkle(this.paper.folds);
+    if (!this.isCreasing) {
+      this.startCreaseMinigame();
     } else {
-      sound.playPianoNote(this.paper.folds);
+      this.commitCreaseMinigame();
+    }
+  }
+
+  public startCreaseMinigame() {
+    if (this.phase === 'flying' || this.paper.isFolding || this.isCreasing) return;
+    this.isCreasing = true;
+    this.creaseStartTime = performance.now();
+
+    // Dynamic difficulty and randomized beat / sweetspot position
+    const folds = this.paper.folds;
+    let sweetspotWidth = 0.24;
+    if (folds <= 2) {
+      sweetspotWidth = 0.23 + Math.random() * 0.05; // 23% - 28% wide
+    } else if (folds <= 6) {
+      sweetspotWidth = 0.16 + Math.random() * 0.04; // 16% - 20% wide
+    } else {
+      sweetspotWidth = 0.11 + Math.random() * 0.03; // 11% - 14% wide (Tight Master Fold!)
     }
 
-    this.paper.fold(() => {
+    // Dynamic randomized position across the gauge (20% to 92% - width)
+    const minStart = 0.20;
+    const maxStart = Math.max(minStart, 0.92 - sweetspotWidth);
+    this.sweetspotStart = minStart + Math.random() * (maxStart - minStart);
+    this.sweetspotEnd = this.sweetspotStart + sweetspotWidth;
+
+    // Dynamic duration with jitter:
+    // Base duration scales down from 760ms to 520ms, plus +/- 120ms random jitter!
+    const baseDuration = Math.max(500, 760 - folds * 28);
+    const jitter = (Math.random() - 0.5) * 240;
+    this.creaseDuration = Math.round(Math.max(420, Math.min(880, baseDuration + jitter)));
+
+    if (this.onCreaseStart) {
+      this.onCreaseStart({
+        duration: this.creaseDuration,
+        sweetspotStart: this.sweetspotStart,
+        sweetspotEnd: this.sweetspotEnd
+      });
+    }
+  }
+
+  public commitCreaseMinigame() {
+    if (!this.isCreasing) return;
+    this.isCreasing = false;
+
+    const elapsed = performance.now() - this.creaseStartTime;
+    const progress = Math.min(1.0, elapsed / this.creaseDuration);
+
+    let quality: CreaseQuality = 'good';
+    if (progress >= this.sweetspotStart && progress <= this.sweetspotEnd) {
+      quality = 'perfect';
+    } else if (progress < this.sweetspotStart) {
+      const earlyTolerance = 0.12;
+      quality = progress >= (this.sweetspotStart - earlyTolerance) ? 'good' : 'imperfect';
+    } else {
+      const lateTolerance = 0.12;
+      quality = progress <= (this.sweetspotEnd + lateTolerance) ? 'good' : 'imperfect';
+    }
+
+    this.executeFold(quality);
+  }
+
+  public autoCommitCreaseTimeout() {
+    if (!this.isCreasing) return;
+    this.isCreasing = false;
+    this.executeFold('good');
+  }
+
+  public executeFold(quality: CreaseQuality = 'good') {
+    if (this.onCreaseResult) {
+      const nextCount = this.paper.perfectCreaseCount + (quality === 'perfect' ? 1 : 0);
+      this.onCreaseResult(quality, nextCount);
+    }
+
+    this.paper.fold(quality, () => {
       const folds = this.paper.folds;
       // Satellite triggers exclusively at 11+ folds!
       if (folds >= 11) {
@@ -436,7 +641,12 @@ export class FaltalityGame {
     });
   }
 
+  public foldPaper() {
+    this.triggerFoldAction();
+  }
+
   public resetNewSheet() {
+    this.isCreasing = false;
     this.state.paperCount++;
     if (!this.isFoilUnlocked()) {
       this.paper.materialType = 'paper';
@@ -458,14 +668,152 @@ export class FaltalityGame {
       return;
     }
 
+    this.cancelSlingshotDrag();
     this.hitTargetThisFlight = false;
     this.isChaosSpectating = false;
     this.phase = 'flying';
+    this.flightDuration = 0;
+
+    if (this.gameMode === 'campaign' && this.currentLevel) {
+      this.levelSheetsRemaining = Math.max(0, this.levelSheetsRemaining - 1);
+      this.levelSheetsUsed++;
+      this.levelMaxFoldsUsed = Math.max(this.levelMaxFoldsUsed, this.paper.folds);
+    }
+
     this.screenShake = 0.15; // Crisp shooter kick!
     this.lockOnReticle.visible = false;
     this.paper.launch(this.pitchDeg, this.yawDeg, this.powerPercent);
     if (this.onPhaseChange) this.onPhaseChange(this.phase);
     if (this.onStatsChanged) this.onStatsChanged();
+  }
+
+  // Direct Look: Move trackpad/mouse freely to point crosshair/camera at sky
+  public updateAimPointer(clientX: number, clientY: number) {
+    if (this.phase !== 'aiming' || this.isChaosSpectating) return;
+
+    // Viewport-normalized coordinates: X in [-1, 1], Y in [-1, 1]
+    const normX = (clientX / window.innerWidth) * 2 - 1;
+    const normY = (clientY / window.innerHeight) * 2 - 1;
+
+    // Pitch: higher on screen = aim higher (up to 78 deg), lower = aim lower (down to 14 deg)
+    const targetPitch = 42 - normY * 34;
+    this.pitchDeg = Math.max(12, Math.min(80, Math.round(targetPitch)));
+
+    // Yaw: center is 0 deg, left (normX = -1) turns left (+58 deg), right turns right (-58 deg)
+    const targetYaw = -normX * 58;
+    this.yawDeg = Math.max(-75, Math.min(75, Math.round(targetYaw)));
+
+    this.isManualAiming = true;
+    this.chargeScreenX = clientX;
+    this.chargeScreenY = clientY;
+
+    this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
+    if (this.onStatsChanged) this.onStatsChanged();
+  }
+
+  // Hold-to-Charge: Press & hold pointer or Spacebar to charge shot power from 20% to 100%!
+  public startChargingShot(screenX: number, screenY: number): boolean {
+    if (this.paper.isFlying || this.paper.isFolding) return false;
+
+    if (this.phase === 'folding') {
+      this.enterAimingMode();
+    }
+
+    this.isCharging = true;
+    this.isSlingshotDragging = true;
+    const basePower = (this.autoAim && this.targetedBird) ? 80 : 20;
+    this.chargePower = basePower;
+    this.chargeScreenX = screenX;
+    this.chargeScreenY = screenY;
+    this.powerPercent = basePower;
+    this.slingshotTension = Math.max(0.05, (basePower - 20) / 80);
+    if (!this.autoAim || !this.targetedBird) {
+      this.isManualAiming = true;
+      this.lockOnReticle.visible = false;
+    }
+
+    // Initial subtle pull on rubber bands
+    this.paper.setSlingshotPull(new THREE.Vector3(0, -0.01, 0.04), this.slingshotTension);
+    this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
+
+    if (this.onSlingshotDrag) {
+      this.onSlingshotDrag({
+        active: true,
+        tension: 0.05,
+        power: 20,
+        pitch: this.pitchDeg,
+        yaw: this.yawDeg,
+        screenX,
+        screenY
+      });
+    }
+
+    return true;
+  }
+
+  // Release charged shot: Fires immediately with crisp audio and high precision
+  public releaseChargeShot(): boolean {
+    if (!this.isCharging && !this.isSlingshotDragging) return false;
+    this.isCharging = false;
+    this.isSlingshotDragging = false;
+
+    sound.playSlingRelease();
+    this.paper.setSlingshotPull(null, 0);
+
+    if (this.onSlingshotDrag) {
+      this.onSlingshotDrag({
+        active: false,
+        tension: 0,
+        power: this.powerPercent,
+        pitch: this.pitchDeg,
+        yaw: this.yawDeg,
+        screenX: 0,
+        screenY: 0
+      });
+    }
+
+    this.launchPaper();
+    return true;
+  }
+
+  // Cancel charging safely
+  public cancelChargingShot() {
+    this.isCharging = false;
+    this.isSlingshotDragging = false;
+    this.slingshotTension = 0;
+    this.paper.setSlingshotPull(null, 0);
+    this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
+
+    if (this.onSlingshotDrag) {
+      this.onSlingshotDrag({
+        active: false,
+        tension: 0,
+        power: this.powerPercent,
+        pitch: this.pitchDeg,
+        yaw: this.yawDeg,
+        screenX: 0,
+        screenY: 0
+      });
+    }
+  }
+
+  // Slingshot alias methods for backwards compatibility
+  public startSlingshotDrag(screenX: number, screenY: number): boolean {
+    return this.startChargingShot(screenX, screenY);
+  }
+
+  public updateSlingshotDrag(screenX: number, screenY: number) {
+    this.chargeScreenX = screenX;
+    this.chargeScreenY = screenY;
+    this.updateAimPointer(screenX, screenY);
+  }
+
+  public releaseSlingshotDrag(): boolean {
+    return this.releaseChargeShot();
+  }
+
+  public cancelSlingshotDrag() {
+    this.cancelChargingShot();
   }
 
   private triggerFaltality(bird: BirdData) {
@@ -489,16 +837,43 @@ export class FaltalityGame {
     if (this.state.currentCombo > this.state.bestCombo) {
       this.state.bestCombo = this.state.currentCombo;
     }
+    this.checkLevelProgression();
+
+    // Campaign Mode objective check:
+    if (this.gameMode === 'campaign' && this.currentLevel) {
+      if (this.currentLevel.targetAction === 'hit_birds') {
+        if (this.currentLevel.targetBirdTypes.includes(bird.type)) {
+          this.levelTargetsHit++;
+          if (this.levelTargetsHit >= this.currentLevel.requiredTargetCount) {
+            this.levelObjectiveMet = true;
+          }
+        }
+      } else if (this.currentLevel.targetAction === 'defeat_boss') {
+        if (bird.type === 'iphone_duo') {
+          this.levelTargetsHit++;
+          this.levelObjectiveMet = true;
+        }
+      }
+    }
 
     if (!wasFoilUnlocked && this.isFoilUnlocked()) {
       this.environment.setFoilUnlocked(true);
       if (this.onFoilUnlocked) this.onFoilUnlocked();
     }
 
-    // Comedic trigger: Airliners and Satellites scare the fainting sheep!
-    if (bird.type === 'airplane' || bird.type === 'satellite') {
+    // Comedic trigger: Airliners, Satellites and iPhone Duo scare the fainting sheep and trigger alarm!
+    if (bird.type === 'airplane' || bird.type === 'satellite' || bird.type === 'iphone_duo') {
       this.environment.triggerFaintingSheep();
+      this.environment.triggerCarAlarm();
       this.isChaosSpectating = true;
+    }
+
+    // Auto-summon iPhone Duo when score >= 15,000 or after satellite is pulverized!
+    if ((this.state.score >= 15000 || bird.type === 'satellite') && !this.bossSpawnedOnce) {
+      this.bossSpawnedOnce = true;
+      setTimeout(() => {
+        this.summonBoss();
+      }, 1600);
     }
 
     sound.playFaltality();
@@ -514,8 +889,62 @@ export class FaltalityGame {
     }
   }
 
-  private handleFlightFinished() {
-    if (this.isResettingCam) return;
+  public fastResetFlight() {
+    if (this.phase !== 'flying') return;
+    if (this.hitEndFlightTimer) {
+      clearTimeout(this.hitEndFlightTimer);
+      this.hitEndFlightTimer = null;
+    }
+    if (this.flightResetTimer) {
+      clearTimeout(this.flightResetTimer);
+      this.flightResetTimer = null;
+    }
+    this.paper.isFlying = false;
+    this.paper.velocity.set(0, 0, 0);
+    this.isResettingCam = false;
+    this.handleFlightFinished(true);
+  }
+
+  public checkLevelProgression() {
+    if (this.currentLevelId === 1 && !this.level2Unlocked && this.state.score >= FaltalityGame.LEVEL1_TARGET_SCORE) {
+      this.level2Unlocked = true;
+      sound.playLevelUp();
+      confetti({
+        particleCount: 110,
+        spread: 85,
+        origin: { y: 0.45 },
+        colors: ['#00d2d3', '#54a0ff', '#feca57', '#ff6b6b']
+      });
+      if (this.onLevelUnlocked) this.onLevelUnlocked(2);
+    }
+  }
+
+  public switchLevel(levelId: number): boolean {
+    if (levelId === 2 && !this.level2Unlocked && this.state.score < FaltalityGame.LEVEL1_TARGET_SCORE) {
+      return false;
+    }
+    this.currentLevelId = levelId;
+    this.environment.setLevel(levelId);
+    this.targetedBird = null;
+    this.lockOnReticle.visible = false;
+    if (levelId === 1) {
+      this.birdManager.initFlocks();
+    } else if (levelId === 2) {
+      this.birdManager.loadCoastFlocks();
+    }
+    this.enterFoldingMode();
+    if (this.onLevelSwitch) this.onLevelSwitch(levelId);
+    if (this.onStatsChanged) this.onStatsChanged();
+    return true;
+  }
+
+  private handleFlightFinished(isFast: boolean = false) {
+    if (this.hitEndFlightTimer) {
+      clearTimeout(this.hitEndFlightTimer);
+      this.hitEndFlightTimer = null;
+    }
+
+    if (this.isResettingCam && !isFast) return;
     this.isResettingCam = true;
 
     // Reset combo if player missed
@@ -524,7 +953,7 @@ export class FaltalityGame {
     }
 
     // Overkill crater effect ONLY for overfolded missed throws (paper slamming into lawn/neighbor fence)
-    const isOverkillMiss = this.paper.folds >= 5 && !this.hitTargetThisFlight;
+    const isOverkillMiss = !isFast && this.paper.folds >= 5 && !this.hitTargetThisFlight;
     if (isOverkillMiss) {
       this.screenShake = 0.6;
       sound.playGroundImpact();
@@ -536,6 +965,12 @@ export class FaltalityGame {
       this.environment.triggerFaintingSheep();
       this.isChaosSpectating = true;
 
+      // Campaign Mode crater objective check:
+      if (this.gameMode === 'campaign' && this.currentLevel?.targetAction === 'trigger_crater') {
+        this.levelTargetsHit++;
+        this.levelObjectiveMet = true;
+      }
+
       if (this.onOverkillCrater) {
         this.onOverkillCrater(this.paper.folds);
       }
@@ -543,25 +978,152 @@ export class FaltalityGame {
 
     if (this.onFlightEnd) this.onFlightEnd();
 
-    // WIDE GARDEN CINEMATIC TIMEOUT:
-    // If chaos occurred (car alarm or sheep fainting), pull camera back for 3.8s so player can watch!
-    const resetDelay = this.isChaosSpectating ? 3800 : 600;
+    // Campaign Level Win/Loss resolution:
+    if (this.gameMode === 'campaign' && this.currentLevel) {
+      if (this.levelObjectiveMet) {
+        const earnedStars = this.currentLevel.stars.checkStars({
+          objectiveMet: true,
+          sheetsUsed: this.levelSheetsUsed,
+          maxSheets: this.currentLevel.maxSheets,
+          perfectCreases: this.paper.perfectCreaseCount,
+          score: this.state.score - this.levelScoreStart,
+          maxFoldsUsed: this.levelMaxFoldsUsed
+        });
+        const scoreDelta = Math.max(0, this.state.score - this.levelScoreStart);
+        const { isNewRecord, newlyUnlockedLevel } = CampaignProgressManager.saveLevelCompletion(
+          this.currentLevel.id,
+          earnedStars,
+          scoreDelta
+        );
+        sound.playLevelVictoryFanfare();
+        if (this.onLevelComplete) {
+          this.onLevelComplete(this.currentLevel, earnedStars, scoreDelta, isNewRecord, newlyUnlockedLevel);
+        }
+        this.isResettingCam = false;
+        return;
+      } else if (this.levelSheetsRemaining <= 0) {
+        sound.playLevelFailed();
+        if (this.onLevelFailed) {
+          this.onLevelFailed(this.currentLevel, 'no_sheets');
+        }
+        this.isResettingCam = false;
+        return;
+      }
+    }
 
-    setTimeout(() => {
+    // WIDE GARDEN CINEMATIC TIMEOUT:
+    // If chaos occurred, pull camera back for a bit, but keep it snappy!
+    const isBossActive = this.birdManager.birds.some(b => b.alive && b.type === 'iphone_duo');
+    const resetDelay = isFast ? 0 : (this.isChaosSpectating ? (isBossActive ? 900 : 1500) : 250);
+
+    if (this.flightResetTimer) {
+      clearTimeout(this.flightResetTimer);
+    }
+
+    const doReset = () => {
+      this.flightResetTimer = null;
       this.state.paperCount++;
       if (!this.isFoilUnlocked()) {
         this.paper.materialType = 'paper';
       }
       this.paper.resetNewSheet();
       this.birdManager.despawnSatellite();
-      this.targetedBird = null;
+
+      // Crucial: Retain boss target lock-on if active!
+      if (this.targetedBird?.type !== 'iphone_duo') {
+        this.targetedBird = null;
+      }
       this.isChaosSpectating = false;
+      this.hitTargetThisFlight = false;
       this.phase = 'folding';
       this.paper.trajectoryLine.visible = false;
       this.isResettingCam = false;
       if (this.onPhaseChange) this.onPhaseChange(this.phase);
       if (this.onStatsChanged) this.onStatsChanged();
-    }, resetDelay);
+    };
+
+    if (resetDelay === 0) {
+      doReset();
+    } else {
+      this.flightResetTimer = window.setTimeout(doReset, resetDelay);
+    }
+  }
+
+  public startCampaignLevel(levelId: number) {
+    const lvl = CAMPAIGN_LEVELS.find(l => l.id === levelId);
+    if (!lvl) return;
+
+    if (this.flightResetTimer) {
+      clearTimeout(this.flightResetTimer);
+      this.flightResetTimer = null;
+    }
+
+    this.gameMode = 'campaign';
+    this.currentLevel = lvl;
+    this.levelSheetsRemaining = lvl.maxSheets;
+    this.levelSheetsUsed = 0;
+    this.levelTargetsHit = 0;
+    this.levelObjectiveMet = false;
+    this.levelMaxFoldsUsed = 0;
+    this.levelScoreStart = this.state.score;
+    this.hitTargetThisFlight = false;
+    this.isChaosSpectating = false;
+    this.isResettingCam = false;
+    this.targetedBird = null;
+
+    this.birdManager.loadLevelSpawns(lvl.spawns);
+    this.paper.resetNewSheet();
+    this.enterFoldingMode();
+
+    if (this.onGameModeChange) this.onGameModeChange('campaign', lvl);
+    if (this.onStatsChanged) this.onStatsChanged();
+  }
+
+  public startSandboxMode() {
+    if (this.flightResetTimer) {
+      clearTimeout(this.flightResetTimer);
+      this.flightResetTimer = null;
+    }
+
+    this.gameMode = 'sandbox';
+    this.currentLevel = null;
+    this.levelSheetsRemaining = 0;
+    this.levelSheetsUsed = 0;
+    this.levelTargetsHit = 0;
+    this.levelObjectiveMet = false;
+    this.levelMaxFoldsUsed = 0;
+    this.hitTargetThisFlight = false;
+    this.isChaosSpectating = false;
+    this.isResettingCam = false;
+    this.targetedBird = null;
+
+    this.birdManager.clearAllBirds();
+    this.birdManager.initFlocks();
+    this.paper.resetNewSheet();
+    this.enterFoldingMode();
+
+    if (this.onGameModeChange) this.onGameModeChange('sandbox', null);
+    if (this.onStatsChanged) this.onStatsChanged();
+  }
+
+  public retryCurrentLevel() {
+    if (this.currentLevel) {
+      this.startCampaignLevel(this.currentLevel.id);
+    } else {
+      this.startSandboxMode();
+    }
+  }
+
+  public nextLevel() {
+    if (this.currentLevel) {
+      const nextId = this.currentLevel.id + 1;
+      const nextLvl = CAMPAIGN_LEVELS.find(l => l.id === nextId);
+      if (nextLvl) {
+        this.startCampaignLevel(nextId);
+      } else {
+        this.startSandboxMode();
+      }
+    }
   }
 
   private onWindowResize() {
@@ -634,12 +1196,16 @@ export class FaltalityGame {
       const reachableBirds = this.birdManager.birds.filter((b: BirdData) => {
         if (!b.alive) return false;
         if (b.type === 'satellite' && stats.folds < 11) return false;
+        if (b.type === 'iphone_duo') return true; // Boss is always lockable!
         return b.baseAltitude <= stats.maxAltitudeM * 1.25;
       });
 
       if (reachableBirds.length > 0) {
+        const boss = reachableBirds.find(b => b.type === 'iphone_duo');
         const satellite = reachableBirds.find(b => b.type === 'satellite');
-        if (satellite && stats.folds >= 11) {
+        if (boss) {
+          this.targetedBird = boss;
+        } else if (satellite && stats.folds >= 11) {
           this.targetedBird = satellite;
         } else if (stats.folds >= 9 && stats.folds <= 10) {
           const plane = reachableBirds.find(b => b.type === 'airplane');
@@ -657,7 +1223,10 @@ export class FaltalityGame {
       const bird = this.targetedBird;
 
       // Color code reticle by target type!
-      if (bird.type === 'satellite') {
+      if (bird.type === 'iphone_duo') {
+        this.reticleMat.color.setHex(0xff2d55); // Apple Electric Magenta
+        this.lockOnReticle.scale.set(4.8, 4.8, 4.8); // Framed for gigantic iPhone Duo boss!
+      } else if (bird.type === 'satellite') {
         this.reticleMat.color.setHex(0xffd700); // Brilliant Gold
         this.lockOnReticle.scale.set(1.5, 1.5, 1.5);
       } else if (bird.type === 'airplane') {
@@ -726,12 +1295,66 @@ export class FaltalityGame {
     this.handleArrowKeyLook(delta);
     this.updateAutoAim(delta);
 
+    // Active Crease timing meter animation & auto-commit
+    if (this.isCreasing) {
+      const elapsed = performance.now() - this.creaseStartTime;
+      const progress = Math.min(1.0, elapsed / this.creaseDuration);
+      if (this.onCreaseProgress) {
+        this.onCreaseProgress(progress);
+      }
+      if (elapsed >= this.creaseDuration) {
+        this.autoCommitCreaseTimeout();
+      }
+    }
+
+    // Hold-to-Charge Slingshot Tension accumulation
+    if (this.isCharging) {
+      this.chargePower = Math.min(100, this.chargePower + delta * 92);
+      this.powerPercent = Math.round(this.chargePower);
+      const tension = Math.min(1.0, (this.chargePower - 20) / 80);
+      this.slingshotTension = tension;
+
+      sound.playSlingStretch(tension);
+
+      // Physical pull on rubber bands
+      const pullZ = tension * 0.32;
+      const pullY = -tension * 0.06;
+      this.paper.setSlingshotPull(new THREE.Vector3(0, pullY, pullZ), tension);
+
+      // Real-time Trajectory update matching charged power
+      this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, false);
+
+      if (this.onSlingshotDrag) {
+        this.onSlingshotDrag({
+          active: true,
+          tension,
+          power: this.powerPercent,
+          pitch: this.pitchDeg,
+          yaw: this.yawDeg,
+          screenX: this.chargeScreenX,
+          screenY: this.chargeScreenY
+        });
+      }
+
+      if (this.onStatsChanged) this.onStatsChanged();
+    }
+
     if (this.paper.isFlying) {
+      this.flightDuration += delta;
       const homingTarget = (this.autoAim && this.targetedBird && this.targetedBird.alive) 
         ? this.targetedBird.mesh.position 
         : null;
 
-      const flightFinished = this.paper.updatePhysics(delta, homingTarget);
+      let flightFinished = this.paper.updatePhysics(delta, homingTarget);
+
+      // Auto-cut flight on miss so player returns quickly to table (max 2.8s or 4.0s for glider, or past horizon)
+      const maxFlightTime = this.paper.getStats().archetype === 'glider' ? 4.0 : 2.8;
+      const pastHorizon = this.paper.mesh.position.z < -65 || this.paper.mesh.position.length() > 95;
+      if (!this.hitTargetThisFlight && (this.flightDuration > maxFlightTime || pastHorizon)) {
+        this.paper.isFlying = false;
+        this.paper.velocity.set(0, 0, 0);
+        flightFinished = true;
+      }
 
       const paperPos = this.paper.mesh.position;
       const stats = this.paper.getStats();
@@ -742,18 +1365,146 @@ export class FaltalityGame {
         if (!bird.alive) continue;
 
         // CRUCIAL ANTI-INTERCEPTION:
-        // If the player locked on the Tim Cook Satellite, intermediate airliners MUST NOT intercept the shot!
-        if (this.targetedBird?.type === 'satellite' && bird.type === 'airplane') {
-          continue; // Pierce right past the airliner into space!
+        // If locked on boss or satellite, intermediate low-altitude birds must not intercept the shot!
+        if (this.targetedBird?.type === 'iphone_duo' && bird.type !== 'iphone_duo') {
+          continue;
+        }
+        if (this.targetedBird?.type === 'satellite' && bird.type !== 'satellite') {
+          continue;
         }
 
         const dist = paperPos.distanceTo(bird.mesh.position);
         if (dist < bird.radius + paperRadius + hitTolerance) {
-          this.birdManager.hitBird(bird, this.paper.velocity);
-          this.triggerFaltality(bird);
+          // Damage calculation: 1 HP for standard throws, 2 HP (critical) for 5+ folds or foil!
+          const isCritical = this.paper.folds >= 5 || this.paper.materialType === 'foil';
+          const damage = (bird.type === 'iphone_duo' && isCritical) ? 2 : 1;
+
+          const destroyed = this.birdManager.hitBird(bird, this.paper.velocity, damage);
+          if (destroyed) {
+            this.triggerFaltality(bird);
+            if (bird.type === 'iphone_duo' && this.onBossDefeat) {
+              this.onBossDefeat(bird);
+            }
+          } else {
+            // Boss took damage but survived
+            this.screenShake = isCritical ? 0.65 : 0.35;
+            this.timeScale = 0.3;
+            this.slowMoTimer = 0.6;
+            if (isCritical) {
+              sound.playFoilClang();
+            }
+            if (this.onBossDamage) {
+              this.onBossDamage(bird, bird.health ?? 0, bird.maxHealth ?? 4, isCritical);
+            }
+          }
+
           this.paper.velocity.multiplyScalar(0.35);
           this.paper.velocity.y = -3;
+
+          // End flight promptly after hit spectacle so paper doesn't drift for 25s
+          if (!this.hitEndFlightTimer) {
+            this.hitEndFlightTimer = window.setTimeout(() => {
+              this.hitEndFlightTimer = null;
+              if (this.paper.isFlying) {
+                this.paper.isFlying = false;
+                this.handleFlightFinished();
+              }
+            }, 1000);
+          }
           break;
+        }
+      }
+
+      // Backyard & Coast Chaos: Check collisions with Sneaky Cat, Neighbor Grill, Car & Krabbenkutter!
+      if (!this.hitTargetThisFlight) {
+        if (this.environment.currentLevel === 1) {
+          // 1. Sneaky Cat on fence
+          const catPos = this.environment.getCatWorldPosition();
+          if (paperPos.distanceTo(catPos) < paperRadius + this.environment.getCatBoundingRadius()) {
+            if (this.environment.hitCat()) {
+              this.hitTargetThisFlight = true;
+              this.state.score += 500;
+              this.state.currentCombo++;
+              this.screenShake = 0.35;
+              this.timeScale = 0.3;
+              this.slowMoTimer = 0.7;
+              this.paper.velocity.multiplyScalar(0.25);
+              this.paper.velocity.y = 2.4;
+              confetti({
+                particleCount: 50,
+                spread: 65,
+                origin: { y: 0.6 },
+                colors: ['#e67e22', '#f39c12', '#2ecc71']
+              });
+              if (this.onCatHit) this.onCatHit(500);
+              this.checkLevelProgression();
+              if (this.onStatsChanged) this.onStatsChanged();
+            }
+          }
+
+          // 2. Neighbor BBQ Grill
+          const grillPos = this.environment.getGrillWorldPosition();
+          if (paperPos.distanceTo(grillPos) < paperRadius + this.environment.getGrillBoundingRadius()) {
+            if (this.environment.hitGrill()) {
+              this.hitTargetThisFlight = true;
+              this.state.score += 300;
+              this.state.currentCombo++;
+              this.screenShake = 0.45;
+              this.timeScale = 0.3;
+              this.slowMoTimer = 0.8;
+              this.paper.velocity.multiplyScalar(0.2);
+              this.paper.velocity.y = -1.5;
+              confetti({
+                particleCount: 45,
+                spread: 60,
+                origin: { y: 0.6 },
+                colors: ['#ff4500', '#e67e22', '#ffd700']
+              });
+              if (this.onGrillHit) this.onGrillHit(300);
+              this.checkLevelProgression();
+              if (this.onStatsChanged) this.onStatsChanged();
+            }
+          }
+
+          // 3. Neighbor Car in Driveway
+          const carPos = this.environment.getCarWorldPosition();
+          if (paperPos.distanceTo(carPos) < paperRadius + this.environment.getCarBoundingRadius()) {
+            this.environment.triggerCarAlarm();
+            this.hitTargetThisFlight = true;
+            this.state.score += 250;
+            this.state.currentCombo++;
+            this.screenShake = 0.45;
+            this.isChaosSpectating = true;
+            this.paper.velocity.multiplyScalar(0.25);
+            this.paper.velocity.y = 1.8;
+            if (this.onCarHit) this.onCarHit(250);
+            this.checkLevelProgression();
+            if (this.onStatsChanged) this.onStatsChanged();
+          }
+        } else if (this.environment.currentLevel === 2) {
+          // Level 2: Krabbenkutter Boat in the bay!
+          const boatPos = this.environment.getBoatWorldPosition();
+          if (paperPos.distanceTo(boatPos) < paperRadius + this.environment.getBoatBoundingRadius()) {
+            if (this.environment.hitBoat()) {
+              this.hitTargetThisFlight = true;
+              this.state.score += 350;
+              this.state.currentCombo++;
+              this.screenShake = 0.45;
+              this.timeScale = 0.3;
+              this.slowMoTimer = 0.8;
+              this.paper.velocity.multiplyScalar(0.2);
+              this.paper.velocity.y = 2.0;
+              confetti({
+                particleCount: 55,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#00d2d3', '#54a0ff', '#feca57']
+              });
+              if (this.onBoatHit) this.onBoatHit(350);
+              this.checkLevelProgression();
+              if (this.onStatsChanged) this.onStatsChanged();
+            }
+          }
         }
       }
 

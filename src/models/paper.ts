@@ -3,6 +3,9 @@ import { sound } from '../sound';
 import { createToonMaterial, GOOSE_PALETTE } from '../materials';
 import type { SupportedLang } from '../i18n';
 
+export type OrigamiArchetype = 'sheet' | 'glider' | 'dart' | 'comet';
+export type CreaseQuality = 'perfect' | 'good' | 'imperfect';
+
 export interface FoldStats {
   folds: number;
   layers: number;
@@ -14,11 +17,21 @@ export interface FoldStats {
   maxAltitudeM: number;
   comparison: string;
   foldName: string;
+  archetype: OrigamiArchetype;
+  archetypeName: string;
+  archetypeIcon: string;
+  archetypeDesc: string;
+  perfectCreases: number;
+  liftRating: number;
+  speedRating: number;
+  impactRating: number;
 }
 
 export class PaperSheet {
   public mesh: THREE.Group;
   public folds: number = 0;
+  public perfectCreaseCount: number = 0;
+  public lastCreaseQuality: CreaseQuality = 'good';
   public isFolding: boolean = false;
   public isFlying: boolean = false;
   public velocity: THREE.Vector3 = new THREE.Vector3();
@@ -26,7 +39,16 @@ export class PaperSheet {
 
   // Trajectory visualization
   public trajectoryLine: THREE.Line;
+  public trajectoryBeads: THREE.InstancedMesh;
+  public readonly beadCount: number = 42;
   private scene: THREE.Scene;
+
+  // Slingshot 3D Visualization Rig
+  public slingshotGroup!: THREE.Group;
+  private leftBandMesh!: THREE.Mesh;
+  private rightBandMesh!: THREE.Mesh;
+  public leftProngPos: THREE.Vector3 = new THREE.Vector3(-0.38, 1.25, -0.15);
+  public rightProngPos: THREE.Vector3 = new THREE.Vector3(0.38, 1.25, -0.15);
 
   // Visual meshes
   private paperBody: THREE.Mesh | null = null;
@@ -37,6 +59,11 @@ export class PaperSheet {
   public materialType: 'paper' | 'foil' = 'paper';
   private foilMat: THREE.MeshStandardMaterial;
   private foilEdgeMat: THREE.MeshStandardMaterial;
+  private titaniumMat: THREE.MeshStandardMaterial;
+  private singularityMat: THREE.MeshBasicMaterial;
+  private accretionRingMat: THREE.MeshBasicMaterial;
+  private layerLinesMat: THREE.Material;
+  public onHeavyFold?: (folds: number) => void;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -50,6 +77,26 @@ export class PaperSheet {
 
     this.foldEdgeMat = createToonMaterial({
       color: GOOSE_PALETTE.paperFoldDark
+    });
+
+    this.layerLinesMat = createToonMaterial({
+      color: 0xbdc3c7
+    });
+
+    this.titaniumMat = new THREE.MeshStandardMaterial({
+      color: 0xdcdde1,
+      roughness: 0.18,
+      metalness: 0.94,
+      flatShading: true
+    });
+
+    this.singularityMat = new THREE.MeshBasicMaterial({
+      color: 0x050505
+    });
+
+    this.accretionRingMat = new THREE.MeshBasicMaterial({
+      color: 0x00d2d3,
+      side: THREE.DoubleSide
     });
 
     this.foilMat = new THREE.MeshStandardMaterial({
@@ -67,6 +114,18 @@ export class PaperSheet {
       flatShading: true
     });
 
+    // Trajectory beads: bold, chunky, highly visible 3D arcade arc (immune to WebGL 1px line limit)
+    const beadGeo = new THREE.SphereGeometry(0.048, 8, 8);
+    const beadMat = new THREE.MeshBasicMaterial({
+      color: 0xff3b30,
+      transparent: true,
+      opacity: 0.92
+    });
+    this.trajectoryBeads = new THREE.InstancedMesh(beadGeo, beadMat, this.beadCount);
+    this.trajectoryBeads.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.trajectoryBeads.visible = false;
+    this.scene.add(this.trajectoryBeads);
+
     const trajGeo = new THREE.BufferGeometry();
     const trajMat = new THREE.LineDashedMaterial({
       color: 0xff3b30,
@@ -77,6 +136,42 @@ export class PaperSheet {
     this.trajectoryLine = new THREE.Line(trajGeo, trajMat);
     this.trajectoryLine.visible = false;
     this.scene.add(this.trajectoryLine);
+
+    // Slingshot 3D Rig with volumetric 3D rubber bands
+    this.slingshotGroup = new THREE.Group();
+
+    const prongMat = createToonMaterial({ color: 0x8b5a2b });
+    const capMat = createToonMaterial({ color: 0xd4af37 });
+
+    [-0.38, 0.38].forEach((x) => {
+      const prongGeo = new THREE.CylinderGeometry(0.024, 0.028, 0.22, 8);
+      const prongMesh = new THREE.Mesh(prongGeo, prongMat);
+      prongMesh.position.set(x, 1.25, -0.15);
+      this.slingshotGroup.add(prongMesh);
+
+      const capGeo = new THREE.SphereGeometry(0.034, 8, 8);
+      const capMesh = new THREE.Mesh(capGeo, capMat);
+      capMesh.position.set(x, 1.36, -0.15);
+      this.slingshotGroup.add(capMesh);
+    });
+
+    // 3D Volumetric Rubber Bands (thick cylinders with pivot at base)
+    const bandCylGeo = new THREE.CylinderGeometry(0.016, 0.016, 1, 8);
+    bandCylGeo.translate(0, 0.5, 0); // pivot at base
+
+    const bandMat = new THREE.MeshStandardMaterial({
+      color: 0xff3b30,
+      roughness: 0.35,
+      metalness: 0.1
+    });
+
+    this.leftBandMesh = new THREE.Mesh(bandCylGeo, bandMat);
+    this.rightBandMesh = new THREE.Mesh(bandCylGeo, bandMat.clone());
+    this.slingshotGroup.add(this.leftBandMesh);
+    this.slingshotGroup.add(this.rightBandMesh);
+
+    this.slingshotGroup.visible = false;
+    this.scene.add(this.slingshotGroup);
 
     this.rebuildMesh();
     this.scene.add(this.mesh);
@@ -232,6 +327,57 @@ export class PaperSheet {
       }
     }
 
+    // Determine Origami Archetype based on fold level and material
+    let archetype: OrigamiArchetype = 'sheet';
+    let archetypeName = '';
+    let archetypeIcon = '📄';
+    let archetypeDesc = '';
+    let liftRating = 1;
+    let speedRating = 1;
+    let impactRating = 1;
+
+    if (this.materialType === 'foil' || folds >= 7) {
+      archetype = 'comet';
+      archetypeIcon = '☄️';
+      archetypeName = lang === 'en' ? 'Titan Comet' : 'Titan-Komet';
+      archetypeDesc = lang === 'en' 
+        ? 'Ballistic mortar arc, crushes armor & craters the lawn' 
+        : 'Ballistischer Meteorit, zerschmettert Rüstung & schlägt Krater';
+      liftRating = 1;
+      speedRating = 5;
+      impactRating = 5;
+    } else if (folds >= 4) {
+      archetype = 'dart';
+      archetypeIcon = '🎯';
+      archetypeName = lang === 'en' ? 'Acrobatic Dart' : 'Akrobatik-Dart';
+      archetypeDesc = lang === 'en'
+        ? 'Supersonic needle trajectory, slices straight through wind'
+        : 'Pfeilschnelle Nadel-Flugbahn, schneidet durch den Wind';
+      liftRating = 3;
+      speedRating = 4;
+      impactRating = 3;
+    } else if (folds >= 1) {
+      archetype = 'glider';
+      archetypeIcon = '🪶';
+      archetypeName = lang === 'en' ? 'Glider' : 'Gleiter';
+      archetypeDesc = lang === 'en'
+        ? 'High aerodynamic lift, gentle glide, long hang-time'
+        : 'Hoher Auftrieb, sanftes Segeln, lange Flugzeit';
+      liftRating = 5;
+      speedRating = 2;
+      impactRating = 2;
+    } else {
+      archetype = 'sheet';
+      archetypeIcon = '📄';
+      archetypeName = lang === 'en' ? 'Unfolded' : 'Ungefaltet';
+      archetypeDesc = lang === 'en'
+        ? 'Fluttering raw note sheet with zero aerodynamics'
+        : 'Reines Flatterblatt ohne aerodynamische Form';
+      liftRating = 1;
+      speedRating = 1;
+      impactRating = 1;
+    }
+
     return {
       folds,
       layers,
@@ -242,7 +388,15 @@ export class PaperSheet {
       maxDistanceM,
       maxAltitudeM,
       comparison,
-      foldName
+      foldName,
+      archetype,
+      archetypeName,
+      archetypeIcon,
+      archetypeDesc,
+      perfectCreases: this.perfectCreaseCount,
+      liftRating,
+      speedRating,
+      impactRating
     };
   }
 
@@ -322,66 +476,174 @@ export class PaperSheet {
         }
       }
     } else {
-      // Classic paper folding models
+      // Classic paper folding models: Exponential thickness escalation!
       if (this.folds === 0) {
-        const geo = new THREE.BoxGeometry(w, 0.005, l);
+        // Pristine flat A4 sheet
+        const geo = new THREE.BoxGeometry(w, 0.003, l);
+        this.paperBody = new THREE.Mesh(geo, this.paperMat);
+        this.paperBody.castShadow = true;
+        this.paperBody.receiveShadow = true;
+        this.mesh.add(this.paperBody);
+      } else if (this.folds === 1) {
+        // Halved sheet with crisp spine fold
+        const geo = new THREE.BoxGeometry(w, 0.006, l);
         this.paperBody = new THREE.Mesh(geo, this.paperMat);
         this.paperBody.castShadow = true;
         this.paperBody.receiveShadow = true;
         this.mesh.add(this.paperBody);
 
-        const creaseGeo = new THREE.BoxGeometry(w * 0.96, 0.006, 0.004);
-        const crease = new THREE.Mesh(creaseGeo, this.foldEdgeMat);
+        const crease = new THREE.Mesh(new THREE.BoxGeometry(w * 0.98, 0.007, 0.004), this.foldEdgeMat);
         this.mesh.add(crease);
-      } else if (this.folds < 4) {
-        const geo = new THREE.BoxGeometry(w, t, l);
+      } else if (this.folds === 2) {
+        // 4 layers - double folded
+        const geo = new THREE.BoxGeometry(w, 0.012, l);
         this.paperBody = new THREE.Mesh(geo, this.paperMat);
         this.paperBody.castShadow = true;
         this.paperBody.receiveShadow = true;
         this.mesh.add(this.paperBody);
 
-        const creaseGeo = new THREE.BoxGeometry(w * 1.01, t * 1.05, 0.006);
-        const crease = new THREE.Mesh(creaseGeo, this.foldEdgeMat);
-        this.mesh.add(crease);
-      } else if (this.folds < 8) {
-        const dartGroup = new THREE.Group();
-        const dartGeo = new THREE.ConeGeometry(w * 0.75, l, 4);
-        dartGeo.rotateX(Math.PI / 2);
-        this.paperBody = new THREE.Mesh(dartGeo, this.paperMat);
-        this.paperBody.scale.set(1, t * 8, 1);
+        const edge = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.013, l * 0.98), this.foldEdgeMat);
+        this.mesh.add(edge);
+      } else if (this.folds === 3) {
+        // 8 layers - sturdy cardboard block
+        const geo = new THREE.BoxGeometry(w, 0.024, l);
+        this.paperBody = new THREE.Mesh(geo, this.paperMat);
         this.paperBody.castShadow = true;
-        dartGroup.add(this.paperBody);
-        this.mesh.add(dartGroup);
+        this.paperBody.receiveShadow = true;
+        this.mesh.add(this.paperBody);
+
+        const edge1 = new THREE.Mesh(new THREE.BoxGeometry(w * 0.98, 0.025, 0.006), this.foldEdgeMat);
+        const edge2 = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.025, l * 0.98), this.foldEdgeMat);
+        this.mesh.add(edge1, edge2);
+      } else if (this.folds < 7) {
+        // Folds 4-6: Visibly thick compressed pack (4.5cm - 9.5cm) with stratified layer lines
+        const blockHeight = 0.045 + (this.folds - 4) * 0.024;
+        const blockGeo = new THREE.BoxGeometry(w, blockHeight, l);
+        this.paperBody = new THREE.Mesh(blockGeo, this.paperMat);
+        this.paperBody.position.y = blockHeight * 0.5;
+        this.paperBody.castShadow = true;
+        this.paperBody.receiveShadow = true;
+        this.mesh.add(this.paperBody);
+
+        // Visible stacked horizontal edge lines on all 4 sides showing compressed paper sheets
+        const numLayers = 3 + (this.folds - 4) * 2;
+        for (let i = 1; i < numLayers; i++) {
+          const layerY = (i / numLayers) * blockHeight;
+          const stripe = new THREE.Mesh(new THREE.BoxGeometry(w * 1.008, 0.003, l * 1.008), this.layerLinesMat);
+          stripe.position.y = layerY;
+          this.mesh.add(stripe);
+        }
+      } else if (this.folds < 9) {
+        // Folds 7-8: THE HYDRAULIC CRUSHER / MASSIVE COMPRESSED PAPER BRICK
+        // 14cm thick solid block with bulging compressed edges and accordion creases!
+        const brickHeight = 0.14;
+        const brickW = Math.max(0.12, w);
+        const brickL = Math.max(0.12, l);
+        const brickGeo = new THREE.BoxGeometry(brickW, brickHeight, brickL, 3, 4, 3);
+
+        // Bulge the vertices slightly outward under extreme internal tension
+        const pos = brickGeo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const vy = pos.getY(i);
+          const distFromCenterY = Math.abs(vy);
+          const bulge = (1.0 - distFromCenterY / (brickHeight * 0.5)) * 0.008;
+          pos.setX(i, pos.getX(i) + (pos.getX(i) > 0 ? bulge : -bulge));
+          pos.setZ(i, pos.getZ(i) + (pos.getZ(i) > 0 ? bulge : -bulge));
+        }
+        brickGeo.computeVertexNormals();
+
+        this.paperBody = new THREE.Mesh(brickGeo, this.paperMat);
+        this.paperBody.position.y = brickHeight * 0.5;
+        this.paperBody.castShadow = true;
+        this.paperBody.receiveShadow = true;
+        this.mesh.add(this.paperBody);
+
+        // Accordion edge bands
+        for (let i = 1; i <= 6; i++) {
+          const bandY = (i / 7) * brickHeight;
+          const stripe = new THREE.Mesh(new THREE.BoxGeometry(brickW * 1.015, 0.004, brickL * 1.015), this.foldEdgeMat);
+          stripe.position.y = bandY;
+          this.mesh.add(stripe);
+        }
+      } else if (this.folds < 11) {
+        // Folds 9-10: TITANIUM INGOT / iFOLD PRO MAX
+        // Solid aerospace-grade titanium block with chamfered bevels and laser etched trim
+        const ingotH = 0.15;
+        const ingotW = 0.13;
+        const ingotL = 0.13;
+        const ingotGeo = new THREE.BoxGeometry(ingotW, ingotH, ingotL);
+        this.paperBody = new THREE.Mesh(ingotGeo, this.titaniumMat);
+        this.paperBody.position.y = ingotH * 0.5;
+        this.paperBody.castShadow = true;
+        this.paperBody.receiveShadow = true;
+        this.mesh.add(this.paperBody);
+
+        // Laser etched chamfer trim
+        const trimGeo = new THREE.BoxGeometry(ingotW * 1.01, 0.012, ingotL * 1.01);
+        const trimMat = new THREE.MeshStandardMaterial({ color: 0x54a0ff, metalness: 0.9, roughness: 0.2 });
+        const trim = new THREE.Mesh(trimGeo, trimMat);
+        trim.position.y = ingotH * 0.5;
+        this.mesh.add(trim);
       } else {
-        const cubeGeo = new THREE.BoxGeometry(w * 0.9, Math.min(t, 0.25), l * 0.9);
-        this.paperBody = new THREE.Mesh(cubeGeo, this.paperMat);
-        this.paperBody.castShadow = true;
+        // Fold 11+: BLACK HOLE / QUANTUM SINGULARITY OF PAPER
+        // Collapsed event horizon sphere with orbiting accretion ring and paper debris!
+        const singRadius = 0.11;
+        const coreGeo = new THREE.SphereGeometry(singRadius, 16, 16);
+        this.paperBody = new THREE.Mesh(coreGeo, this.singularityMat);
+        this.paperBody.position.y = singRadius * 1.6;
         this.mesh.add(this.paperBody);
+
+        // Glowing cyan/violet accretion ring
+        const ringGeo = new THREE.RingGeometry(singRadius * 1.4, singRadius * 1.85, 24);
+        ringGeo.rotateX(Math.PI / 2);
+        const ring = new THREE.Mesh(ringGeo, this.accretionRingMat);
+        ring.position.y = singRadius * 1.6;
+        this.mesh.add(ring);
+
+        // Orbiting paper shred satellites
+        for (let i = 0; i < 4; i++) {
+          const shredGeo = new THREE.BoxGeometry(0.025, 0.002, 0.035);
+          const shred = new THREE.Mesh(shredGeo, this.paperMat);
+          const angle = (i / 4) * Math.PI * 2;
+          shred.position.set(Math.cos(angle) * singRadius * 2.2, singRadius * 1.6 + (i % 2 === 0 ? 0.02 : -0.02), Math.sin(angle) * singRadius * 2.2);
+          shred.rotation.y = angle;
+          shred.rotation.z = 0.3;
+          this.mesh.add(shred);
+        }
       }
     }
   }
 
-  // Animated procedural paper folding animation
-  public fold(onComplete?: () => void) {
+  // Animated procedural paper folding animation with Crease Quality
+  public fold(quality: CreaseQuality = 'good', onComplete?: () => void) {
     if (this.isFolding || this.isFlying) return;
     this.isFolding = true;
+    this.lastCreaseQuality = quality;
 
-    if (this.materialType === 'foil') {
-      sound.playFoilCrinkle(this.folds);
+    if (quality === 'perfect') {
+      this.perfectCreaseCount++;
+      sound.playPerfectCrease();
+    } else if (quality === 'imperfect') {
+      sound.playCrumpleCrease();
     } else {
-      sound.playFold();
+      if (this.materialType === 'foil') {
+        sound.playFoilCrinkle(this.folds);
+      } else {
+        sound.playPianoNote(this.folds);
+      }
     }
 
+    const previousArchetype = this.getStats().archetype;
     const startPos = this.mesh.position.clone();
     const startTime = performance.now();
-    const duration = 280; // Crisp, snappy folding feel
+    const duration = quality === 'perfect' ? 220 : 280; // Snappier fold animation for perfect crease!
 
     const animateFold = (time: number) => {
       const elapsed = time - startTime;
       const progress = Math.min(1.0, elapsed / duration);
 
-      // Cute lift & squeeze hop
-      const hop = Math.sin(progress * Math.PI) * 0.12;
+      // Lift & squeeze hop (extra bounce for perfect fold!)
+      const hop = Math.sin(progress * Math.PI) * (quality === 'perfect' ? 0.16 : 0.12);
       this.mesh.position.y = startPos.y + hop;
 
       // Snappy fold rotation
@@ -396,6 +658,20 @@ export class PaperSheet {
         this.mesh.rotation.set(0, 0, 0);
         this.rebuildMesh();
         this.isFolding = false;
+
+        // Heavy impact table shudder & sound for thick folds
+        if (this.folds >= 6) {
+          sound.playHeavyFoldImpact(this.folds);
+          if (this.onHeavyFold) {
+            this.onHeavyFold(this.folds);
+          }
+        }
+
+        const newArchetype = this.getStats().archetype;
+        if (newArchetype !== previousArchetype) {
+          sound.playArchetypeShift(newArchetype === 'sheet' ? 'glider' : newArchetype);
+        }
+
         if (onComplete) onComplete();
       }
     };
@@ -403,13 +679,22 @@ export class PaperSheet {
     requestAnimationFrame(animateFold);
   }
 
-  // Update parabolic dotted trajectory guide line
+  // Update parabolic dotted trajectory guide line matching Archetype aerodynamics
   public updateTrajectory(pitchDeg: number, yawDeg: number, powerPercent: number, hasTargetLock: boolean = false) {
     const stats = this.getStats();
     const foilMult = this.materialType === 'foil' ? 1.25 : 1.0;
-    const baseSpeed = (24.0 + stats.folds * 15.0) * foilMult; // Higher folds launch at immense hypersonic speed
-    const launchSpeed = baseSpeed * (powerPercent / 100);
+    const perfectBonus = 1.0 + Math.min(0.35, this.perfectCreaseCount * 0.08);
 
+    let baseSpeed = 12.0;
+    if (stats.archetype === 'glider') {
+      baseSpeed = 20.0 + (stats.folds - 1) * 7.0;
+    } else if (stats.archetype === 'dart') {
+      baseSpeed = 48.0 + (stats.folds - 4) * 16.0;
+    } else if (stats.archetype === 'comet') {
+      baseSpeed = 96.0 + Math.max(0, stats.folds - 7) * 25.0;
+    }
+
+    const launchSpeed = baseSpeed * perfectBonus * foilMult * (powerPercent / 100);
     const pitchRad = THREE.MathUtils.degToRad(pitchDeg);
     const yawRad = THREE.MathUtils.degToRad(yawDeg);
 
@@ -422,18 +707,32 @@ export class PaperSheet {
     const points: THREE.Vector3[] = [];
     const simPos = this.mesh.position.clone();
     const dt = 0.035;
-    const maxSteps = 90;
+    const maxSteps = 95;
 
     for (let i = 0; i < maxSteps; i++) {
       points.push(simPos.clone());
       simPos.addScaledVector(simVelocity, dt);
 
-      // Gliding aerodynamic lift based on folds
-      const liftFactor = Math.max(0.1, 1.0 - stats.folds * 0.08);
-      const gravity = -9.81 * dt * liftFactor;
-      simVelocity.y += gravity;
+      let gravity = -9.81 * dt;
+      let drag = 1.0;
 
-      const drag = 1.0 - (0.015 / Math.max(1, stats.folds * 0.8));
+      if (stats.archetype === 'glider') {
+        const lift = Math.max(0.72, 0.94 - (this.folds - 1) * 0.08);
+        gravity = -9.81 * dt * (1.0 - lift);
+        drag = 1.0 - 0.015;
+      } else if (stats.archetype === 'dart') {
+        const lift = Math.max(0.25, 0.42 - (this.folds - 4) * 0.05);
+        gravity = -9.81 * dt * (1.0 - lift * 0.6);
+        drag = 1.0 - 0.005;
+      } else if (stats.archetype === 'comet') {
+        gravity = -9.81 * dt * 1.45;
+        drag = 1.0 - 0.003;
+      } else {
+        gravity = -9.81 * dt * 0.85;
+        drag = 1.0 - 0.035;
+      }
+
+      simVelocity.y += gravity;
       simVelocity.multiplyScalar(drag);
 
       if (simPos.y <= 0.1) {
@@ -444,11 +743,107 @@ export class PaperSheet {
 
     this.trajectoryLine.geometry.dispose();
     this.trajectoryLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
-    (this.trajectoryLine.material as THREE.LineDashedMaterial).color.setHex(
-      hasTargetLock ? (stats.folds >= 11 ? 0xffd700 : 0x28cd41) : 0xff3b30
-    );
+
+    // Color code trajectory by Archetype, Target Lock & Perfect Crease
+    let lineColor = 0xff3b30;
+    if (hasTargetLock) {
+      lineColor = 0xff2d55; // Vibrant neon crimson lock-on
+    } else if (this.perfectCreaseCount > 0) {
+      lineColor = 0xffd700; // Shimmering Gold for perfect crease mastery
+    } else if (stats.archetype === 'glider') {
+      lineColor = 0x30d158; // Spring Green
+    } else if (stats.archetype === 'dart') {
+      lineColor = 0x0a84ff; // Cyan Dart
+    } else if (stats.archetype === 'comet') {
+      lineColor = 0xff9500; // Fiery Comet
+    }
+
+    (this.trajectoryLine.material as THREE.LineDashedMaterial).color.setHex(lineColor);
     this.trajectoryLine.computeLineDistances();
     this.trajectoryLine.visible = true;
+
+    // Update InstancedMesh trajectory beads: bold, chunky, highly visible 3D arcade arc!
+    const dummyMat = new THREE.Matrix4();
+    const dummyScale = new THREE.Vector3();
+    const dummyQuat = new THREE.Quaternion();
+
+    for (let i = 0; i < this.beadCount; i++) {
+      const pointIdx = Math.min(
+        points.length - 1,
+        Math.floor((i / (this.beadCount - 1)) * (points.length - 1))
+      );
+      const pt = points[pointIdx];
+      // Taper beads: starts chunky (1.0) and tapers to 0.4 near the end
+      const s = Math.max(0.35, 1.0 - (i / this.beadCount) * 0.6);
+      dummyScale.set(s, s, s);
+      dummyMat.compose(pt, dummyQuat, dummyScale);
+      this.trajectoryBeads.setMatrixAt(i, dummyMat);
+    }
+    this.trajectoryBeads.instanceMatrix.needsUpdate = true;
+    (this.trajectoryBeads.material as THREE.MeshBasicMaterial).color.setHex(lineColor);
+    this.trajectoryBeads.visible = true;
+  }
+
+  private orientBand(mesh: THREE.Mesh, from: THREE.Vector3, to: THREE.Vector3, tension: number) {
+    const dir = to.clone().sub(from);
+    const len = dir.length();
+    if (len < 0.001) return;
+
+    mesh.position.copy(from);
+    const baseRadius = 0.016;
+    const thickness = Math.max(0.009, baseRadius - tension * 0.005);
+    const scaleFactor = thickness / baseRadius;
+    mesh.scale.set(scaleFactor, len, scaleFactor);
+
+    const yAxis = new THREE.Vector3(0, 1, 0);
+    mesh.quaternion.setFromUnitVectors(yAxis, dir.normalize());
+  }
+
+  // Set Slingshot Pull Vector & Tension
+  public setSlingshotPull(pullOffset: THREE.Vector3 | null, tension01: number = 0) {
+    if (!pullOffset) {
+      this.mesh.position.copy(this.initialTablePos);
+      this.mesh.rotation.set(0, 0, 0);
+      const restingBack = this.initialTablePos.clone().add(new THREE.Vector3(0, 0.02, 0.06));
+      this.orientBand(this.leftBandMesh, this.leftProngPos, restingBack, 0);
+      this.orientBand(this.rightBandMesh, this.rightProngPos, restingBack, 0);
+      return;
+    }
+
+    this.mesh.position.set(
+      this.initialTablePos.x + pullOffset.x,
+      this.initialTablePos.y + pullOffset.y,
+      this.initialTablePos.z + pullOffset.z
+    );
+
+    // Subtle dynamic tilt while dragging
+    this.mesh.rotation.x = pullOffset.y * 1.8;
+    this.mesh.rotation.y = -pullOffset.x * 2.2;
+
+    const paperBackAttach = this.mesh.position.clone().add(new THREE.Vector3(0, 0.02, 0.05));
+    this.orientBand(this.leftBandMesh, this.leftProngPos, paperBackAttach, tension01);
+    this.orientBand(this.rightBandMesh, this.rightProngPos, paperBackAttach, tension01);
+
+    // Update band color based on tension (Orange -> Neon Red -> Golden)
+    const bandMatL = this.leftBandMesh.material as THREE.MeshStandardMaterial;
+    const bandMatR = this.rightBandMesh.material as THREE.MeshStandardMaterial;
+    let bandColor = 0xff9500;
+    if (tension01 >= 0.88) {
+      bandColor = 0xffd700; // Shimmering Gold
+    } else if (tension01 >= 0.45) {
+      bandColor = 0xff3b30; // Neon Red
+    }
+    bandMatL.color.setHex(bandColor);
+    bandMatR.color.setHex(bandColor);
+  }
+
+  public setSlingshotVisible(visible: boolean) {
+    this.slingshotGroup.visible = visible;
+    if (!visible) {
+      this.setSlingshotPull(null, 0);
+      this.trajectoryLine.visible = false;
+      this.trajectoryBeads.visible = false;
+    }
   }
 
   // Launch paper into physics flight
@@ -456,12 +851,23 @@ export class PaperSheet {
     this.isFlying = true;
     this.isFolding = false;
     this.trajectoryLine.visible = false;
+    this.trajectoryBeads.visible = false;
+    this.setSlingshotVisible(false);
 
     const stats = this.getStats();
     const foilMult = this.materialType === 'foil' ? 1.25 : 1.0;
-    const baseSpeed = (24.0 + stats.folds * 15.0) * foilMult;
-    const launchSpeed = baseSpeed * (powerPercent / 100);
+    const perfectBonus = 1.0 + Math.min(0.35, this.perfectCreaseCount * 0.08);
 
+    let baseSpeed = 12.0;
+    if (stats.archetype === 'glider') {
+      baseSpeed = 20.0 + (stats.folds - 1) * 7.0;
+    } else if (stats.archetype === 'dart') {
+      baseSpeed = 48.0 + (stats.folds - 4) * 16.0;
+    } else if (stats.archetype === 'comet') {
+      baseSpeed = 96.0 + Math.max(0, stats.folds - 7) * 25.0;
+    }
+
+    const launchSpeed = baseSpeed * perfectBonus * foilMult * (powerPercent / 100);
     const pitchRad = THREE.MathUtils.degToRad(pitchDeg);
     const yawRad = THREE.MathUtils.degToRad(yawDeg);
 
@@ -480,35 +886,58 @@ export class PaperSheet {
 
     const stats = this.getStats();
 
-    // Homing guidance: gently bend trajectory toward locked bird
+    // Homing guidance: gently bend trajectory toward locked target
     if (homingTarget) {
       const dirToTarget = homingTarget.clone().sub(this.mesh.position).normalize();
       const currentDir = this.velocity.clone().normalize();
       const speed = this.velocity.length();
 
-      const trackingStrength = Math.min(1.0, (0.45 + stats.folds * 0.05) * delta * 15.0);
+      const trackingStrength = Math.min(1.0, (0.35 + stats.folds * 0.04) * delta * 12.0);
       currentDir.lerp(dirToTarget, trackingStrength);
       this.velocity.copy(currentDir.multiplyScalar(speed));
     }
 
-    // Aerodynamics & Gravity
-    const liftFactor = Math.max(0.08, 1.0 - stats.folds * 0.075);
-    const gravity = -9.81 * delta * liftFactor;
+    // Aerodynamics & Gravity governed by Origami Archetype
+    let gravity = -9.81 * delta;
+    let drag = 1.0;
+
+    if (stats.archetype === 'glider') {
+      // Glider: High lift, floaty slow glide, stays in the air for extended time
+      const lift = Math.max(0.72, 0.94 - (this.folds - 1) * 0.08);
+      gravity = -9.81 * delta * (1.0 - lift);
+      drag = 1.0 - 0.015 * (delta * 60);
+    } else if (stats.archetype === 'dart') {
+      // Dart: Piercing straight line, minimal drag, fast flight path
+      const lift = Math.max(0.25, 0.42 - (this.folds - 4) * 0.05);
+      gravity = -9.81 * delta * (1.0 - lift * 0.6);
+      drag = 1.0 - 0.005 * (delta * 60);
+    } else if (stats.archetype === 'comet') {
+      // Comet: Ballistic heavy drop, massive kinetic impact
+      gravity = -9.81 * delta * 1.45;
+      drag = 1.0 - 0.003 * (delta * 60);
+    } else {
+      // Raw sheet: flutters wildly and drops
+      gravity = -9.81 * delta * 0.85;
+      drag = 1.0 - 0.035 * (delta * 60);
+    }
+
+    // Imperfect fold wobble penalty
+    if (this.lastCreaseQuality === 'imperfect') {
+      this.velocity.x += Math.sin(this.mesh.position.z * 1.8) * 0.8 * delta;
+    }
+
     this.velocity.y += gravity;
-
-    const drag = 1.0 - (0.012 / Math.max(1, stats.folds * 0.8)) * (delta * 60);
     this.velocity.multiplyScalar(drag);
-
     this.mesh.position.addScaledVector(this.velocity, delta);
 
-    // Dynamic rotation: paper points toward velocity vector
+    // Dynamic rotation: paper aligns with flight trajectory
     if (this.velocity.lengthSq() > 0.1) {
       const lookAtPos = this.mesh.position.clone().add(this.velocity);
       this.mesh.lookAt(lookAtPos);
 
-      if (stats.folds >= 5) {
-        // Hypersonic bullet spin
-        this.mesh.rotation.z += 15.0 * delta;
+      // Supersonic bullet spin for darts and comets, or perfect folds
+      if (stats.archetype === 'dart' || stats.archetype === 'comet' || this.perfectCreaseCount > 0) {
+        this.mesh.rotation.z += (stats.archetype === 'comet' ? 22.0 : 16.0) * delta;
       }
     }
 
@@ -534,13 +963,18 @@ export class PaperSheet {
   // Reset to fresh unfolded sheet of paper
   public resetNewSheet() {
     this.folds = 0;
+    this.perfectCreaseCount = 0;
+    this.lastCreaseQuality = 'good';
     this.isFlying = false;
     this.isFolding = false;
     this.velocity.set(0, 0, 0);
     this.mesh.position.copy(this.initialTablePos);
     this.mesh.rotation.set(0, 0, 0);
+    this.setSlingshotPull(null, 0);
+    this.setSlingshotVisible(false);
     this.rebuildMesh();
     this.trajectoryLine.visible = false;
+    this.trajectoryBeads.visible = false;
     sound.playNewPaper();
   }
 }

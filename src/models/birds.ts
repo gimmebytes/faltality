@@ -2,8 +2,10 @@ import * as THREE from 'three';
 import { sound } from '../sound';
 import { createToonMaterial } from '../materials';
 import { modelLoader } from '../assetLoader';
+import { IPhoneDuoModel } from './iphoneDuo';
+import type { LevelSpawnConfig } from '../levels';
 
-export type BirdType = 'goose' | 'pigeon' | 'seagull' | 'drone' | 'airplane' | 'satellite';
+export type BirdType = 'goose' | 'pigeon' | 'seagull' | 'drone' | 'airplane' | 'satellite' | 'iphone_duo';
 
 export interface BirdData {
   mesh: THREE.Group;
@@ -22,6 +24,10 @@ export interface BirdData {
   parachuteMesh?: THREE.Group;
   scoreValue: number;
   title: string;
+  iphoneDuoModel?: IPhoneDuoModel;
+  health?: number;
+  maxHealth?: number;
+  bossPhase?: 'closed' | 'unfolding' | 'unfolded' | 'defeated';
 }
 
 export class BirdManager {
@@ -61,11 +67,73 @@ export class BirdManager {
     // It is an exclusive Endgame easter egg that only enters orbit once the player reaches 11+ folds!
   }
 
+  // Spawn maritime flocks for Level 2: Ostsee-Küste
+  public loadCoastFlocks() {
+    this.clearAllBirds();
+
+    // 1. Low-skimming coastal seagulls diving over waves (3.5m - 6.5m altitude)
+    this.spawnBird('seagull', 4.5, -14, -12);
+    this.spawnBird('seagull', 5.8, 12, -14);
+    this.spawnBird('seagull', 6.2, -4, -11);
+
+    // 2. High-circling seagulls in thermal updrafts (9m - 16m altitude)
+    this.spawnBird('seagull', 10.5, -18, -17);
+    this.spawnBird('seagull', 13.0, 22, -16);
+    this.spawnBird('seagull', 15.8, 0, -20);
+
+    // 3. Pier pigeons pecking near wooden pilings
+    this.spawnBird('pigeon', 3.6, 8, -9);
+
+    // 4. Beach advertising prop aircraft
+    const bannerPlane = this.spawnBird('airplane', 18.5, -16, -21);
+    bannerPlane.title = 'Faltality Küsten-Flieger';
+    bannerPlane.speed = 4.2;
+  }
+
+  // Clear all birds from the 3D scene
+  public clearAllBirds() {
+    for (let i = this.birds.length - 1; i >= 0; i--) {
+      this.scene.remove(this.birds[i].mesh);
+    }
+    this.birds = [];
+  }
+
+  // Spawn exact targets for Campaign levels
+  public loadLevelSpawns(spawns: LevelSpawnConfig[]) {
+    this.clearAllBirds();
+    for (const sp of spawns) {
+      const bird = this.spawnBird(sp.type, sp.altitude, sp.x, sp.z);
+      if (sp.speed) {
+        bird.speed = sp.speed;
+      }
+    }
+  }
+
   // Dynamically launch the Keynote Satellite into orbit when 11+ folds reached!
   public ensureSatelliteSpawned(): BirdData {
     const existing = this.birds.find(b => b.type === 'satellite' && b.alive);
     if (existing) return existing;
     return this.spawnBird('satellite', 22.5, 0, -14.5);
+  }
+
+  // Clear the skies of all normal birds so the giant iPhone Duo has the entire stage!
+  public evacuateAirspaceForBoss() {
+    for (let i = this.birds.length - 1; i >= 0; i--) {
+      const b = this.birds[i];
+      if (b.type !== 'iphone_duo') {
+        this.scene.remove(b.mesh);
+        this.birds.splice(i, 1);
+      }
+    }
+    sound.playHonk(1.4); // Comic flock scatter sound
+  }
+
+  // Summon the legendary giant iPhone Duo Boss!
+  public ensureBossSpawned(): BirdData {
+    this.evacuateAirspaceForBoss();
+    const existing = this.birds.find(b => b.type === 'iphone_duo' && b.alive);
+    if (existing) return existing;
+    return this.spawnBird('iphone_duo', 18.0, 0, -16.0);
   }
 
   // Remove the satellite when player resets paper back to 0 folds
@@ -84,6 +152,10 @@ export class BirdManager {
     let rightWing: THREE.Object3D;
     let head: THREE.Object3D;
     let beaconMesh: THREE.Mesh | undefined;
+    let iphoneDuoModel: IPhoneDuoModel | undefined;
+    let health: number | undefined;
+    let maxHealth: number | undefined;
+    let bossPhase: 'closed' | 'unfolding' | 'unfolded' | 'defeated' | undefined;
     let radius = 1.4;
     let speed = 4.5;
     let scoreValue = 100;
@@ -145,6 +217,21 @@ export class BirdManager {
       speed = 3.6;
       scoreValue = 10000;
       title = '🛰️ Tim Cook Keynote-Satellit (iSat One)';
+    } else if (type === 'iphone_duo') {
+      const phone = new IPhoneDuoModel();
+      group.add(phone.rootGroup);
+      iphoneDuoModel = phone;
+      leftWing = phone.leftHalf;
+      rightWing = phone.rightHalf;
+      head = phone.hingeMesh;
+      group.scale.set(7.5, 7.5, 7.5); // TITANIC KEYNOTE FLAGSHIP!
+      radius = 8.5; // Massive target radius for epic gameplay
+      speed = 3.6; // Majestic, menacing cruise
+      scoreValue = 25000;
+      title = '📱 Apple iPhone Duo (Titanium Hinge)';
+      health = 4;
+      maxHealth = 4;
+      bossPhase = 'closed';
     } else {
       // High-End Origami Drone / Stealth Dart
       const parts = this.createOrigamiStealthDart();
@@ -174,7 +261,7 @@ export class BirdManager {
       baseAltitude: altitude,
       speed: speed * dir,
       wingAngle: Math.random() * Math.PI,
-      wingSpeed: (type === 'airplane' || type === 'satellite') ? 0.1 : (type === 'drone' ? 18 : (type === 'pigeon' ? 12 : 8)),
+      wingSpeed: (type === 'airplane' || type === 'satellite' || type === 'iphone_duo') ? 0.1 : (type === 'drone' ? 18 : (type === 'pigeon' ? 12 : 8)),
       leftWing,
       rightWing,
       head,
@@ -183,7 +270,11 @@ export class BirdManager {
       alive: true,
       hitVelocity: new THREE.Vector3(),
       scoreValue,
-      title
+      title,
+      iphoneDuoModel,
+      health,
+      maxHealth,
+      bossPhase
     };
 
     this.birds.push(bird);
@@ -444,7 +535,7 @@ export class BirdManager {
       plane.scale.set(s, s, s);
       const center = box.getCenter(new THREE.Vector3());
       plane.position.set(-center.x * s, -center.y * s, -center.z * s);
-      plane.rotation.z = Math.PI / 2;
+      // Face forward (+Z) aligned with flight direction, upright with horizontal wings
       plane.rotation.y = Math.PI;
       bodyGroup.add(plane);
     }).catch(() => {
@@ -705,7 +796,9 @@ export class BirdManager {
 
     // Standard birds and airliner luggage
     let colors: number[];
-    if (birdType === 'airplane') {
+    if (birdType === 'iphone_duo') {
+      colors = [0x30d158, 0x0a84ff, 0xff375f, 0xffd60a, 0xffffff]; // Apple Keynote Neon Palette
+    } else if (birdType === 'airplane') {
       colors = [0x0984e3, 0xff7675, 0xfdcb6e, 0x00cec9, 0xffffff];
     } else if (birdType === 'goose') {
       colors = [0xfaf9f5, 0xcc2222, 0xe8e5dc];
@@ -717,7 +810,7 @@ export class BirdManager {
       colors = [0x1e272e, 0x00d2d3, 0x576574];
     }
 
-    const shredCount = birdType === 'airplane' ? 50 : 28;
+    const shredCount = (birdType === 'airplane' || birdType === 'iphone_duo') ? 50 : 28;
 
     for (let i = 0; i < shredCount; i++) {
       let geo: THREE.BufferGeometry;
@@ -766,11 +859,11 @@ export class BirdManager {
   public attachParachute(bird: BirdData) {
     const chuteGroup = new THREE.Group();
     const clothMat = createToonMaterial({
-      color: bird.type === 'satellite' ? 0xf1c40f : (bird.type === 'airplane' ? 0x0984e3 : (bird.type === 'goose' ? 0xff4757 : (bird.type === 'drone' ? 0x00d2d3 : 0x2ed573))),
+      color: bird.type === 'iphone_duo' ? 0xff2d55 : (bird.type === 'satellite' ? 0xf1c40f : (bird.type === 'airplane' ? 0x0984e3 : (bird.type === 'goose' ? 0xff4757 : (bird.type === 'drone' ? 0x00d2d3 : 0x2ed573)))),
       side: THREE.DoubleSide
     });
 
-    const chuteRadius = bird.type === 'satellite' ? 4.5 : (bird.type === 'airplane' ? 3.5 : 1.5);
+    const chuteRadius = bird.type === 'iphone_duo' ? 5.2 : (bird.type === 'satellite' ? 4.5 : (bird.type === 'airplane' ? 3.5 : 1.5));
     const canopyGeo = new THREE.ConeGeometry(chuteRadius, chuteRadius * 0.5, 8, 1, true);
     canopyGeo.rotateX(Math.PI);
     const canopy = new THREE.Mesh(canopyGeo, clothMat);
@@ -795,10 +888,46 @@ export class BirdManager {
     bird.parachuteMesh = chuteGroup;
   }
 
-  public hitBird(bird: BirdData, impactVelocity: THREE.Vector3): void {
-    if (!bird.alive) return;
-    bird.alive = false;
+  public hitBird(bird: BirdData, impactVelocity: THREE.Vector3, damage: number = 1): boolean {
+    if (!bird.alive) return false;
 
+    if (bird.type === 'iphone_duo') {
+      const currentHp = bird.health ?? 4;
+      if (currentHp > damage) {
+        bird.health = currentHp - damage;
+        bird.iphoneDuoModel?.triggerDamageFlash();
+        sound.playAppleErrorAlert();
+
+        // When health drops to 2 or below (<= 50%), trigger THE UNFOLDING!
+        if (bird.health <= 2 && bird.bossPhase !== 'unfolded') {
+          bird.bossPhase = 'unfolded';
+          if (bird.iphoneDuoModel) {
+            bird.iphoneDuoModel.targetFoldAngle = 0; // Unfold to gigantic flat 180° dual-screen!
+          }
+          sound.playHingeMechanical();
+        }
+
+        this.spawnPaperExplosion(bird.mesh.position, bird.type);
+        return false; // Still alive, multi-phase boss!
+      }
+
+      // Final fatal hit!
+      bird.health = 0;
+      bird.alive = false;
+      bird.bossPhase = 'defeated';
+      if (bird.iphoneDuoModel) {
+        bird.iphoneDuoModel.targetFoldAngle = -Math.PI * 0.25; // Hinge breaks backwards!
+      }
+      bird.hitVelocity.copy(impactVelocity).multiplyScalar(0.25);
+      bird.hitVelocity.y = 5.0;
+
+      sound.playBossVictoryFanfare();
+      this.spawnPaperExplosion(bird.mesh.position, bird.type);
+      this.attachParachute(bird);
+      return true;
+    }
+
+    bird.alive = false;
     bird.hitVelocity.copy(impactVelocity).multiplyScalar(0.35);
     bird.hitVelocity.y = Math.max(bird.hitVelocity.y * 0.3, 4.0);
 
@@ -817,19 +946,25 @@ export class BirdManager {
 
     this.spawnPaperExplosion(bird.mesh.position, bird.type);
     this.attachParachute(bird);
+    return true;
   }
 
   public update(delta: number) {
     this.chirpTimer -= delta;
     if (this.chirpTimer <= 0) {
-      this.chirpTimer = 6 + Math.random() * 8;
-      const livingGoose = this.birds.find(b => b.alive && b.type === 'goose');
-      if (livingGoose && Math.abs(livingGoose.mesh.position.x) < 25) {
-        sound.playHonk(0.9 + Math.random() * 0.2);
+      this.chirpTimer = 5 + Math.random() * 7;
+      const livingSeagull = this.birds.find(b => b.alive && b.type === 'seagull');
+      if (livingSeagull && Math.abs(livingSeagull.mesh.position.x) < 25 && Math.random() > 0.35) {
+        sound.playSeagull();
       } else {
-        const livingPigeon = this.birds.find(b => b.alive && b.type === 'pigeon');
-        if (livingPigeon && Math.abs(livingPigeon.mesh.position.x) < 20) {
-          sound.playPigeonCoo();
+        const livingGoose = this.birds.find(b => b.alive && b.type === 'goose');
+        if (livingGoose && Math.abs(livingGoose.mesh.position.x) < 25) {
+          sound.playHonk(0.9 + Math.random() * 0.2);
+        } else {
+          const livingPigeon = this.birds.find(b => b.alive && b.type === 'pigeon');
+          if (livingPigeon && Math.abs(livingPigeon.mesh.position.x) < 20) {
+            sound.playPigeonCoo();
+          }
         }
       }
     }
@@ -857,6 +992,24 @@ export class BirdManager {
           } else if (bird.mesh.position.x < -26) {
             bird.mesh.position.x = -26;
             bird.speed = Math.abs(bird.speed);
+          }
+        } else if (bird.type === 'iphone_duo') {
+          // Update 3D foldable model animation
+          bird.iphoneDuoModel?.update(delta);
+
+          // Majestic boss cruise across the sky
+          bird.mesh.position.y = bird.baseAltitude + Math.sin(bird.mesh.position.x * 0.12) * 0.8;
+          bird.mesh.rotation.z = Math.sin(bird.mesh.position.x * 0.06) * 0.1;
+
+          // Cruise back and forth smoothly across center sky between -20 and +20
+          if (bird.mesh.position.x > 20) {
+            bird.mesh.position.x = 20;
+            bird.speed = -Math.abs(bird.speed);
+            bird.mesh.rotation.y = -Math.PI / 2;
+          } else if (bird.mesh.position.x < -20) {
+            bird.mesh.position.x = -20;
+            bird.speed = Math.abs(bird.speed);
+            bird.mesh.rotation.y = Math.PI / 2;
           }
         } else if (bird.type === 'airplane') {
           // Airliner gentle bank and cloud cruising
@@ -903,11 +1056,12 @@ export class BirdManager {
           bird.parachuteMesh.scale.set(s, s, s);
         }
 
-        // Quick reliable respawn after hit! (Satellites do not auto-respawn if not 11+ folds)
+        // Quick reliable respawn after hit! (Satellites & Boss do not auto-respawn; no birds while boss is active)
         if (bird.mesh.position.y <= 1.5) {
           this.scene.remove(bird.mesh);
           this.birds.splice(i, 1);
-          if (bird.type !== 'satellite') {
+          const isBossPresent = this.birds.some(b => b.alive && b.type === 'iphone_duo');
+          if (bird.type !== 'satellite' && bird.type !== 'iphone_duo' && !isBossPresent) {
             setTimeout(() => {
               this.spawnBird(bird.type, bird.baseAltitude, 0, -14.5);
             }, 2000);

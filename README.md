@@ -88,3 +88,17 @@ docker build -t faltality:latest .
 # Container starten
 docker run -d -p 8080:8080 --name faltality faltality:latest
 ```
+
+---
+
+## 🎨 Credits & Lizenzen
+
+* **3D-Modelle (Umgebung & Props)**:
+  * Gebäude, Auto, Zaun, Bänke, Tische & Bäume stammen aus den fantastischen Asset-Packs von [Kenney](https://kenney.nl) (*City, Suburb, Car & Nature Kits*).
+  * Lizenziert unter **[CC0 1.0 Universal (Public Domain)](https://creativecommons.org/publicdomain/zero/1.0/)**. Vielen Dank an Kenney für die Open-Source Game-Assets!
+* **Origami-Vögel & Flugobjekte**:
+  * Kranich, Gans, Taube, Möwe, Origami-Drohne und der Keynote-Satellit sind maßgeschneiderte, prozedurale Three.js-Geometrien (`src/models/birds.ts`).
+  * Verkehrsflugzeug (*Airliner FL-404*) & Low-Poly Schaf: Low-Poly Stylized 3D-Modelle (CC0).
+* **Audio**:
+  * Prozedural synthetisierte Klänge, Falt-Geräusche, Flug-Whooshes, Honks und Alarmanlagen über die native Web Audio API (`src/sound.ts`).
+

@@ -127,6 +127,109 @@ export interface Translations {
   pointsPlane: (pts: number) => string;
   pointsNormal: (pts: number) => string;
   pointsCrater: (folds: number) => string;
+
+  // Boss: iPhone Duo
+  bossName: string;
+  bossPhaseClosed: string;
+  bossPhaseUnfolding: string;
+  bossPhaseOpen: string;
+  bossShieldDeflect: string;
+  bossSpawnBanner: string;
+  bossSpawnSub: string;
+  bossDefeatBanner: string;
+  bossDefeatSub: string;
+  menuSummonBoss: string;
+
+  // Active Crease Timing & Archetypes
+  creaseTitle: string;
+  creasePerfect: string;
+  creaseGood: string;
+  creaseImperfect: string;
+  creaseHint: string;
+  archetypeBadgeLabel: string;
+  archetypeGlider: string;
+  archetypeDart: string;
+  archetypeComet: string;
+  archetypeSheet: string;
+  archetypeGliderDesc: string;
+  archetypeDartDesc: string;
+  archetypeCometDesc: string;
+  archetypeSheetDesc: string;
+  statGlide: string;
+  statSpeed: string;
+  statImpact: string;
+
+  // Slingshot Drag-to-Throw
+  slingDragTip: string;
+  slingDragRelease: string;
+  slingDragCancel: string;
+
+  // Campaign Mode & Levels
+  modeSandbox: string;
+  modeCampaign: string;
+  btnLevelSelect: string;
+  btnSandbox: string;
+  levelSelectTitle: string;
+  levelSelectSubtitle: string;
+  levelSelectClose: string;
+  levelUnlockAllBtn: string;
+  levelResetProgressBtn: string;
+  levelSheetsAmmoLabel: (remaining: number, max: number) => string;
+  levelObjectivePill: (current: number, required: number) => string;
+  levelResultVictory: string;
+  levelResultFailed: string;
+  levelResultFailedReason: string;
+  btnNextLevel: string;
+  btnRetryLevel: string;
+  btnReturnToSelect: string;
+  btnBackToSandbox: string;
+  starEarnedTitle: (stars: number) => string;
+  highScorePill: (score: number) => string;
+
+  // Level 1: Der Gartenzaun
+  lvl1Title: string;
+  lvl1Subtitle: string;
+  lvl1Desc: string;
+  lvl1Objective: string;
+  lvl1Star1: string;
+  lvl1Star2: string;
+  lvl1Star3: string;
+
+  // Level 2: Hohe Weide
+  lvl2Title: string;
+  lvl2Subtitle: string;
+  lvl2Desc: string;
+  lvl2Objective: string;
+  lvl2Star1: string;
+  lvl2Star2: string;
+  lvl2Star3: string;
+
+  // Level 3: Auto-Alarm
+  lvl3Title: string;
+  lvl3Subtitle: string;
+  lvl3Desc: string;
+  lvl3Objective: string;
+  lvl3Star1: string;
+  lvl3Star2: string;
+  lvl3Star3: string;
+
+  // Level 4: Flug FL-404
+  lvl4Title: string;
+  lvl4Subtitle: string;
+  lvl4Desc: string;
+  lvl4Objective: string;
+  lvl4Star1: string;
+  lvl4Star2: string;
+  lvl4Star3: string;
+
+  // Level 5: Apple Keynote Orbit
+  lvl5Title: string;
+  lvl5Subtitle: string;
+  lvl5Desc: string;
+  lvl5Objective: string;
+  lvl5Star1: string;
+  lvl5Star2: string;
+  lvl5Star3: string;
 }
 
 export const translations: Record<SupportedLang, Translations> = {
@@ -190,7 +293,7 @@ export const translations: Record<SupportedLang, Translations> = {
     introStartBtn: 'SPIEL STARTEN',
     introHintF: '<kbd>F</kbd> Papier falten (Verdoppeln)',
     introHintSpace: '<kbd>Leertaste</kbd> Zielen & Werfen',
-    introHintT: '<kbd>T</kbd> Ziel wechseln (Lock-On)',
+    introHintT: '<kbd>Tab</kbd> / <kbd>T</kbd> 90s Arcade Lock-On',
     introHintArrows: '<kbd>Pfeiltasten</kbd> Kamera & Winkel',
 
     menuTitle: 'MENÜ',
@@ -198,7 +301,7 @@ export const translations: Record<SupportedLang, Translations> = {
     menuLangLabel: '🌐 Sprache wechseln / Language:',
     menuFaltpediaBtn: '📖 FALT-PEDIA Enzyklopädie öffnen',
     menuAimLabel: '🎯 Apple iAim Auto-Targeting:',
-    menuCycleTargetBtn: '🎯 Nächstes Ziel anvisieren [Taste T]',
+    menuCycleTargetBtn: '🎯 Ziel wechseln [Tab / T]',
     menuSoundLabel: '🔊 Sound & Musik:',
     menuSoundOn: '🔊 Ton: AN',
     menuSoundOff: '🔇 Ton: AUS',
@@ -209,7 +312,7 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapModalHeader: '⌨️ Tastenbelegung (Key Map)',
     keymapF: '<strong>Papier falten</strong> (Dicke & Reichweite verdoppeln) / Zurück zum Tisch',
     keymapSpace: '<strong>Zielmodus aktivieren</strong> bzw. <strong>Papier abschiessen</strong>',
-    keymapT: '<strong>Ziel wechseln</strong> (Schaltet durch Tauben, Flugzeuge & Tim Cook Satellit)',
+    keymapT: '<strong>90s Arcade Lock-On</strong> (Schaltet durch Vögel, Möwen, Jets & Tim Cook Satellit)',
     keymapArrowsPitch: '<strong>Steigung (Pitch)</strong> erhöhen / senken',
     keymapArrowsYaw: '<strong>Richtung (Yaw)</strong> nach links / rechts steuern',
     keymapA: '<strong>Apple iAim</strong> Auto-Lock an-/ausschalten',
@@ -306,7 +409,103 @@ export const translations: Record<SupportedLang, Translations> = {
     pointsSatellite: (pts) => `🛰️ +${pts.toLocaleString()} PUNKTE!`,
     pointsPlane: (pts) => `✈️ +${pts.toLocaleString()} PUNKTE!`,
     pointsNormal: (pts) => `+${pts.toLocaleString()} PUNKTE!`,
-    pointsCrater: (folds) => `MIT ${folds} FALTUNGEN!`
+    pointsCrater: (folds) => `MIT ${folds} FALTUNGEN!`,
+
+    bossName: '📱 Apple iPhone Duo (Titanium Hinge)',
+    bossPhaseClosed: 'Phase 1: Geschlossen (Pocket Mode)',
+    bossPhaseUnfolding: 'Phase 2: Entfaltung...',
+    bossPhaseOpen: 'Phase 3: Aufgeklappt (Dual-Screen)',
+    bossShieldDeflect: '🛡️ CERAMIC SHIELD ZU STARK! Mindestens 5 Faltungen oder Alufolie nötig!',
+    bossSpawnBanner: '★ ONE MORE THING... ★',
+    bossSpawnSub: 'Der finale Falt-Boss: iPhone Duo nähert sich aus dem Orbit!',
+    bossDefeatBanner: '🏆 F A L T A L I T Y !',
+    bossDefeatSub: '📱 iPhone Duo Scharnier geknackt! +25.000 Punkte!',
+    menuSummonBoss: '📱 iPhone Duo herausfordern [B]',
+
+    creaseTitle: 'FALT-TIMING',
+    creasePerfect: '★ PERFEKTE KANTE! (+25% SPEED) ★',
+    creaseGood: 'GUTE KANTE',
+    creaseImperfect: 'KNITTER-KANTE (Eiert leicht)',
+    creaseHint: '[F] im grünen Bereich drücken!',
+    archetypeBadgeLabel: 'FLUG-ARCHETYP',
+    archetypeGlider: 'Segler (Glider)',
+    archetypeDart: 'Pfeil (Dart)',
+    archetypeComet: 'Komet (Comet)',
+    archetypeSheet: 'Papierblatt',
+    archetypeGliderDesc: 'Sanfter Weitgleiter mit enormer Thermik & Hangtime.',
+    archetypeDartDesc: 'Rasanter Präzisionspfeil mit lasergerader Flugbahn.',
+    archetypeCometDesc: 'Schweres Ballistik-Geschoss mit massiver kinetischer Wucht.',
+    archetypeSheetDesc: 'Ungefaltetes Blatt. Trudelt zu Boden.',
+    statGlide: 'Gleitflug',
+    statSpeed: 'Tempo',
+    statImpact: 'Wucht',
+
+    // Slingshot: Direct Look & Hold-to-Charge
+    slingDragTip: '🎯 Zielen mit Trackpad/Maus • Halten zum Laden • Loslassen!',
+    slingDragRelease: 'Loslassen zum Werfen!',
+    slingDragCancel: '[Esc] Abbruch',
+
+    // Campaign Mode & Levels
+    modeSandbox: '🏡 Spielwiese (Endlos)',
+    modeCampaign: '🎯 Kampagne',
+    btnLevelSelect: '🎯 Level-Auswahl',
+    btnSandbox: '🏡 Freie Spielwiese',
+    levelSelectTitle: '🎯 KAMPAGNEN-LEVEL',
+    levelSelectSubtitle: 'Wähle eine Falt-Mission, erfülle das Ziel und sammle bis zu 3 Sterne!',
+    levelSelectClose: 'Schließen',
+    levelUnlockAllBtn: '🔓 Alle freischalten (Cheat)',
+    levelResetProgressBtn: '🔄 Fortschritt zurücksetzen',
+    levelSheetsAmmoLabel: (rem, max) => `📄 Blätter: ${rem}/${max}`,
+    levelObjectivePill: (curr, req) => `Ziel: ${curr}/${req}`,
+    levelResultVictory: '★ MISSION ERFÜLLT! ★',
+    levelResultFailed: 'MISSION GESCHEITERT',
+    levelResultFailedReason: 'Keine Papierbögen mehr übrig!',
+    btnNextLevel: 'Nächstes Level ▶',
+    btnRetryLevel: 'Erneut versuchen 🔄',
+    btnReturnToSelect: 'Level-Auswahl 📋',
+    btnBackToSandbox: 'Zur Spielwiese 🏡',
+    starEarnedTitle: (stars) => `${stars} von 3 Sternen erreicht!`,
+    highScorePill: (score) => `Bestwert: ${score.toLocaleString()} Pkt.`,
+
+    lvl1Title: 'Level 1: Der Gartenzaun',
+    lvl1Subtitle: 'Origami-Einstieg & Thermik',
+    lvl1Desc: 'Zwei neugierige Stadttauben kreisen tief über dem Vorgarten. Falte einen sanften Segler (Glider), um sie zu erwischen!',
+    lvl1Objective: 'Triff 2 Tauben mit maximal 3 Blättern.',
+    lvl1Star1: '★ Level erfolgreich abgeschlossen',
+    lvl1Star2: '★ Mit maximal 2 Blättern geschafft',
+    lvl1Star3: '★ Mindestens 1 perfekte Kante erzielt',
+
+    lvl2Title: 'Level 2: Hohe Weide',
+    lvl2Subtitle: 'Präzisionsflug & Nadel-Aerodynamik',
+    lvl2Desc: 'Zwei japanische Origami-Kraniche ziehen in 12m Höhe vorbei. Hier hilft nur ein rasanter Akrobatik-Dart!',
+    lvl2Objective: 'Triff 2 Kraniche in der Höhe mit max. 3 Blättern.',
+    lvl2Star1: '★ Beide Kraniche getroffen',
+    lvl2Star2: '★ Mit maximal 2 Blättern geschafft',
+    lvl2Star3: '★ Mindestens 1 perfekte Kante erzielt',
+
+    lvl3Title: 'Level 3: Nachbars Auto-Alarm',
+    lvl3Subtitle: 'Kinetische Zerstörungskraft',
+    lvl3Desc: 'Nachbars Familienkutsche steht friedlich in der Auffahrt. Falte das Papier zu einem schweren Kometen (5+ Faltungen) und löse den Autoalarm aus!',
+    lvl3Objective: 'Erzeuge einen Meteoriten-Krater (5+ Faltungen), um die Alarmanlage auszulösen.',
+    lvl3Star1: '★ Autoalarm & Schaf-Schock ausgelöst',
+    lvl3Star2: '★ Im allerersten Wurf gelungen (1-Shot)',
+    lvl3Star3: '★ Perfekte Kante & Komet gemeistert',
+
+    lvl4Title: 'Level 4: Flug FL-404',
+    lvl4Subtitle: 'Stratosphären-Abfangjäger',
+    lvl4Desc: 'Der Passagierjet Faltality Airlines FL-404 kreuzt in 20m Höhe mit 7 m/s! Berechne den Vorhaltewinkel präzise.',
+    lvl4Objective: 'Hole Passagierjet FL-404 vom Himmel (max. 4 Blätter).',
+    lvl4Star1: '★ Flugzeug FL-404 getroffen',
+    lvl4Star2: '★ Mit maximal 2 Blättern getroffen',
+    lvl4Star3: '★ Mindestens 1 perfekte Kante erzielt',
+
+    lvl5Title: 'Level 5: Apple Keynote Orbit',
+    lvl5Subtitle: 'Der finale Falt-Boss: iPhone Duo',
+    lvl5Desc: 'Das gigantische 14m-Titanium iPhone Duo schwebt majestätisch im Orbit! Knacke das Ceramic-Shield-Scharnier!',
+    lvl5Objective: 'Zerstöre das iPhone Duo (4 Treffer, max. 6 Blätter).',
+    lvl5Star1: '★ iPhone Duo Scharnier pulverisiert',
+    lvl5Star2: '★ Mit maximal 4 Blättern besiegt',
+    lvl5Star3: '★ Mindestens 2 perfekte Kanten erzielt'
   },
   en: {
     gameTitle: 'FOLDTALITY',
@@ -368,7 +567,7 @@ export const translations: Record<SupportedLang, Translations> = {
     introStartBtn: 'START GAME',
     introHintF: '<kbd>F</kbd> Fold Paper (Double)',
     introHintSpace: '<kbd>Space</kbd> Aim & Launch',
-    introHintT: '<kbd>T</kbd> Cycle Target (Lock-On)',
+    introHintT: '<kbd>Tab</kbd> / <kbd>T</kbd> 90s Arcade Lock-On',
     introHintArrows: '<kbd>← → ↑ ↓</kbd> Pan View & Aim',
 
     menuTitle: 'MENU',
@@ -376,7 +575,7 @@ export const translations: Record<SupportedLang, Translations> = {
     menuLangLabel: '🌐 Switch Language / Sprache:',
     menuFaltpediaBtn: '📖 Open FALT-PEDIA Encyclopedia',
     menuAimLabel: '🎯 Apple iAim Auto-Targeting:',
-    menuCycleTargetBtn: '🎯 Lock Next Target [Key T]',
+    menuCycleTargetBtn: '🎯 Cycle Target [Tab / T]',
     menuSoundLabel: '🔊 Sound & Music:',
     menuSoundOn: '🔊 Sound: ON',
     menuSoundOff: '🔇 Sound: OFF',
@@ -387,7 +586,7 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapModalHeader: '⌨️ Controls & Key Map',
     keymapF: '<strong>Fold Paper</strong> (Double thickness & range) / Return to table',
     keymapSpace: '<strong>Toggle Aim Mode</strong> or <strong>Launch Paper</strong>',
-    keymapT: '<strong>Cycle Target</strong> (Cycles through Pigeons, Cranes, Airliner & Keynote Satellite)',
+    keymapT: '<strong>90s Arcade Lock-On</strong> (Cycles through Pigeons, Seagulls, Airliners & Satellites)',
     keymapArrowsPitch: '<strong>Adjust Pitch</strong> up / down',
     keymapArrowsYaw: '<strong>Adjust Yaw</strong> left / right',
     keymapA: 'Toggle <strong>Apple iAim</strong> Auto-Lock',
@@ -484,7 +683,103 @@ export const translations: Record<SupportedLang, Translations> = {
     pointsSatellite: (pts) => `🛰️ +${pts.toLocaleString()} POINTS!`,
     pointsPlane: (pts) => `✈️ +${pts.toLocaleString()} POINTS!`,
     pointsNormal: (pts) => `+${pts.toLocaleString()} POINTS!`,
-    pointsCrater: (folds) => `WITH ${folds} FOLDS!`
+    pointsCrater: (folds) => `WITH ${folds} FOLDS!`,
+
+    bossName: '📱 Apple iPhone Duo (Titanium Hinge)',
+    bossPhaseClosed: 'Phase 1: Closed (Pocket Mode)',
+    bossPhaseUnfolding: 'Phase 2: Unfolding...',
+    bossPhaseOpen: 'Phase 3: Unfolded (Dual-Screen)',
+    bossShieldDeflect: '🛡️ CERAMIC SHIELD TOO STRONG! Requires 5+ folds or Aluminum Foil!',
+    bossSpawnBanner: '★ ONE MORE THING... ★',
+    bossSpawnSub: 'The Ultimate Folding Boss: iPhone Duo approaches from orbit!',
+    bossDefeatBanner: '🏆 F O L D T A L I T Y !',
+    bossDefeatSub: '📱 iPhone Duo Hinge cracked! +25,000 Points!',
+    menuSummonBoss: '📱 Challenge iPhone Duo [B]',
+
+    creaseTitle: 'CREASE TIMING',
+    creasePerfect: '★ PERFECT CREASE! (+25% SPEED) ★',
+    creaseGood: 'GOOD CREASE',
+    creaseImperfect: 'CRUMPLED CREASE (Wobbly)',
+    creaseHint: 'Press [F] inside the sweetspot!',
+    archetypeBadgeLabel: 'FLIGHT ARCHETYPE',
+    archetypeGlider: 'Glider',
+    archetypeDart: 'Dart',
+    archetypeComet: 'Comet',
+    archetypeSheet: 'Flat Sheet',
+    archetypeGliderDesc: 'Gentle floater with high lift factor and long hang-time.',
+    archetypeDartDesc: 'High-speed precision dart with razor-straight trajectory.',
+    archetypeCometDesc: 'Heavy ballistic slug with immense kinetic impact.',
+    archetypeSheetDesc: 'Unfolded sheet. Drifts helplessly to the grass.',
+    statGlide: 'Glide',
+    statSpeed: 'Speed',
+    statImpact: 'Impact',
+
+    // Slingshot: Direct Look & Hold-to-Charge
+    slingDragTip: '🎯 Aim with Trackpad/Mouse • Hold to Charge • Release!',
+    slingDragRelease: 'Release to launch!',
+    slingDragCancel: '[Esc] Cancel',
+
+    // Campaign Mode & Levels
+    modeSandbox: '🏡 Sandbox (Endless)',
+    modeCampaign: '🎯 Campaign',
+    btnLevelSelect: '🎯 Level Select',
+    btnSandbox: '🏡 Free Sandbox',
+    levelSelectTitle: '🎯 CAMPAIGN LEVELS',
+    levelSelectSubtitle: 'Pick a folding mission, complete the objective, and earn up to 3 stars!',
+    levelSelectClose: 'Close',
+    levelUnlockAllBtn: '🔓 Unlock All (Cheat)',
+    levelResetProgressBtn: '🔄 Reset Progress',
+    levelSheetsAmmoLabel: (rem, max) => `📄 Sheets: ${rem}/${max}`,
+    levelObjectivePill: (curr, req) => `Goal: ${curr}/${req}`,
+    levelResultVictory: '★ MISSION COMPLETE! ★',
+    levelResultFailed: 'MISSION FAILED',
+    levelResultFailedReason: 'Out of paper sheets!',
+    btnNextLevel: 'Next Level ▶',
+    btnRetryLevel: 'Try Again 🔄',
+    btnReturnToSelect: 'Level Select 📋',
+    btnBackToSandbox: 'To Sandbox 🏡',
+    starEarnedTitle: (stars) => `${stars} of 3 Stars Earned!`,
+    highScorePill: (score) => `Best: ${score.toLocaleString()} pts`,
+
+    lvl1Title: 'Level 1: The Garden Fence',
+    lvl1Subtitle: 'Origami Basics & Float Dynamics',
+    lvl1Desc: 'Two curious city pigeons cruise low across the garden. Fold a gentle Glider to catch them!',
+    lvl1Objective: 'Hit 2 pigeons with max 3 sheets.',
+    lvl1Star1: '★ Level successfully completed',
+    lvl1Star2: '★ Solved with max 2 sheets',
+    lvl1Star3: '★ At least 1 perfect crease scored',
+
+    lvl2Title: 'Level 2: High Pasture',
+    lvl2Subtitle: 'Precision Dart Flight',
+    lvl2Desc: 'Two Japanese origami cranes soar at 12m altitude. You need a razor-straight Dart!',
+    lvl2Objective: 'Hit 2 cranes aloft with max 3 sheets.',
+    lvl2Star1: '★ Both cranes nailed',
+    lvl2Star2: '★ Solved with max 2 sheets',
+    lvl2Star3: '★ At least 1 perfect crease scored',
+
+    lvl3Title: 'Level 3: Car Alarm Chaos',
+    lvl3Subtitle: 'Kinetic Shockwave',
+    lvl3Desc: 'Neighbor’s car rests quietly in the driveway. Fold the sheet into a dense Comet (5+ folds) and trigger the alarm!',
+    lvl3Objective: 'Blast a meteor crater (5+ folds) to blare the car alarm.',
+    lvl3Star1: '★ Car alarm & fainting sheep triggered',
+    lvl3Star2: '★ Nailed on the very first throw (1-shot)',
+    lvl3Star3: '★ Perfect crease & comet mastered',
+
+    lvl4Title: 'Level 4: Flight FL-404',
+    lvl4Subtitle: 'Stratospheric Interception',
+    lvl4Desc: 'Passenger airliner Faltality Airlines FL-404 cruises at 20m height with 7 m/s! Lead your shot carefully.',
+    lvl4Objective: 'Take down jet FL-404 with max 4 sheets.',
+    lvl4Star1: '★ Airliner FL-404 shot down',
+    lvl4Star2: '★ Solved with max 2 sheets',
+    lvl4Star3: '★ At least 1 perfect crease scored',
+
+    lvl5Title: 'Level 5: Keynote Orbit',
+    lvl5Subtitle: 'Final Boss: iPhone Duo',
+    lvl5Desc: 'The gargantuan 14m titanium iPhone Duo hovers in orbit! Shatter the Ceramic Shield hinge!',
+    lvl5Objective: 'Destroy the iPhone Duo (4 hits, max 6 sheets).',
+    lvl5Star1: '★ iPhone Duo hinge pulverized',
+    lvl5Star2: '★ Defeated with max 4 sheets',
+    lvl5Star3: '★ At least 2 perfect creases scored'
   }
 };
 

@@ -58,7 +58,7 @@
                 <kbd>Leertaste</kbd> Zielen & Werfen
               </div>
               <div class="intro-control-item" id="intro-hint-t">
-                <kbd>T</kbd> Ziel wechseln (Taube, Kranich, Jet, Satellit)
+                <kbd>Tab</kbd> / <kbd>T</kbd> 90s Arcade Lock-On Zielwechsel
               </div>
               <div class="intro-control-item" id="intro-hint-arrows">
                 <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> Kamera & Flugwinkel steuern
@@ -92,6 +92,12 @@
             </div>
           </div>
 
+          <!-- Mode Indicator / Level Select Pill Button -->
+          <button id="mode-indicator-btn" class="mode-pill-btn" title="Modus wechseln / Level-Auswahl">
+            <span id="mode-pill-icon" class="mode-pill-icon">🏡</span>
+            <span id="mode-pill-text" class="mode-pill-text">Spielwiese</span>
+          </button>
+
           <!-- Hamburger Button (☰) -->
           <button id="menu-toggle-btn" class="hamburger-btn" title="Menü öffnen [M]">
             <span class="hamburger-bar"></span>
@@ -100,6 +106,29 @@
           </button>
         </div>
       </header>
+
+      <!-- 🏹 SLINGSHOT DRAG-TO-THROW LIVE INDICATOR -->
+      <div id="slingshot-drag-indicator" class="slingshot-drag-indicator hidden ui-non-interactive">
+        <div class="sling-reticle-ring">
+          <div id="sling-tension-fill" class="sling-tension-fill"></div>
+          <span id="sling-power-val" class="sling-power-val">85%</span>
+        </div>
+        <div id="sling-instruction-hint" class="sling-instruction-hint">Loslassen zum Werfen</div>
+      </div>
+
+      <!-- 📱 BOSS HUD: iPhone Duo Health Bar -->
+      <div id="boss-hud" class="boss-hud hidden ui-interactive">
+        <div class="boss-header">
+          <div class="boss-title-wrap">
+            <span class="boss-icon">📱</span>
+            <span id="boss-name" class="boss-name">Apple iPhone Duo</span>
+          </div>
+          <span id="boss-phase-badge" class="boss-phase-badge">Phase 1: Geschlossen</span>
+        </div>
+        <div class="boss-hp-bar-bg">
+          <div id="boss-hp-fill" class="boss-hp-fill" style="width: 100%;"></div>
+        </div>
+      </div>
 
       <!-- ☰ SLIDE-OVER HAMBURGER MENU DRAWER -->
       <div id="menu-drawer-backdrop" class="drawer-backdrop hidden ui-interactive">
@@ -127,6 +156,9 @@
               <button id="drawer-pedia-btn" class="menu-highlight-btn">
                 📖 <span id="menu-pedia-label">FALT-PEDIA Enzyklopädie</span>
               </button>
+              <button id="drawer-level-select-btn" class="menu-highlight-btn campaign-btn">
+                🎯 <span id="menu-level-select-label">Kampagnen-Level (Angry Birds Modus)</span>
+              </button>
             </div>
 
             <!-- Targeting Options -->
@@ -147,6 +179,7 @@
             <!-- Audio & Keymap Controls -->
             <div class="menu-section">
               <div class="menu-btn-col">
+                <button id="menu-summon-boss-btn" class="menu-action-btn boss-btn">📱 <span id="menu-boss-label">iPhone Duo herausfordern [B]</span></button>
                 <button id="menu-sound-btn" class="menu-action-btn">🔊 Ton: AN</button>
                 <button id="menu-keymap-btn" class="menu-action-btn">⌨️ Tastenbelegung [K]</button>
                 <button id="menu-replay-intro-btn" class="menu-action-btn secondary">🎬 Intro-Animation ansehen</button>
@@ -155,7 +188,7 @@
           </div>
 
           <div class="drawer-footer">
-            <span class="drawer-footer-text">FALTALITY • High Performance Paper Physics</span>
+            <span class="drawer-footer-text">FALTALITY • 3D Assets: <a href="https://kenney.nl" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Kenney (CC0)</a></span>
           </div>
         </aside>
       </div>
@@ -181,6 +214,22 @@
           <div class="tower-sub-stats">
             <span id="tower-layers-val" class="tower-pill">1 Lage</span>
             <span id="tower-thickness-val" class="tower-pill">0.1 mm</span>
+          </div>
+        </div>
+
+        <!-- Origami Flight Archetype Card -->
+        <div id="archetype-badge" class="archetype-badge" title="Flug-Archetyp & Aerodynamik">
+          <div class="archetype-badge-top">
+            <span id="archetype-icon" class="archetype-icon">📄</span>
+            <div class="archetype-info">
+              <span id="archetype-badge-label" class="archetype-badge-label">FLUG-ARCHETYP</span>
+              <span id="archetype-title" class="archetype-title">Papierblatt</span>
+            </div>
+          </div>
+          <div class="archetype-stats-grid">
+            <div class="stat-pill"><span id="stat-glide-label" class="stat-name">Gleitflug</span><span id="stat-glide-val" class="stat-stars">★☆☆</span></div>
+            <div class="stat-pill"><span id="stat-speed-label" class="stat-name">Tempo</span><span id="stat-speed-val" class="stat-stars">★☆☆</span></div>
+            <div class="stat-pill"><span id="stat-impact-label" class="stat-name">Wucht</span><span id="stat-impact-val" class="stat-stars">★☆☆</span></div>
           </div>
         </div>
 
@@ -253,6 +302,9 @@
         <div class="actions-panel">
           <!-- Angle and Power quick sliders (Visible during aiming) -->
           <div id="aim-sliders" class="slider-controls hidden">
+            <div id="slingshot-drag-tip" class="slingshot-drag-tip">
+              <span>🏹 <strong id="sling-drag-tip-text">Schleuder:</strong> Ziehen zum Spannen!</span>
+            </div>
             <div class="slider-group">
               <label for="pitch-slider"><span id="label-pitch">Steigung [↑/↓]:</span> <span id="pitch-val">38</span>°</label>
               <input type="range" id="pitch-slider" min="15" max="80" value="38" />
@@ -261,6 +313,33 @@
               <label for="power-slider"><span id="label-power">Wurfkraft:</span> <span id="power-val">85</span>%</label>
               <input type="range" id="power-slider" min="30" max="100" value="85" />
             </div>
+          </div>
+
+          <!-- Campaign Mission & Ammo Bar (Visible during Campaign Mode) -->
+          <div id="campaign-hud" class="campaign-hud hidden ui-interactive">
+            <div class="campaign-hud-info">
+              <span id="campaign-mission-name" class="campaign-mission-name">Level 1: Der Gartenzaun</span>
+              <span id="campaign-mission-objective" class="campaign-mission-objective">Ziel: 0/2 Tauben</span>
+            </div>
+            <div class="campaign-hud-ammo">
+              <span id="campaign-ammo-icons" class="campaign-ammo-icons" title="Verbleibende Papier-Munition">📄📄📄</span>
+            </div>
+          </div>
+
+          <!-- Active Crease Timing Minigame (Gears of War / Mario Golf style) -->
+          <div id="active-crease-hud" class="active-crease-hud hidden ui-interactive">
+            <div class="crease-header">
+              <span class="crease-icon">✨</span>
+              <span id="crease-title" class="crease-title">FALT-TIMING</span>
+              <span id="crease-hint" class="crease-hint">[F] im Trefferfeld drücken!</span>
+            </div>
+            <div class="crease-track-wrapper">
+              <div class="crease-meter-track">
+                <div id="crease-sweetspot" class="crease-sweetspot"></div>
+                <div id="crease-needle" class="crease-needle"></div>
+              </div>
+            </div>
+            <div id="crease-rating" class="crease-rating hidden"></div>
           </div>
 
           <!-- Main Action Buttons (Cupertino Minimal Pill Style) -->
@@ -337,8 +416,8 @@
                 <div id="keymap-desc-space" class="desc"><strong>Zielmodus aktivieren</strong> bzw. <strong>Papier abschiessen</strong></div>
               </div>
               <div class="keymap-row">
-                <div class="keys"><kbd>T</kbd> / Klick</div>
-                <div id="keymap-desc-t" class="desc"><strong>Ziel wechseln</strong> (Schaltet durch Tauben, Flugzeuge & Tim Cook Satellit)</div>
+                <div class="keys"><kbd>Tab</kbd> / <kbd>T</kbd></div>
+                <div id="keymap-desc-t" class="desc"><strong>90s Arcade Lock-On</strong> (Schaltet durch Vögel, Möwen, Flugzeuge & Tim Cook Satellit)</div>
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>↑</kbd> <kbd>↓</kbd></div>
@@ -369,6 +448,10 @@
                 <div id="keymap-desc-u" class="desc"><strong>Material wechseln</strong> (Zwischen Papier & Alufolie umschalten)</div>
               </div>
               <div class="keymap-row">
+                <div class="keys"><kbd>B</kbd></div>
+                <div id="keymap-desc-b" class="desc"><strong>iPhone Duo Boss beschwören</strong> (Sofortiger Endgegner-Kampf!)</div>
+              </div>
+              <div class="keymap-row">
                 <div class="keys"><kbd>R</kbd></div>
                 <div id="keymap-desc-r" class="desc"><strong>Frisches Blatt Papier</strong> auf den Tisch legen (Reset)</div>
               </div>
@@ -380,6 +463,75 @@
             <div class="keymap-footer">
               <button id="keymap-ok-btn" class="btn btn-primary">Verstanden, weiterspielen!</button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🎯 CAMPAIGN LEVEL SELECT MODAL -->
+      <div id="level-select-modal" class="modal-backdrop hidden ui-interactive">
+        <div class="modal-card level-select-card">
+          <div class="modal-header">
+            <div class="level-select-header-text">
+              <h2 id="level-select-title">🎯 KAMPAGNEN-LEVEL</h2>
+              <p id="level-select-subtitle" class="level-select-subtitle">Wähle eine Falt-Mission, erfülle das Ziel und sammle bis zu 3 Sterne!</p>
+            </div>
+            <button id="level-select-close-btn" class="icon-btn">✕</button>
+          </div>
+
+          <!-- Mode switch quick tabs -->
+          <div class="mode-switch-tabs">
+            <button id="tab-sandbox-btn" class="mode-tab-btn active">🏡 Freie Spielwiese (Endlos)</button>
+            <button id="tab-campaign-btn" class="mode-tab-btn">🎯 Kampagne (Level 1–5)</button>
+          </div>
+
+          <div class="modal-content level-select-content">
+            <div id="level-cards-grid" class="level-cards-grid">
+              <!-- Dynamically populated from CAMPAIGN_LEVELS & progress -->
+            </div>
+          </div>
+
+          <div class="level-select-footer">
+            <button id="unlock-all-cheat-btn" class="text-link-btn">🔓 Alle freischalten (Cheat/Test)</button>
+            <button id="reset-campaign-progress-btn" class="text-link-btn">🔄 Fortschritt zurücksetzen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🏆 LEVEL RESULT (VICTORY / DEFEAT) MODAL -->
+      <div id="level-result-modal" class="modal-backdrop hidden ui-interactive">
+        <div class="modal-card result-card">
+          <div id="result-icon-badge" class="result-icon-badge">🏆</div>
+          <h2 id="result-title" class="result-title">★ MISSION ERFÜLLT! ★</h2>
+          <p id="result-subtitle" class="result-subtitle">Perfekt gezielt & sauber gefaltet!</p>
+
+          <!-- 3 Big Bouncing Celebratory Stars -->
+          <div id="result-stars-container" class="result-stars-container">
+            <span class="result-star" id="result-star-1">★</span>
+            <span class="result-star" id="result-star-2">★</span>
+            <span class="result-star" id="result-star-3">★</span>
+          </div>
+
+          <!-- Score & Ammo Breakdown -->
+          <div class="result-stats-card">
+            <div class="result-stat-row">
+              <span class="stat-lbl">Punkte:</span>
+              <span id="result-score-val" class="stat-val">+1,450</span>
+            </div>
+            <div class="result-stat-row">
+              <span class="stat-lbl">Verbrauchte Bögen:</span>
+              <span id="result-sheets-val" class="stat-val">2 von 3</span>
+            </div>
+            <div class="result-stat-row">
+              <span class="stat-lbl">Perfekte Kanten:</span>
+              <span id="result-perfect-val" class="stat-val">★ 1x</span>
+            </div>
+          </div>
+
+          <div class="result-actions">
+            <button id="result-next-btn" class="btn btn-primary">Nächstes Level ▶</button>
+            <button id="result-retry-btn" class="btn btn-secondary">Erneut versuchen 🔄</button>
+            <button id="result-select-btn" class="btn btn-secondary">Level-Auswahl 📋</button>
+            <button id="result-sandbox-btn" class="btn btn-secondary">Zur Spielwiese 🏡</button>
           </div>
         </div>
       </div>
