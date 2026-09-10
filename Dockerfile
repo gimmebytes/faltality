@@ -1,22 +1,18 @@
-# Stage 1: Build static assets with Node.js
+# Stage 1: Build static assets using Vite & Node
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy dependency definitions
+# Install dependencies first for Docker caching
 COPY package*.json ./
-
-# Install clean dependencies
 RUN npm ci
 
-# Copy source files
+# Copy source code and build
 COPY . .
-
-# Build production bundle with TypeScript & Vite
 RUN npm run build
 
-# Stage 2: Serve production assets via lightweight Nginx Alpine
-FROM nginx:alpine AS runner
+# Stage 2: Serve compiled HTML/JS/CSS via high-performance unprivileged Nginx
+FROM nginx:alpine
 
 # Remove default nginx configs
 RUN rm -rf /etc/nginx/conf.d/*

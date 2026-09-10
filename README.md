@@ -1,4 +1,4 @@
-# 🪿 FALTALITY (iFold Edition)
+# 🪶 FALTALITY (iFold Edition)
 
 Ein satirisch-physikalisches 3D-Browsergame im charmanten Low-Poly Flat-Shading Stil von **Untitled Goose Game**, gewidmet dem Mythos des exponentiellen Papierfaltens und dem Erscheinen des neuen *iPhone Fold*.
 
@@ -23,7 +23,7 @@ In **FALTALITY** startest du mit einem frischen Blatt Papier auf einem gemütlic
 
 2. **Phase 2: Zielmodus (Himmelsperspektive)**
    - Die Kamera schwenkt majestätisch hoch in den Himmel über den Garten.
-   - Am Himmel ziehen gefaltete japanische Origami-Kraniche, Origami-Tauben, Möwen, die *iFold Origami Stealth Dart* und in den Wolken **Faltality Airlines Flug FL-404** ihre Bahnen.
+   - Am Himmel ziehen gefaltete japanische Origami-Kraniche, Origami-Tauben, Möwen, die *iFold Origami Stealth Dart*, in den Wolken **Faltality Airlines Flug FL-404** und im Erdorbit **Tim Cooks Apple Keynote-Satellit** ihre Bahnen.
    - Steuere deinen Schuss flüssig mit den **Pfeiltasten [↑ ↓ ← →]** oder der Maus.
    - Drücke die **Leertaste** zum blitzschnellen Moorhuhn-Abschuss!
 
@@ -41,6 +41,9 @@ In **FALTALITY** startest du mit einem frischen Blatt Papier auf einem gemütlic
 | --- | --- |
 | <kbd>F</kbd> | Papier falten / Zurück zum Tisch wechseln |
 | <kbd>Leertaste</kbd> | Zielmodus aktivieren / Papiergeschoss abfeuern |
+| <kbd>T</kbd> | Nächstes Ziel erfassen (Lock-On Zyklen) |
+| <kbd>U</kbd> | Material wechseln (Papier / Alufolie ab 500 Pkt.) |
+| <kbd>C</kbd> | Kamera-Fokus auf Papier auf dem Tisch zentrieren |
 | <kbd>↑</kbd> <kbd>↓</kbd> | Steigung (Pitch) erhöhen / senken |
 | <kbd>←</kbd> <kbd>→</kbd> | Richtung (Yaw) links / rechts steuern |
 | <kbd>A</kbd> | Apple iAim Auto-Lock umschalten |
@@ -78,8 +81,10 @@ npm run build
 
 Das Spiel ist vollständig containerisiert und kann als leichtgewichtiger Nginx-Container betrieben werden.
 
-### Lokaler Docker-Start
 ```bash
+# Docker Image bauen
 docker build -t faltality:latest .
-docker run -p 8080:8080 faltality:latest
+
+# Container starten
+docker run -d -p 8080:8080 --name faltality faltality:latest
 ```
