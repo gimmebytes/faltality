@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { sound } from '../sound';
 import { createToonMaterial, GOOSE_PALETTE } from '../materials';
+import { modelLoader } from '../assetLoader';
 
 interface OrigamiSheep {
   group: THREE.Group;
@@ -167,8 +168,8 @@ export class Environment {
       [-10, 0, 35],
       [12, 0, 32]
     ];
-    treePositions.forEach(([tx, ty, tz]) => {
-      this.createTree(tx, ty, tz);
+    treePositions.forEach(([tx, ty, tz], idx) => {
+      this.createTree(tx, ty, tz, idx);
     });
 
     // 4. White Picket Fence in distance separating gardens
@@ -179,51 +180,24 @@ export class Environment {
   }
 
   // Neighbor house, garage driveway, red car with blinkers and wobbly fence
+    // Neighbor house, garage driveway, stylized sedan with blinkers
   private buildNeighborProperty() {
     const houseGroup = new THREE.Group();
     houseGroup.position.set(-25, 0, -28);
 
-    // Main House Body (warm English plaster/stone)
-    const houseGeo = new THREE.BoxGeometry(16, 8, 12);
-    const houseMat = createToonMaterial({ color: GOOSE_PALETTE.plasterWall });
-    const house = new THREE.Mesh(houseGeo, houseMat);
-    house.position.set(0, 4, 0);
-    house.castShadow = true;
-    house.receiveShadow = true;
-    houseGroup.add(house);
-
-    // Gabled Roof (terracotta tiles)
-    const roofGeo = new THREE.ConeGeometry(12, 4.5, 4);
-    roofGeo.rotateY(Math.PI / 4);
-    const roofMat = createToonMaterial({ color: GOOSE_PALETTE.roofTiles });
-    const roof = new THREE.Mesh(roofGeo, roofMat);
-    roof.position.set(0, 10.2, 0);
-    roof.scale.set(1.1, 1, 0.9);
-    roof.castShadow = true;
-    houseGroup.add(roof);
-
-    // Windows with warm cozy light
-    const winGeo = new THREE.PlaneGeometry(1.6, 2.2);
-    const winMat = new THREE.MeshBasicMaterial({ color: 0xffeaa7 });
-    const winCoords = [
-      [-4.5, 4.5, 6.05],
-      [4.5, 4.5, 6.05],
-      [-4.5, 4.5, -6.05],
-      [4.5, 4.5, -6.05]
-    ];
-    winCoords.forEach(([wx, wy, wz]) => {
-      const win = new THREE.Mesh(winGeo, winMat);
-      win.position.set(wx, wy, wz);
-      if (wz < 0) win.rotateY(Math.PI);
-      houseGroup.add(win);
+    // High-Quality Stylized Suburban Cottage
+    modelLoader.load('/models/building-type-a.glb').then((house) => {
+      house.scale.set(14.0, 14.0, 14.0);
+      house.position.set(0, 0, 0);
+      house.rotation.y = Math.PI * 0.5;
+      houseGroup.add(house);
+    }).catch(() => {
+      const houseGeo = new THREE.BoxGeometry(16, 8, 12);
+      const houseMat = createToonMaterial({ color: GOOSE_PALETTE.plasterWall });
+      const house = new THREE.Mesh(houseGeo, houseMat);
+      house.position.set(0, 4, 0);
+      houseGroup.add(house);
     });
-
-    // Chimney
-    const chimneyGeo = new THREE.BoxGeometry(1.2, 3.2, 1.2);
-    const chimneyMat = createToonMaterial({ color: GOOSE_PALETTE.neighborChimney });
-    const chimney = new THREE.Mesh(chimneyGeo, chimneyMat);
-    chimney.position.set(-4, 11, 2);
-    houseGroup.add(chimney);
 
     // Driveway gravel patch
     const driveGeo = new THREE.PlaneGeometry(10, 16);
@@ -234,51 +208,24 @@ export class Environment {
     driveway.receiveShadow = true;
     houseGroup.add(driveway);
 
-    // Neighbor's Prized Low-Poly Station Wagon (Car) in classic British vintage blue
+    // Neighbor's Prized Stylized Low-Poly Car
     const carGroup = new THREE.Group();
-    carGroup.position.set(13, 0.65, 4);
+    carGroup.position.set(13, 0.05, 4);
     carGroup.rotateY(-Math.PI * 0.15);
 
-    // Chassis
-    const carBodyGeo = new THREE.BoxGeometry(3.2, 1.1, 5.4);
-    const carMat = createToonMaterial({ color: GOOSE_PALETTE.carBlue });
-    const carBody = new THREE.Mesh(carBodyGeo, carMat);
-    carBody.position.set(0, 0.6, 0);
-    carBody.castShadow = true;
-    carGroup.add(carBody);
-
-    // Cabin / Roof
-    const carRoofGeo = new THREE.BoxGeometry(2.7, 0.95, 3.0);
-    const carGlassMat = createToonMaterial({ color: GOOSE_PALETTE.windowGlass });
-    const carRoof = new THREE.Mesh(carRoofGeo, carGlassMat);
-    carRoof.position.set(0, 1.5, -0.4);
-    carRoof.castShadow = true;
-    carGroup.add(carRoof);
-
-    // 4 Wheels
-    const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.35, 10);
-    wheelGeo.rotateZ(Math.PI / 2);
-    const wheelMat = createToonMaterial({ color: GOOSE_PALETTE.carTire });
-    const wheelPositions = [
-      [-1.55, 0.2, 1.6],
-      [1.55, 0.2, 1.6],
-      [-1.55, 0.2, -1.6],
-      [1.55, 0.2, -1.6]
-    ];
-    wheelPositions.forEach(([wx, wy, wz]) => {
-      const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-      wheel.position.set(wx, wy, wz);
-      wheel.castShadow = true;
-      carGroup.add(wheel);
+    modelLoader.load('/models/sedan.glb').then((car) => {
+      car.scale.set(2.3, 2.3, 2.3);
+      car.rotation.y = Math.PI;
+      carGroup.add(car);
     });
 
-    // 4 Orange Hazard Blinkers
-    const blinkerGeo = new THREE.BoxGeometry(0.4, 0.25, 0.15);
+    // Hazard Blinkers for car alarm
+    const blinkerGeo = new THREE.BoxGeometry(0.35, 0.2, 0.15);
     const blinkerPositions = [
-      [-1.2, 0.7, 2.72],
-      [1.2, 0.7, 2.72],
-      [-1.2, 0.7, -2.72],
-      [1.2, 0.7, -2.72]
+      [-1.1, 0.75, 2.2],
+      [1.1, 0.75, 2.2],
+      [-1.1, 0.75, -2.2],
+      [1.1, 0.75, -2.2]
     ];
     this.carBlinkers = [];
     blinkerPositions.forEach(([bx, by, bz]) => {
@@ -433,34 +380,26 @@ export class Environment {
     this.triggerSheepFaint();
   }
 
-  private createTree(x: number, y: number, z: number) {
+  private createTree(x: number, y: number, z: number, variant: number = 0) {
     const treeGroup = new THREE.Group();
     treeGroup.position.set(x, y, z);
-
-    const trunkGeo = new THREE.CylinderGeometry(0.3, 0.45, 2.5, 6);
-    const trunkMat = createToonMaterial({ color: GOOSE_PALETTE.woodBark });
-    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-    trunk.position.y = 1.25;
-    trunk.castShadow = true;
-    treeGroup.add(trunk);
-
-    const foliageMat = createToonMaterial({
-      color: GOOSE_PALETTE.foliagePrimary
-    });
-    const foliageTiers = [
-      { radius: 2.2, height: 2.5, y: 2.8 },
-      { radius: 1.7, height: 2.2, y: 4.2 },
-      { radius: 1.1, height: 1.8, y: 5.4 }
-    ];
-    foliageTiers.forEach((tier) => {
-      const fGeo = new THREE.ConeGeometry(tier.radius, tier.height, 6);
-      const fMesh = new THREE.Mesh(fGeo, foliageMat);
-      fMesh.position.y = tier.y;
-      fMesh.castShadow = true;
-      treeGroup.add(fMesh);
-    });
-
     this.scene.add(treeGroup);
+
+    const modelUrl = variant % 2 === 0 ? '/models/tree_oak.glb' : '/models/tree_detailed.glb';
+    modelLoader.load(modelUrl).then((tree) => {
+      const scale = 5.8 + (variant % 3) * 0.7;
+      tree.scale.set(scale, scale, scale);
+      tree.rotation.y = variant * 1.6;
+      treeGroup.add(tree);
+    }).catch(() => {
+      // Fallback
+      const trunkGeo = new THREE.CylinderGeometry(0.3, 0.45, 2.5, 6);
+      const trunkMat = createToonMaterial({ color: GOOSE_PALETTE.woodBark });
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = 1.25;
+      trunk.castShadow = true;
+      treeGroup.add(trunk);
+    });
   }
 
   private createFence(startX: number, z: number, length: number) {
