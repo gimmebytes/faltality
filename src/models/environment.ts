@@ -5,8 +5,8 @@ import { modelLoader } from '../assetLoader';
 
 interface OrigamiSheep {
   group: THREE.Group;
-  headGroup: THREE.Group;
-  legs: THREE.Mesh[];
+  headGroup?: THREE.Group;
+  legs?: THREE.Mesh[];
   state: 'grazing' | 'fainting' | 'down' | 'recovering';
   timer: number;
   baseY: number;
@@ -266,75 +266,32 @@ export class Environment {
     rail2.position.set(0, 0.5, -6.5);
     pastureGroup.add(rail1, rail2);
 
-    // Create 3 comical low-poly origami sheep
+    // Create 3 comical stylized 3D sheep
     const sheepConfigs = [
       { x: -3.5, z: -1, rotY: 0.4 },
       { x: 0.5, z: 2.2, rotY: -1.2 },
       { x: 4.0, z: -1.5, rotY: 2.1 }
     ];
 
-    const woolMat = createToonMaterial({ color: GOOSE_PALETTE.sheepWool });
-    const faceMat = createToonMaterial({ color: GOOSE_PALETTE.sheepFace });
-    const legMat = createToonMaterial({ color: GOOSE_PALETTE.sheepLegs });
-
     this.sheepFlock = sheepConfigs.map((cfg) => {
       const sheepGroup = new THREE.Group();
-      sheepGroup.position.set(cfg.x, 0.7, cfg.z);
+      sheepGroup.position.set(cfg.x, 0.05, cfg.z);
       sheepGroup.rotateY(cfg.rotY);
 
-      // Fluffy wool body (faceted geometric block)
-      const woolGeo = new THREE.BoxGeometry(1.6, 1.2, 2.2);
-      const body = new THREE.Mesh(woolGeo, woolMat);
-      body.castShadow = true;
-      sheepGroup.add(body);
-
-      // Black sheep face & ears (Suffolk blackface)
-      const headGroup = new THREE.Group();
-      headGroup.position.set(0, 0.4, 1.25);
-
-      const headGeo = new THREE.BoxGeometry(0.7, 0.7, 0.9);
-      const head = new THREE.Mesh(headGeo, faceMat);
-      head.castShadow = true;
-      headGroup.add(head);
-
-      // Droopy ears
-      const earGeo = new THREE.BoxGeometry(0.5, 0.15, 0.25);
-      const earL = new THREE.Mesh(earGeo, faceMat);
-      earL.position.set(-0.45, 0.15, -0.1);
-      earL.rotateZ(-0.3);
-      const earR = new THREE.Mesh(earGeo, faceMat);
-      earR.position.set(0.45, 0.15, -0.1);
-      earR.rotateZ(0.3);
-      headGroup.add(earL, earR);
-
-      sheepGroup.add(headGroup);
-
-      // 4 tiny matchstick legs
-      const legGeo = new THREE.BoxGeometry(0.18, 0.8, 0.18);
-      const legs: THREE.Mesh[] = [];
-      const legOffsets = [
-        [-0.55, -0.7, 0.7],
-        [0.55, -0.7, 0.7],
-        [-0.55, -0.7, -0.7],
-        [0.55, -0.7, -0.7]
-      ];
-      legOffsets.forEach(([lx, ly, lz]) => {
-        const leg = new THREE.Mesh(legGeo, legMat);
-        leg.position.set(lx, ly, lz);
-        leg.castShadow = true;
-        sheepGroup.add(leg);
-        legs.push(leg);
+      modelLoader.load('/models/sheep.glb').then((model) => {
+        model.scale.set(0.42, 0.42, 0.42);
+        model.rotation.y = Math.PI; // Face forward
+        model.position.y = -0.4;
+        sheepGroup.add(model);
       });
 
       pastureGroup.add(sheepGroup);
 
       return {
         group: sheepGroup,
-        headGroup,
-        legs,
         state: 'grazing',
         timer: 0,
-        baseY: 0.7,
+        baseY: 0.05,
         baseRotY: cfg.rotY,
         chewPhase: Math.random() * Math.PI * 2
       };
@@ -463,29 +420,20 @@ export class Environment {
   }
 
   private buildClouds() {
-    const cloudMat = createToonMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.94
-    });
-
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 11; i++) {
       const cloudGroup = new THREE.Group();
-      const puffCount = 4 + Math.floor(Math.random() * 4);
-
-      for (let p = 0; p < puffCount; p++) {
-        const puffSize = 3.5 + Math.random() * 3.5;
-        const puffGeo = new THREE.DodecahedronGeometry(puffSize, 1);
-        const puff = new THREE.Mesh(puffGeo, cloudMat);
-        puff.position.set((p - puffCount / 2) * 3.0, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2.5);
-        cloudGroup.add(puff);
-      }
-
       cloudGroup.position.set(
-        (Math.random() - 0.5) * 260,
-        32 + Math.random() * 24,
-        -50 - Math.random() * 180
+        (Math.random() - 0.5) * 280,
+        32 + Math.random() * 22,
+        -40 - Math.random() * 190
       );
+
+      modelLoader.load('/models/cloud.glb').then((cloudMesh) => {
+        const s = 14.0 + Math.random() * 12.0;
+        cloudMesh.scale.set(s, s * 0.65, s * 0.85);
+        cloudGroup.add(cloudMesh);
+      });
+
       this.clouds.push(cloudGroup);
       this.scene.add(cloudGroup);
     }
@@ -533,14 +481,14 @@ export class Environment {
       sheep.chewPhase += delta * 4;
 
       if (sheep.state === 'grazing') {
-        sheep.headGroup.rotation.x = 0.2 + Math.sin(sheep.chewPhase) * 0.12;
+        if (sheep.headGroup) sheep.headGroup.rotation.x = 0.2 + Math.sin(sheep.chewPhase) * 0.12;
       } else if (sheep.state === 'fainting') {
         sheep.timer += delta * 4.5;
         const roll = Math.min(Math.PI / 2, sheep.timer * (Math.PI / 2));
         sheep.group.rotation.z = roll;
         sheep.group.position.y = sheep.baseY - Math.sin(roll) * 0.35;
 
-        sheep.legs.forEach((leg) => {
+        sheep.legs?.forEach((leg) => {
           leg.rotation.z = -0.4;
         });
 
@@ -566,7 +514,7 @@ export class Environment {
           sheep.state = 'grazing';
           sheep.group.rotation.z = 0;
           sheep.group.position.y = sheep.baseY;
-          sheep.legs.forEach((leg) => {
+          sheep.legs?.forEach((leg) => {
             leg.rotation.z = 0;
           });
         }

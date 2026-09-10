@@ -46,16 +46,29 @@ class ModelLoaderService {
         mesh.castShadow = true;
         mesh.receiveShadow = true;
 
+        const hasVertexColors = !!(mesh.geometry?.attributes?.color);
+
         if (mesh.material) {
           const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           const newMats = mats.map((mat) => {
             const m = mat as THREE.MeshStandardMaterial;
-            return new THREE.MeshToonMaterial({
-              color: m.color ? m.color : 0xffffff,
+
+            const toonMat = new THREE.MeshToonMaterial({
+              color: m.color ? m.color.clone() : new THREE.Color(0xffffff),
               map: m.map ?? null,
-              gradientMap: gradient
+              gradientMap: gradient,
+              side: m.side ?? THREE.FrontSide,
+              vertexColors: hasVertexColors
             });
+
+            if (m.map) {
+              m.map.colorSpace = THREE.SRGBColorSpace;
+              m.map.needsUpdate = true;
+            }
+
+            return toonMat;
           });
+
           mesh.material = Array.isArray(mesh.material) ? newMats : newMats[0];
         }
       }

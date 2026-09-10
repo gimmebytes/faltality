@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { sound } from '../sound';
-import { createToonMaterial, GOOSE_PALETTE } from '../materials';
+import { createToonMaterial } from '../materials';
+import { modelLoader } from '../assetLoader';
 
 export type BirdType = 'goose' | 'pigeon' | 'seagull' | 'drone' | 'airplane' | 'satellite';
 
@@ -208,146 +209,184 @@ export class BirdManager {
   // 1. Japanese Origami Crane (Orizuru)
   private createOrigamiCrane() {
     const bodyGroup = new THREE.Group();
+    const whiteMat = createToonMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+    const orangeMat = createToonMaterial({ color: 0xff9f43 });
+    const darkMat = createToonMaterial({ color: 0x222222 });
 
-    const whiteWashi = createToonMaterial({ color: GOOSE_PALETTE.craneWhite, side: THREE.DoubleSide });
-    const redAccent = createToonMaterial({ color: GOOSE_PALETTE.craneRedCrown, side: THREE.DoubleSide });
-    const foldShadow = createToonMaterial({ color: 0xded8cc, side: THREE.DoubleSide });
-
-    const bodyVerts = [
-      [0, 0.45, 0], [0, -0.45, 0], [0, 0.05, 0.65], [0, 0.05, -0.65], [0.35, 0.1, 0], [-0.35, 0.1, 0]
-    ];
-    const bodyIndices = [
-      [0, 2, 4], [0, 4, 3], [0, 3, 5], [0, 5, 2],
-      [1, 4, 2], [1, 3, 4], [1, 5, 3], [1, 2, 5]
-    ];
-    const bodyGeo = this.createFoldedFacetGeo(bodyVerts, bodyIndices);
-    const body = new THREE.Mesh(bodyGeo, whiteWashi);
+    // Plump egg-shaped Goose Body (Untitled Goose Game inspired)
+    const bodyGeo = new THREE.SphereGeometry(0.55, 10, 8);
+    bodyGeo.scale(0.8, 0.75, 1.25);
+    const body = new THREE.Mesh(bodyGeo, whiteMat);
+    body.castShadow = true;
     bodyGroup.add(body);
 
-    const headGroup = new THREE.Group();
-    headGroup.position.set(0, 0.05, 0.6);
+    // Pointy little tail feathers
+    const tailGeo = new THREE.ConeGeometry(0.2, 0.5, 6);
+    tailGeo.rotateX(-Math.PI * 0.65);
+    tailGeo.translate(0, 0.15, -0.65);
+    const tail = new THREE.Mesh(tailGeo, whiteMat);
+    bodyGroup.add(tail);
 
-    const neckVerts = [[0, 0, 0], [0, 0.9, 0.55], [0.08, 0.35, 0.25], [-0.08, 0.35, 0.25]];
-    const neckIndices = [[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]];
-    const neck = new THREE.Mesh(this.createFoldedFacetGeo(neckVerts, neckIndices), whiteWashi);
+    // Orange webbed feet trailing behind
+    for (const side of [-0.2, 0.2]) {
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.35), orangeMat);
+      foot.position.set(side, -0.3, -0.6);
+      bodyGroup.add(foot);
+    }
+
+    // Upright graceful neck and head
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, 0.2, 0.5);
+
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.65, 8), whiteMat);
+    neck.position.set(0, 0.35, 0.12);
+    neck.rotation.x = Math.PI * 0.15;
     headGroup.add(neck);
 
-    const beakVerts = [[0, 0.9, 0.55], [0, 0.72, 0.85], [0.06, 0.84, 0.65], [-0.06, 0.84, 0.65]];
-    const beakIndices = [[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]];
-    const beak = new THREE.Mesh(this.createFoldedFacetGeo(beakVerts, beakIndices), redAccent);
+    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), whiteMat);
+    headMesh.position.set(0, 0.68, 0.25);
+    headGroup.add(headMesh);
+
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.35, 6), orangeMat);
+    beak.rotation.x = Math.PI * 0.5;
+    beak.position.set(0, 0.65, 0.5);
+    headGroup.add(beak);
+
+    for (const s of [-0.14, 0.14]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 4), darkMat);
+      eye.position.set(s, 0.72, 0.3);
+      headGroup.add(eye);
+    }
+    bodyGroup.add(headGroup);
+
+    // Wings
+    const leftWingGroup = new THREE.Group();
+    leftWingGroup.position.set(-0.35, 0.15, 0.1);
+    const lWingMain = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.05, 0.45), whiteMat);
+    lWingMain.position.set(-0.6, 0, 0);
+    const lWingTip = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.04, 0.35), whiteMat);
+    lWingTip.position.set(-1.4, 0.05, -0.05);
+    lWingTip.rotation.y = -0.15;
+    leftWingGroup.add(lWingMain, lWingTip);
+
+    const rightWingGroup = new THREE.Group();
+    rightWingGroup.position.set(0.35, 0.15, 0.1);
+    const rWingMain = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.05, 0.45), whiteMat);
+    rWingMain.position.set(0.6, 0, 0);
+    const rWingTip = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.04, 0.35), whiteMat);
+    rWingTip.position.set(1.4, 0.05, -0.05);
+    rWingTip.rotation.y = 0.15;
+    rightWingGroup.add(rWingMain, rWingTip);
+
+    bodyGroup.add(leftWingGroup, rightWingGroup);
+
+    return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: headGroup };
+  }
+
+  private createOrigamiPigeon() {
+    const bodyGroup = new THREE.Group();
+    const slateMat = createToonMaterial({ color: 0x718093 });
+    const darkMat = createToonMaterial({ color: 0x2f3640 });
+    const tealMat = createToonMaterial({ color: 0x10ac84 });
+    const pinkMat = createToonMaterial({ color: 0xff7675 });
+
+    const bodyGeo = new THREE.SphereGeometry(0.42, 8, 8);
+    bodyGeo.scale(0.85, 0.9, 1.2);
+    const body = new THREE.Mesh(bodyGeo, slateMat);
+    body.castShadow = true;
+    bodyGroup.add(body);
+
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.04, 0.5), darkMat);
+    tail.position.set(0, 0.1, -0.55);
+    tail.rotation.x = -0.2;
+    bodyGroup.add(tail);
+
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, 0.15, 0.35);
+
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.18, 0.3, 8), tealMat);
+    neck.position.set(0, 0.15, 0.08);
+    neck.rotation.x = 0.2;
+    headGroup.add(neck);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), slateMat);
+    head.position.set(0, 0.32, 0.15);
+    headGroup.add(head);
+
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 5), pinkMat);
+    beak.rotation.x = Math.PI / 2;
+    beak.position.set(0, 0.3, 0.32);
     headGroup.add(beak);
     bodyGroup.add(headGroup);
 
-    const tailVerts = [[0, 0.05, -0.6], [0, 0.75, -1.05], [0.08, 0.35, -0.8], [-0.08, 0.35, -0.8]];
-    const tailIndices = [[0, 1, 2], [0, 3, 1], [0, 2, 3], [1, 3, 2]];
-    const tail = new THREE.Mesh(this.createFoldedFacetGeo(tailVerts, tailIndices), foldShadow);
-    bodyGroup.add(tail);
-
     const leftWingGroup = new THREE.Group();
-    leftWingGroup.position.set(-0.3, 0.1, 0);
-    const lWingVerts = [[0, 0, 0.4], [0, 0, -0.4], [-1.4, 0.35, 0.1], [-0.8, 0.15, -0.3]];
-    const lWingIndices = [[0, 2, 1], [1, 2, 3]];
-    const lWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(lWingVerts, lWingIndices), whiteWashi);
-    leftWingGroup.add(lWingMesh);
+    leftWingGroup.position.set(-0.3, 0.1, 0.05);
+    const lWing = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.4), darkMat);
+    lWing.position.set(-0.45, 0, 0);
+    leftWingGroup.add(lWing);
 
     const rightWingGroup = new THREE.Group();
-    rightWingGroup.position.set(0.3, 0.1, 0);
-    const rWingVerts = [[0, 0, 0.4], [0, 0, -0.4], [1.4, 0.35, 0.1], [0.8, 0.15, -0.3]];
-    const rWingIndices = [[0, 1, 2], [1, 3, 2]];
-    const rWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(rWingVerts, rWingIndices), whiteWashi);
-    rightWingGroup.add(rWingMesh);
+    rightWingGroup.position.set(0.3, 0.1, 0.05);
+    const rWing = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.4), darkMat);
+    rWing.position.set(0.45, 0, 0);
+    rightWingGroup.add(rWing);
 
     bodyGroup.add(leftWingGroup, rightWingGroup);
 
     return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: headGroup };
   }
 
-  // 2. Origami Pigeon
-  private createOrigamiPigeon() {
+  private createOrigamiSeagull() {
     const bodyGroup = new THREE.Group();
-    const slateWashi = createToonMaterial({ color: GOOSE_PALETTE.pigeonGray, side: THREE.DoubleSide });
-    const darkWashi = createToonMaterial({ color: 0x4f6477, side: THREE.DoubleSide });
-    const pinkAccent = createToonMaterial({ color: 0xe8849b, side: THREE.DoubleSide });
+    const whiteMat = createToonMaterial({ color: 0xffffff });
+    const grayMat = createToonMaterial({ color: 0xbdc3c7 });
+    const blackMat = createToonMaterial({ color: 0x2d3436 });
+    const yellowMat = createToonMaterial({ color: 0xf1c40f });
+    const redMat = createToonMaterial({ color: 0xe74c3c });
 
-    const bodyVerts = [
-      [0, 0.35, 0.1], [0, -0.35, 0.1], [0, 0.0, 0.55], [0, 0.1, -0.55], [0.32, 0.05, 0], [-0.32, 0.05, 0]
-    ];
-    const bodyIndices = [
-      [0, 2, 4], [0, 4, 3], [0, 3, 5], [0, 5, 2],
-      [1, 4, 2], [1, 3, 4], [1, 5, 3], [1, 2, 5]
-    ];
-    const body = new THREE.Mesh(this.createFoldedFacetGeo(bodyVerts, bodyIndices), slateWashi);
+    const bodyGeo = new THREE.ConeGeometry(0.35, 1.4, 8);
+    bodyGeo.rotateX(Math.PI / 2);
+    const body = new THREE.Mesh(bodyGeo, whiteMat);
+    body.castShadow = true;
     bodyGroup.add(body);
 
     const headGroup = new THREE.Group();
-    headGroup.position.set(0, 0.15, 0.45);
-    const headVerts = [[0, 0, 0], [0, 0.35, 0.25], [0, 0.2, 0.45], [0.12, 0.15, 0.18], [-0.12, 0.15, 0.18]];
-    const headIndices = [[0, 3, 1], [0, 1, 4], [1, 3, 2], [1, 2, 4], [0, 4, 3]];
-    const head = new THREE.Mesh(this.createFoldedFacetGeo(headVerts, headIndices), pinkAccent);
+    headGroup.position.set(0, 0.1, 0.65);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), whiteMat);
     headGroup.add(head);
+
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.35, 6), yellowMat);
+    beak.rotation.x = Math.PI / 2;
+    beak.position.set(0, -0.03, 0.25);
+    headGroup.add(beak);
+
+    const redSpot = new THREE.Mesh(new THREE.SphereGeometry(0.03, 4, 4), redMat);
+    redSpot.position.set(0, -0.06, 0.3);
+    headGroup.add(redSpot);
     bodyGroup.add(headGroup);
 
     const leftWingGroup = new THREE.Group();
-    leftWingGroup.position.set(-0.28, 0.05, 0);
-    const lWingVerts = [[0, 0, 0.3], [0, 0, -0.3], [-1.0, 0.2, 0.0], [-0.6, 0.05, -0.35]];
-    const lWingIndices = [[0, 2, 1], [1, 2, 3]];
-    const lWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(lWingVerts, lWingIndices), darkWashi);
-    leftWingGroup.add(lWingMesh);
+    leftWingGroup.position.set(-0.25, 0.08, 0.15);
+    const lWingInner = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.04, 0.35), grayMat);
+    lWingInner.position.set(-0.5, 0, 0);
+    const lWingTip = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.03, 0.25), blackMat);
+    lWingTip.position.set(-1.25, 0.04, -0.05);
+    leftWingGroup.add(lWingInner, lWingTip);
 
     const rightWingGroup = new THREE.Group();
-    rightWingGroup.position.set(0.28, 0.05, 0);
-    const rWingVerts = [[0, 0, 0.3], [0, 0, -0.3], [1.0, 0.2, 0.0], [0.6, 0.05, -0.35]];
-    const rWingIndices = [[0, 1, 2], [1, 3, 2]];
-    const rWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(rWingVerts, rWingIndices), darkWashi);
-    rightWingGroup.add(rWingMesh);
+    rightWingGroup.position.set(0.25, 0.08, 0.15);
+    const rWingInner = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.04, 0.35), grayMat);
+    rWingInner.position.set(0.5, 0, 0);
+    const rWingTip = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.03, 0.25), blackMat);
+    rWingTip.position.set(1.25, 0.04, -0.05);
+    rightWingGroup.add(rWingInner, rWingTip);
 
     bodyGroup.add(leftWingGroup, rightWingGroup);
 
     return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: headGroup };
   }
 
-  // 3. Origami Seagull
-  private createOrigamiSeagull() {
-    const bodyGroup = new THREE.Group();
-    const whiteWashi = createToonMaterial({ color: GOOSE_PALETTE.seagullWhite, side: THREE.DoubleSide });
-    const yellowAccent = createToonMaterial({ color: GOOSE_PALETTE.seagullBeak, side: THREE.DoubleSide });
-    const greyCrease = createToonMaterial({ color: GOOSE_PALETTE.seagullWing, side: THREE.DoubleSide });
-
-    const bodyVerts = [
-      [0, 0.25, 0.2], [0, -0.25, 0.2], [0, 0.0, 0.8], [0, 0.05, -0.7], [0.26, 0.0, 0], [-0.26, 0.0, 0]
-    ];
-    const bodyIndices = [
-      [0, 2, 4], [0, 4, 3], [0, 3, 5], [0, 5, 2],
-      [1, 4, 2], [1, 3, 4], [1, 5, 3], [1, 2, 5]
-    ];
-    const body = new THREE.Mesh(this.createFoldedFacetGeo(bodyVerts, bodyIndices), whiteWashi);
-    bodyGroup.add(body);
-
-    const beakVerts = [[0, 0.08, 0.55], [0, -0.08, 0.55], [0, 0.0, 0.85], [0.08, 0.0, 0.6], [-0.08, 0.0, 0.6]];
-    const beakIndices = [[0, 3, 2], [0, 2, 4], [1, 2, 3], [1, 4, 2]];
-    const beak = new THREE.Mesh(this.createFoldedFacetGeo(beakVerts, beakIndices), yellowAccent);
-    bodyGroup.add(beak);
-
-    const leftWingGroup = new THREE.Group();
-    leftWingGroup.position.set(-0.25, 0.05, 0.1);
-    const lWingVerts = [[0, 0, 0.35], [0, 0, -0.3], [-1.7, 0.4, 0.05], [-1.0, 0.2, -0.25]];
-    const lWingIndices = [[0, 2, 1], [1, 2, 3]];
-    const lWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(lWingVerts, lWingIndices), greyCrease);
-    leftWingGroup.add(lWingMesh);
-
-    const rightWingGroup = new THREE.Group();
-    rightWingGroup.position.set(0.25, 0.05, 0.1);
-    const rWingVerts = [[0, 0, 0.35], [0, 0, -0.3], [1.7, 0.4, 0.05], [1.0, 0.2, -0.25]];
-    const rWingIndices = [[0, 1, 2], [1, 3, 2]];
-    const rWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(rWingVerts, rWingIndices), greyCrease);
-    rightWingGroup.add(rWingMesh);
-
-    bodyGroup.add(leftWingGroup, rightWingGroup);
-
-    return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: beak };
-  }
-
-  // 4. Origami Stealth Dart
   private createOrigamiStealthDart() {
     const bodyGroup = new THREE.Group();
     const stealthMat = new THREE.MeshStandardMaterial({
@@ -392,88 +431,39 @@ export class BirdManager {
   // 5. Origami Commercial Airliner (Faltality Airlines FL-404)
   private createOrigamiAirplane() {
     const bodyGroup = new THREE.Group();
-    const whiteFuselage = createToonMaterial({ color: GOOSE_PALETTE.airplaneWings, side: THREE.DoubleSide });
-    const blueAirline = createToonMaterial({ color: GOOSE_PALETTE.airplaneFuselage, side: THREE.DoubleSide });
-    const redStripe = createToonMaterial({ color: GOOSE_PALETTE.airplaneStripe, side: THREE.DoubleSide });
-    const engineMat = createToonMaterial({ color: 0x2c3e50, side: THREE.DoubleSide });
-
-    // Fuselage: Octagonal folded aerodynamic body
-    const fuselageGeo = new THREE.CylinderGeometry(0.38, 0.32, 3.6, 8);
-    fuselageGeo.rotateX(Math.PI / 2);
-    const fuselage = new THREE.Mesh(fuselageGeo, whiteFuselage);
-    bodyGroup.add(fuselage);
-
-    // Folded Blue Nose Cone
-    const noseGeo = new THREE.ConeGeometry(0.38, 1.0, 8);
-    noseGeo.rotateX(Math.PI / 2);
-    noseGeo.translate(0, 0, 2.3);
-    const nose = new THREE.Mesh(noseGeo, blueAirline);
-    bodyGroup.add(nose);
-
-    // Decorative Red Stripe around fuselage
-    const stripeGeo = new THREE.CylinderGeometry(0.39, 0.39, 0.3, 8);
-    stripeGeo.rotateX(Math.PI / 2);
-    stripeGeo.translate(0, 0, 0.7);
-    const stripe = new THREE.Mesh(stripeGeo, redStripe);
-    bodyGroup.add(stripe);
-
-    // Folded Vertical Tail Fin (Rudder)
-    const finVerts = [
-      [0, 0.35, -0.9], [0, 1.35, -1.7], [0, 0.25, -1.8], [0.07, 0.35, -1.1], [-0.07, 0.35, -1.1]
-    ];
-    const finIndices = [[0, 3, 1], [0, 1, 4], [1, 3, 2], [1, 2, 4]];
-    const fin = new THREE.Mesh(this.createFoldedFacetGeo(finVerts, finIndices), blueAirline);
-    bodyGroup.add(fin);
-
-    // Horizontal Stabilizers (Heckflügel)
-    const horizStabGeo = new THREE.BoxGeometry(1.6, 0.05, 0.4);
-    horizStabGeo.translate(0, 0.2, -1.5);
-    const horizStab = new THREE.Mesh(horizStabGeo, whiteFuselage);
-    bodyGroup.add(horizStab);
-
-    // Swept Airliner Wings with Engines
     const leftWingGroup = new THREE.Group();
-    leftWingGroup.position.set(-0.35, 0.0, 0.3);
-    const lWingVerts = [[0, 0, 0.8], [0, 0, -0.7], [-2.8, 0.25, -0.9], [-2.3, 0.4, -0.8]];
-    const lWingIndices = [[0, 2, 1], [2, 3, 1]];
-    const lWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(lWingVerts, lWingIndices), whiteFuselage);
-    leftWingGroup.add(lWingMesh);
-
-    // Jet Engine Left
-    const lEngine = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.65, 6), engineMat);
-    lEngine.rotation.x = Math.PI / 2;
-    lEngine.position.set(-1.1, -0.22, -0.1);
-    leftWingGroup.add(lEngine);
-
     const rightWingGroup = new THREE.Group();
-    rightWingGroup.position.set(0.35, 0.0, 0.3);
-    const rWingVerts = [[0, 0, 0.8], [0, 0, -0.7], [2.8, 0.25, -0.9], [2.3, 0.4, -0.8]];
-    const rWingIndices = [[0, 1, 2], [2, 1, 3]];
-    const rWingMesh = new THREE.Mesh(this.createFoldedFacetGeo(rWingVerts, rWingIndices), whiteFuselage);
-    rightWingGroup.add(rWingMesh);
+    const nose = new THREE.Group();
 
-    // Jet Engine Right
-    const rEngine = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.65, 6), engineMat);
-    rEngine.rotation.x = Math.PI / 2;
-    rEngine.position.set(1.1, -0.22, -0.1);
-    rightWingGroup.add(rEngine);
+    modelLoader.load('/models/airplane.glb').then((plane) => {
+      const box = new THREE.Box3().setFromObject(plane);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const s = 4.2 / maxDim;
+      plane.scale.set(s, s, s);
+      const center = box.getCenter(new THREE.Vector3());
+      plane.position.set(-center.x * s, -center.y * s, -center.z * s);
+      plane.rotation.z = Math.PI / 2;
+      plane.rotation.y = Math.PI;
+      bodyGroup.add(plane);
+    }).catch(() => {
+      const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.35, 4, 8), createToonMaterial({ color: 0xffffff }));
+      cyl.rotation.x = Math.PI / 2;
+      bodyGroup.add(cyl);
+    });
 
-    bodyGroup.add(leftWingGroup, rightWingGroup);
-
-    // Thick, High-Visibility 3D White Contrail Trails!
     const trailMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75 });
     for (const xOff of [-1.1, 1.1]) {
-      const trailGeo = new THREE.CylinderGeometry(0.08, 0.02, 7.5, 4);
+      const trailGeo = new THREE.CylinderGeometry(0.08, 0.02, 8.5, 4);
       trailGeo.rotateX(Math.PI / 2);
-      trailGeo.translate(xOff, -0.22, -4.0);
-      const trailMesh = new THREE.Mesh(trailGeo, trailMat);
-      bodyGroup.add(trailMesh);
+      trailGeo.translate(xOff, -0.22, -4.5);
+      bodyGroup.add(new THREE.Mesh(trailGeo, trailMat));
     }
 
     return { bodyGroup, leftWing: leftWingGroup, rightWing: rightWingGroup, head: nose };
   }
 
-  // 6. TIM COOK KEYNOTE SATELLITE (iSat Keynote One)
   private createOrigamiSatellite() {
     const bodyGroup = new THREE.Group();
     const spaceGray = new THREE.MeshStandardMaterial({
