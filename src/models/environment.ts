@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { sound } from '../sound';
+import { createToonMaterial, GOOSE_PALETTE } from '../materials';
 
 interface OrigamiSheep {
   group: THREE.Group;
@@ -41,7 +42,7 @@ export class Environment {
   }
 
   private buildGarden() {
-    // 1. Soft rolling green grass terrain
+    // 1. Soft rolling green grass terrain in warm Goose Game lawn green
     const groundGeo = new THREE.PlaneGeometry(300, 300, 24, 24);
     groundGeo.rotateX(-Math.PI / 2);
     const pos = groundGeo.attributes.position;
@@ -54,18 +55,17 @@ export class Environment {
     }
     groundGeo.computeVertexNormals();
 
-    const grassMat = new THREE.MeshLambertMaterial({
-      color: 0x82a852, // Warm Untitled Goose Game lawn green
-      flatShading: true
+    const grassMat = createToonMaterial({
+      color: GOOSE_PALETTE.grass
     });
     const ground = new THREE.Mesh(groundGeo, grassMat);
     ground.receiveShadow = true;
     this.scene.add(ground);
 
-    // 2. Wooden garden table where folding takes place
+    // 2. Wooden garden table where folding takes place (warm cottage honey wood)
     const tableGroup = new THREE.Group();
-    const woodMat = new THREE.MeshLambertMaterial({ color: 0xb57842, flatShading: true });
-    const darkWoodMat = new THREE.MeshLambertMaterial({ color: 0x8a5528, flatShading: true });
+    const woodMat = createToonMaterial({ color: GOOSE_PALETTE.tableWood });
+    const darkWoodMat = createToonMaterial({ color: GOOSE_PALETTE.tableLegs });
 
     // Tabletop planks
     const plankWidth = 0.45;
@@ -105,23 +105,31 @@ export class Environment {
 
     // Origami dark green cutting mat on table for contrast with bright white paper
     const matGeo = new THREE.BoxGeometry(1.1, 0.006, 0.85);
-    const matMat = new THREE.MeshLambertMaterial({ color: 0x1b4332, flatShading: true });
+    const matMat = createToonMaterial({ color: GOOSE_PALETTE.cuttingMat });
     const cuttingMat = new THREE.Mesh(matGeo, matMat);
     cuttingMat.position.set(0, 1.203, 0);
     cuttingMat.receiveShadow = true;
     tableGroup.add(cuttingMat);
 
-    // Apple coffee mug on table
+    // Cozy rustic red enamel mug on table
     const mugGeo = new THREE.CylinderGeometry(0.1, 0.09, 0.22, 10);
-    const mugMat = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true });
+    const mugMat = createToonMaterial({ color: GOOSE_PALETTE.mugEnamel });
     const mug = new THREE.Mesh(mugGeo, mugMat);
     mug.position.set(0.7, 1.32, -0.6);
     mug.castShadow = true;
+
+    // Dark coffee inside the mug
+    const coffeeGeo = new THREE.CylinderGeometry(0.088, 0.088, 0.02, 10);
+    const coffeeMat = createToonMaterial({ color: GOOSE_PALETTE.mugCoffee });
+    const coffee = new THREE.Mesh(coffeeGeo, coffeeMat);
+    coffee.position.set(0, 0.09, 0);
+    mug.add(coffee);
+
     tableGroup.add(mug);
 
     // Kitchen Aluminium Foil Roll Box on table (initially locked, visible when threshold met)
     const foilBoxGeo = new THREE.BoxGeometry(0.55, 0.08, 0.08);
-    const foilBoxMat = new THREE.MeshLambertMaterial({ color: 0x2c3e50, flatShading: true });
+    const foilBoxMat = createToonMaterial({ color: 0x2c3e50 });
     const foilBox = new THREE.Mesh(foilBoxGeo, foilBoxMat);
     foilBox.position.set(-0.68, 1.245, -0.45);
     foilBox.rotation.y = 0.2;
@@ -135,8 +143,8 @@ export class Environment {
     foilLipGeo.rotateX(-Math.PI / 2);
     const foilLipMat = new THREE.MeshStandardMaterial({
       color: 0xecf0f1,
-      roughness: 0.28,
-      metalness: 0.92,
+      roughness: 0.25,
+      metalness: 0.95,
       flatShading: true
     });
     const foilLip = new THREE.Mesh(foilLipGeo, foilLipMat);
@@ -175,19 +183,19 @@ export class Environment {
     const houseGroup = new THREE.Group();
     houseGroup.position.set(-25, 0, -28);
 
-    // Main House Body
+    // Main House Body (warm English plaster/stone)
     const houseGeo = new THREE.BoxGeometry(16, 8, 12);
-    const houseMat = new THREE.MeshLambertMaterial({ color: 0xf4ece1, flatShading: true });
+    const houseMat = createToonMaterial({ color: GOOSE_PALETTE.plasterWall });
     const house = new THREE.Mesh(houseGeo, houseMat);
     house.position.set(0, 4, 0);
     house.castShadow = true;
     house.receiveShadow = true;
     houseGroup.add(house);
 
-    // Gabled Roof
+    // Gabled Roof (terracotta tiles)
     const roofGeo = new THREE.ConeGeometry(12, 4.5, 4);
     roofGeo.rotateY(Math.PI / 4);
-    const roofMat = new THREE.MeshLambertMaterial({ color: 0xb53b2a, flatShading: true });
+    const roofMat = createToonMaterial({ color: GOOSE_PALETTE.roofTiles });
     const roof = new THREE.Mesh(roofGeo, roofMat);
     roof.position.set(0, 10.2, 0);
     roof.scale.set(1.1, 1, 0.9);
@@ -210,9 +218,9 @@ export class Environment {
       houseGroup.add(win);
     });
 
-    // Chimney with small puff
+    // Chimney
     const chimneyGeo = new THREE.BoxGeometry(1.2, 3.2, 1.2);
-    const chimneyMat = new THREE.MeshLambertMaterial({ color: 0x8a3828, flatShading: true });
+    const chimneyMat = createToonMaterial({ color: GOOSE_PALETTE.neighborChimney });
     const chimney = new THREE.Mesh(chimneyGeo, chimneyMat);
     chimney.position.set(-4, 11, 2);
     houseGroup.add(chimney);
@@ -220,20 +228,20 @@ export class Environment {
     // Driveway gravel patch
     const driveGeo = new THREE.PlaneGeometry(10, 16);
     driveGeo.rotateX(-Math.PI / 2);
-    const driveMat = new THREE.MeshLambertMaterial({ color: 0x95a5a6, flatShading: true });
+    const driveMat = createToonMaterial({ color: 0xb4c2c9 });
     const driveway = new THREE.Mesh(driveGeo, driveMat);
     driveway.position.set(13, 0.05, 4);
     driveway.receiveShadow = true;
     houseGroup.add(driveway);
 
-    // Neighbor's Prized Low-Poly Station Wagon (Car)
+    // Neighbor's Prized Low-Poly Station Wagon (Car) in classic British vintage blue
     const carGroup = new THREE.Group();
     carGroup.position.set(13, 0.65, 4);
     carGroup.rotateY(-Math.PI * 0.15);
 
     // Chassis
     const carBodyGeo = new THREE.BoxGeometry(3.2, 1.1, 5.4);
-    const carMat = new THREE.MeshLambertMaterial({ color: 0xd63031, flatShading: true });
+    const carMat = createToonMaterial({ color: GOOSE_PALETTE.carBlue });
     const carBody = new THREE.Mesh(carBodyGeo, carMat);
     carBody.position.set(0, 0.6, 0);
     carBody.castShadow = true;
@@ -241,7 +249,7 @@ export class Environment {
 
     // Cabin / Roof
     const carRoofGeo = new THREE.BoxGeometry(2.7, 0.95, 3.0);
-    const carGlassMat = new THREE.MeshLambertMaterial({ color: 0x74b9ff, flatShading: true });
+    const carGlassMat = createToonMaterial({ color: GOOSE_PALETTE.windowGlass });
     const carRoof = new THREE.Mesh(carRoofGeo, carGlassMat);
     carRoof.position.set(0, 1.5, -0.4);
     carRoof.castShadow = true;
@@ -250,7 +258,7 @@ export class Environment {
     // 4 Wheels
     const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.35, 10);
     wheelGeo.rotateZ(Math.PI / 2);
-    const wheelMat = new THREE.MeshLambertMaterial({ color: 0x2d3436, flatShading: true });
+    const wheelMat = createToonMaterial({ color: GOOSE_PALETTE.carTire });
     const wheelPositions = [
       [-1.55, 0.2, 1.6],
       [1.55, 0.2, 1.6],
@@ -292,8 +300,8 @@ export class Environment {
     const pastureGroup = new THREE.Group();
     pastureGroup.position.set(17, 0, -23);
 
-    // Fence around pasture
-    const fenceMat = new THREE.MeshLambertMaterial({ color: 0xdeb887, flatShading: true });
+    // Fence around pasture (rustic cottage wood)
+    const fenceMat = createToonMaterial({ color: GOOSE_PALETTE.woodFence });
     for (let i = -7.5; i <= 7.5; i += 3.0) {
       const postGeo = new THREE.BoxGeometry(0.2, 1.3, 0.2);
       const post = new THREE.Mesh(postGeo, fenceMat);
@@ -318,6 +326,10 @@ export class Environment {
       { x: 4.0, z: -1.5, rotY: 2.1 }
     ];
 
+    const woolMat = createToonMaterial({ color: GOOSE_PALETTE.sheepWool });
+    const faceMat = createToonMaterial({ color: GOOSE_PALETTE.sheepFace });
+    const legMat = createToonMaterial({ color: GOOSE_PALETTE.sheepLegs });
+
     this.sheepFlock = sheepConfigs.map((cfg) => {
       const sheepGroup = new THREE.Group();
       sheepGroup.position.set(cfg.x, 0.7, cfg.z);
@@ -325,17 +337,15 @@ export class Environment {
 
       // Fluffy wool body (faceted geometric block)
       const woolGeo = new THREE.BoxGeometry(1.6, 1.2, 2.2);
-      const woolMat = new THREE.MeshLambertMaterial({ color: 0xf5f6fa, flatShading: true });
       const body = new THREE.Mesh(woolGeo, woolMat);
       body.castShadow = true;
       sheepGroup.add(body);
 
-      // Black sheep face & ears
+      // Black sheep face & ears (Suffolk blackface)
       const headGroup = new THREE.Group();
       headGroup.position.set(0, 0.4, 1.25);
 
       const headGeo = new THREE.BoxGeometry(0.7, 0.7, 0.9);
-      const faceMat = new THREE.MeshLambertMaterial({ color: 0x2f3640, flatShading: true });
       const head = new THREE.Mesh(headGeo, faceMat);
       head.castShadow = true;
       headGroup.add(head);
@@ -354,7 +364,6 @@ export class Environment {
 
       // 4 tiny matchstick legs
       const legGeo = new THREE.BoxGeometry(0.18, 0.8, 0.18);
-      const legMat = new THREE.MeshLambertMaterial({ color: 0x2f3640, flatShading: true });
       const legs: THREE.Mesh[] = [];
       const legOffsets = [
         [-0.55, -0.7, 0.7],
@@ -429,15 +438,14 @@ export class Environment {
     treeGroup.position.set(x, y, z);
 
     const trunkGeo = new THREE.CylinderGeometry(0.3, 0.45, 2.5, 6);
-    const trunkMat = new THREE.MeshLambertMaterial({ color: 0x795548, flatShading: true });
+    const trunkMat = createToonMaterial({ color: GOOSE_PALETTE.woodBark });
     const trunk = new THREE.Mesh(trunkGeo, trunkMat);
     trunk.position.y = 1.25;
     trunk.castShadow = true;
     treeGroup.add(trunk);
 
-    const foliageMat = new THREE.MeshLambertMaterial({
-      color: 0x4caf50,
-      flatShading: true
+    const foliageMat = createToonMaterial({
+      color: GOOSE_PALETTE.foliagePrimary
     });
     const foliageTiers = [
       { radius: 2.2, height: 2.5, y: 2.8 },
@@ -457,7 +465,7 @@ export class Environment {
 
   private createFence(startX: number, z: number, length: number) {
     const fenceGroup = new THREE.Group();
-    const fenceMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f5, flatShading: true });
+    const fenceMat = createToonMaterial({ color: GOOSE_PALETTE.woodFence });
     this.damagedFencePosts = [];
 
     const postSpacing = 2.0;
@@ -484,9 +492,9 @@ export class Environment {
 
   private createDaisies() {
     const flowerGroup = new THREE.Group();
-    const stemMat = new THREE.MeshLambertMaterial({ color: 0x4caf50 });
-    const petalMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-    const centerMat = new THREE.MeshLambertMaterial({ color: 0xffeb3b });
+    const stemMat = createToonMaterial({ color: GOOSE_PALETTE.foliageSecondary });
+    const petalMat = createToonMaterial({ color: 0xffffff });
+    const centerMat = createToonMaterial({ color: 0xf1c40f });
 
     for (let i = 0; i < 45; i++) {
       const x = (Math.random() - 0.5) * 50;
@@ -516,11 +524,10 @@ export class Environment {
   }
 
   private buildClouds() {
-    const cloudMat = new THREE.MeshLambertMaterial({
+    const cloudMat = createToonMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.92,
-      flatShading: true
+      opacity: 0.94
     });
 
     for (let i = 0; i < 9; i++) {

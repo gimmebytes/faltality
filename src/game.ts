@@ -4,6 +4,7 @@ import { Environment } from './models/environment';
 import { BirdManager } from './models/birds';
 import type { BirdData } from './models/birds';
 import { PaperSheet } from './models/paper';
+import { GOOSE_PALETTE } from './materials';
 import { sound } from './sound';
 
 export type GamePhase = 'folding' | 'aiming' | 'flying';
@@ -103,8 +104,8 @@ export class FaltalityGame {
     this.container = container;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0xbfe0f7);
-    this.scene.fog = new THREE.Fog(0xbfe0f7, 140, 450);
+    this.scene.background = new THREE.Color(GOOSE_PALETTE.sky);
+    this.scene.fog = new THREE.Fog(GOOSE_PALETTE.fog, 65, 260);
 
     this.camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 600);
     this.camera.position.copy(this.foldCamPos);
@@ -168,22 +169,28 @@ export class FaltalityGame {
   }
 
   private setupLighting() {
-    const hemiLight = new THREE.HemisphereLight(0xddeeff, 0x82a852, 0.75);
+    // Soft sky and grass bounce light
+    const hemiLight = new THREE.HemisphereLight(GOOSE_PALETTE.hemiSky, GOOSE_PALETTE.hemiGround, 0.85);
     this.scene.add(hemiLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfff7e6, 1.35);
-    sunLight.position.set(25, 45, 20);
+    // Warm British afternoon sun in 45-degree angle
+    const sunLight = new THREE.DirectionalLight(GOOSE_PALETTE.sunLight, 1.45);
+    sunLight.position.set(30, 48, 22);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
     sunLight.shadow.camera.near = 5;
-    sunLight.shadow.camera.far = 150;
-    sunLight.shadow.camera.left = -40;
-    sunLight.shadow.camera.right = 40;
-    sunLight.shadow.camera.top = 40;
-    sunLight.shadow.camera.bottom = -40;
-    sunLight.shadow.bias = -0.0005;
+    sunLight.shadow.camera.far = 160;
+    sunLight.shadow.camera.left = -45;
+    sunLight.shadow.camera.right = 45;
+    sunLight.shadow.camera.top = 45;
+    sunLight.shadow.camera.bottom = -45;
+    sunLight.shadow.bias = -0.0004;
     this.scene.add(sunLight);
+
+    // Gentle ambient light to keep pastel shadows readable
+    const ambientLight = new THREE.AmbientLight(0xfff8ee, 0.35);
+    this.scene.add(ambientLight);
   }
 
   private setupAimingControls() {

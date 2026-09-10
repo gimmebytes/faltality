@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { sound } from '../sound';
+import { createToonMaterial, GOOSE_PALETTE } from '../materials';
 import type { SupportedLang } from '../i18n';
 
 export interface FoldStats {
@@ -31,8 +32,8 @@ export class PaperSheet {
   private paperBody: THREE.Mesh | null = null;
 
   // Paper materials
-  private paperMat: THREE.MeshLambertMaterial;
-  private foldEdgeMat: THREE.MeshLambertMaterial;
+  private paperMat: THREE.Material;
+  private foldEdgeMat: THREE.Material;
   public materialType: 'paper' | 'foil' = 'paper';
   private foilMat: THREE.MeshStandardMaterial;
   private foilEdgeMat: THREE.MeshStandardMaterial;
@@ -42,15 +43,13 @@ export class PaperSheet {
     this.mesh = new THREE.Group();
     this.mesh.position.copy(this.initialTablePos);
 
-    this.paperMat = new THREE.MeshLambertMaterial({
-      color: 0xffffff,
-      flatShading: true,
+    this.paperMat = createToonMaterial({
+      color: GOOSE_PALETTE.paperWhite,
       side: THREE.DoubleSide
     });
 
-    this.foldEdgeMat = new THREE.MeshLambertMaterial({
-      color: 0xd4cbb8,
-      flatShading: true
+    this.foldEdgeMat = createToonMaterial({
+      color: GOOSE_PALETTE.paperFoldDark
     });
 
     this.foilMat = new THREE.MeshStandardMaterial({

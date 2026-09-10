@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { sound } from '../sound';
+import { createToonMaterial, GOOSE_PALETTE } from '../materials';
 
 export type BirdType = 'goose' | 'pigeon' | 'seagull' | 'drone' | 'airplane' | 'satellite';
 
@@ -208,9 +209,9 @@ export class BirdManager {
   private createOrigamiCrane() {
     const bodyGroup = new THREE.Group();
 
-    const whiteWashi = new THREE.MeshLambertMaterial({ color: 0xfaf9f5, flatShading: true, side: THREE.DoubleSide });
-    const redAccent = new THREE.MeshLambertMaterial({ color: 0xcc2222, flatShading: true, side: THREE.DoubleSide });
-    const foldShadow = new THREE.MeshLambertMaterial({ color: 0xe8e5dc, flatShading: true, side: THREE.DoubleSide });
+    const whiteWashi = createToonMaterial({ color: GOOSE_PALETTE.craneWhite, side: THREE.DoubleSide });
+    const redAccent = createToonMaterial({ color: GOOSE_PALETTE.craneRedCrown, side: THREE.DoubleSide });
+    const foldShadow = createToonMaterial({ color: 0xded8cc, side: THREE.DoubleSide });
 
     const bodyVerts = [
       [0, 0.45, 0], [0, -0.45, 0], [0, 0.05, 0.65], [0, 0.05, -0.65], [0.35, 0.1, 0], [-0.35, 0.1, 0]
@@ -264,9 +265,9 @@ export class BirdManager {
   // 2. Origami Pigeon
   private createOrigamiPigeon() {
     const bodyGroup = new THREE.Group();
-    const slateWashi = new THREE.MeshLambertMaterial({ color: 0x758aa2, flatShading: true, side: THREE.DoubleSide });
-    const darkWashi = new THREE.MeshLambertMaterial({ color: 0x4b6584, flatShading: true, side: THREE.DoubleSide });
-    const pinkAccent = new THREE.MeshLambertMaterial({ color: 0xf78fb3, flatShading: true, side: THREE.DoubleSide });
+    const slateWashi = createToonMaterial({ color: GOOSE_PALETTE.pigeonGray, side: THREE.DoubleSide });
+    const darkWashi = createToonMaterial({ color: 0x4f6477, side: THREE.DoubleSide });
+    const pinkAccent = createToonMaterial({ color: 0xe8849b, side: THREE.DoubleSide });
 
     const bodyVerts = [
       [0, 0.35, 0.1], [0, -0.35, 0.1], [0, 0.0, 0.55], [0, 0.1, -0.55], [0.32, 0.05, 0], [-0.32, 0.05, 0]
@@ -308,9 +309,9 @@ export class BirdManager {
   // 3. Origami Seagull
   private createOrigamiSeagull() {
     const bodyGroup = new THREE.Group();
-    const whiteWashi = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true, side: THREE.DoubleSide });
-    const yellowAccent = new THREE.MeshLambertMaterial({ color: 0xf6b93b, flatShading: true, side: THREE.DoubleSide });
-    const greyCrease = new THREE.MeshLambertMaterial({ color: 0xd2dae2, flatShading: true, side: THREE.DoubleSide });
+    const whiteWashi = createToonMaterial({ color: GOOSE_PALETTE.seagullWhite, side: THREE.DoubleSide });
+    const yellowAccent = createToonMaterial({ color: GOOSE_PALETTE.seagullBeak, side: THREE.DoubleSide });
+    const greyCrease = createToonMaterial({ color: GOOSE_PALETTE.seagullWing, side: THREE.DoubleSide });
 
     const bodyVerts = [
       [0, 0.25, 0.2], [0, -0.25, 0.2], [0, 0.0, 0.8], [0, 0.05, -0.7], [0.26, 0.0, 0], [-0.26, 0.0, 0]
@@ -391,10 +392,10 @@ export class BirdManager {
   // 5. Origami Commercial Airliner (Faltality Airlines FL-404)
   private createOrigamiAirplane() {
     const bodyGroup = new THREE.Group();
-    const whiteFuselage = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true, side: THREE.DoubleSide });
-    const blueAirline = new THREE.MeshLambertMaterial({ color: 0x0984e3, flatShading: true, side: THREE.DoubleSide });
-    const redStripe = new THREE.MeshLambertMaterial({ color: 0xe63946, flatShading: true, side: THREE.DoubleSide });
-    const engineMat = new THREE.MeshLambertMaterial({ color: 0x2d3436, flatShading: true, side: THREE.DoubleSide });
+    const whiteFuselage = createToonMaterial({ color: GOOSE_PALETTE.airplaneWings, side: THREE.DoubleSide });
+    const blueAirline = createToonMaterial({ color: GOOSE_PALETTE.airplaneFuselage, side: THREE.DoubleSide });
+    const redStripe = createToonMaterial({ color: GOOSE_PALETTE.airplaneStripe, side: THREE.DoubleSide });
+    const engineMat = createToonMaterial({ color: 0x2c3e50, side: THREE.DoubleSide });
 
     // Fuselage: Octagonal folded aerodynamic body
     const fuselageGeo = new THREE.CylinderGeometry(0.38, 0.32, 3.6, 8);
@@ -774,10 +775,9 @@ export class BirdManager {
   // Giant Origami parachute
   public attachParachute(bird: BirdData) {
     const chuteGroup = new THREE.Group();
-    const clothMat = new THREE.MeshLambertMaterial({
+    const clothMat = createToonMaterial({
       color: bird.type === 'satellite' ? 0xf1c40f : (bird.type === 'airplane' ? 0x0984e3 : (bird.type === 'goose' ? 0xff4757 : (bird.type === 'drone' ? 0x00d2d3 : 0x2ed573))),
-      side: THREE.DoubleSide,
-      flatShading: true
+      side: THREE.DoubleSide
     });
 
     const chuteRadius = bird.type === 'satellite' ? 4.5 : (bird.type === 'airplane' ? 3.5 : 1.5);
