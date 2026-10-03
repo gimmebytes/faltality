@@ -1369,15 +1369,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Direct Look: Moving pointer freely aims crosshair/camera in real-time while actively dragging
-  canvas.addEventListener('pointermove', (e: PointerEvent) => {
-    if (game.phase === 'aiming' && game.isSlingshotDragging) {
-      game.updateAimPointer(e.clientX, e.clientY);
-    }
-  });
-
   const handlePointerUp = (e: PointerEvent) => {
-    if (game.isCharging || game.isSlingshotDragging) {
+    if (game.isCharging) {
       try {
         canvas.releasePointerCapture(e.pointerId);
       } catch {}
@@ -1388,7 +1381,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   canvas.addEventListener('pointerup', handlePointerUp);
   canvas.addEventListener('pointercancel', (e: PointerEvent) => {
-    if (game.isCharging || game.isSlingshotDragging) {
+    if (game.isCharging) {
       try {
         canvas.releasePointerCapture(e.pointerId);
       } catch {}
@@ -1581,8 +1574,8 @@ window.addEventListener('DOMContentLoaded', () => {
         updateUI();
         return;
       }
-      if (game.isSlingshotDragging) {
-        game.cancelSlingshotDrag();
+      if (game.isCharging) {
+        game.resetAimState();
         updateUI();
         return;
       }
