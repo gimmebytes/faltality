@@ -202,6 +202,29 @@ test.describe('Faltality - Core Gameplay & Vivaldi Compatibility', () => {
     expect(after.yaw).toBe(before.yaw);
   });
 
+  test('mouse press does not start a hold-to-charge (touch-only; Space throws)', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#intro-start-btn').click();
+    await page.evaluate(() => {
+      const g = (window as any).__faltality_game;
+      if (g.phase !== 'aiming') g.enterAimingMode();
+    });
+    await page.waitForTimeout(100);
+
+    // A real left mouse press on the canvas used to open the charge/power indicator.
+    const canvas = page.locator('#game-canvas');
+    await canvas.dispatchEvent('pointerdown', { button: 0, pointerType: 'mouse', clientX: 400, clientY: 300 });
+    await page.waitForTimeout(50);
+
+    const charging = await page.evaluate(() => (window as any).__faltality_game.isCharging);
+    const indicatorHidden = await page.locator('#slingshot-drag-indicator').evaluate(
+      (el) => el.classList.contains('hidden')
+    );
+
+    expect(charging).toBe(false);
+    expect(indicatorHidden).toBe(true);
+  });
+
   test('trajectory aim line and beads are disabled for 90s arcade style', async ({ page }) => {
     await page.goto('/');
     await page.locator('#intro-start-btn').click();

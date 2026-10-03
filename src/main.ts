@@ -1378,6 +1378,11 @@ window.addEventListener('DOMContentLoaded', () => {
     if (isModalOpen) return;
 
     if (game.phase === 'aiming' || game.phase === 'folding') {
+      // Hold-to-Charge is a TOUCH-only control. On a laptop the mouse/trackpad must
+      // not start a charge — throwing is driven by the Space bar (spec
+      // campaign-and-controls-cleanup: single aiming paradigm, mouse free-aim removed).
+      // Touch charge is kept but unverified; needs dedicated iPad testing.
+      if (e.pointerType === 'mouse') return;
       const started = game.startChargingShot(e.clientX, e.clientY);
       if (started) {
         try {
