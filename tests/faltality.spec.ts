@@ -156,6 +156,52 @@ test.describe('Faltality - Core Gameplay & Vivaldi Compatibility', () => {
     expect(result.level2Unlocked).toBe(true);
   });
 
+  test('mouse drag no longer free-aims (pitch/yaw unchanged while dragging)', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#intro-start-btn').click();
+
+    // Enter aiming mode deterministically and clear any locked target so the iAim
+    // tracking loop (which lerps pitch/yaw toward a moving target every frame) does
+    // not run. That isolates the mouse-drag behavior we are asserting about.
+    await page.evaluate(() => {
+      const g = (window as any).__faltality_game;
+      if (g.phase !== 'aiming') g.enterAimingMode();
+      g.targetedBird = null;
+      g.currentTarget = null;
+    });
+    await page.waitForTimeout(100);
+
+    const before = await page.evaluate(() => {
+      const g = (window as any).__faltality_game;
+      g.targetedBird = null;
+      g.currentTarget = null;
+      return { pitch: g.pitchDeg, yaw: g.yawDeg, phase: g.phase };
+    });
+    expect(before.phase).toBe('aiming');
+
+    // Dispatch raw window mouse drag events (mousedown + mousemove) — this is exactly
+    // what the removed free-aim listener in game.ts reacted to. Using synthetic window
+    // events avoids the canvas charge/throw path, isolating the aim-drag behavior.
+    await page.evaluate(() => {
+      const fire = (type: string, x: number, y: number) =>
+        window.dispatchEvent(new MouseEvent(type, { clientX: x, clientY: y, bubbles: true }));
+      fire('mousedown', 300, 300);
+      for (let i = 0; i <= 10; i++) fire('mousemove', 300 + i * 60, 300 - i * 15);
+      for (let i = 0; i <= 10; i++) fire('mousemove', 900 - i * 70, 150 + i * 45);
+      fire('mouseup', 200, 600);
+    });
+    await page.waitForTimeout(50);
+
+    const after = await page.evaluate(() => {
+      const g = (window as any).__faltality_game;
+      return { pitch: g.pitchDeg, yaw: g.yawDeg };
+    });
+
+    // Aim angle must be driven only by iAim lock-on / arrow keys, not the mouse.
+    expect(after.pitch).toBe(before.pitch);
+    expect(after.yaw).toBe(before.yaw);
+  });
+
   test('trajectory aim line and beads are disabled for 90s arcade style', async ({ page }) => {
     await page.goto('/');
     await page.locator('#intro-start-btn').click();

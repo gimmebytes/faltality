@@ -273,12 +273,14 @@ export class FaltalityGame {
   }
 
   private setupAimingControls() {
-    let isDragging = false;
+    // Tap-to-lock only. Free-hand drag aiming was removed with the always-on iAim
+    // cleanup (spec campaign-and-controls-cleanup, Req 2/3): the mouse must NOT move
+    // pitch/yaw. A short tap on a bird still locks onto it; aim angle is driven by
+    // iAim lock-on and the arrow keys, nothing else.
     let startX = 0;
     let startY = 0;
-    let initialYaw = this.yawDeg;
-    let initialPitch = this.pitchDeg;
     let pointerDownTime = 0;
+    let pointerIsDown = false;
 
     const onPointerDown = (e: MouseEvent | TouchEvent) => {
       if (this.phase !== 'aiming') return;
@@ -288,49 +290,31 @@ export class FaltalityGame {
       const target = e.target as HTMLElement;
       if (target.closest('.ui-interactive')) return;
 
-      isDragging = true;
+      pointerIsDown = true;
       startX = clientX;
       startY = clientY;
-      initialYaw = this.yawDeg;
-      initialPitch = this.pitchDeg;
       pointerDownTime = performance.now();
     };
 
-    const onPointerMove = (e: MouseEvent | TouchEvent) => {
-      if (!isDragging || this.phase !== 'aiming') return;
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-
-      const deltaX = clientX - startX;
-      const deltaY = clientY - startY;
-
-      // Generous yaw range to easily look left at the sheep or right at the neighbor's house!
-      this.yawDeg = Math.max(-75, Math.min(75, initialYaw - deltaX * 0.25));
-      this.pitchDeg = Math.max(12, Math.min(80, initialPitch + deltaY * 0.28));
-
-      this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
-      if (this.onStatsChanged) this.onStatsChanged();
-    };
-
     const onPointerUp = (e: MouseEvent | TouchEvent) => {
-      if (!isDragging) return;
-      isDragging = false;
+      if (!pointerIsDown) return;
+      pointerIsDown = false;
 
-      // Tap on a bird / satellite in the sky
+      // A short, near-stationary tap on a bird / satellite locks onto it. This is a
+      // targeting shortcut, not free aiming — it never changes pitch/yaw directly.
       const clickDuration = performance.now() - pointerDownTime;
-      if (clickDuration < 250) {
-        const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : (e as MouseEvent).clientX;
-        const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : (e as MouseEvent).clientY;
+      const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : (e as MouseEvent).clientX;
+      const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : (e as MouseEvent).clientY;
+      const moved = Math.abs(clientX - startX) + Math.abs(clientY - startY);
+      if (clickDuration < 250 && moved < 12) {
         this.checkRaycastTarget(clientX, clientY);
       }
     };
 
     window.addEventListener('mousedown', onPointerDown);
-    window.addEventListener('mousemove', onPointerMove);
     window.addEventListener('mouseup', onPointerUp);
 
     window.addEventListener('touchstart', onPointerDown, { passive: false });
-    window.addEventListener('touchmove', onPointerMove, { passive: false });
     window.addEventListener('touchend', onPointerUp);
   }
 
