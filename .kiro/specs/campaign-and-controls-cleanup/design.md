@@ -1,41 +1,41 @@
 # Design: Campaign & Controls Cleanup
 
-Bezug: `requirements.md` (gleiches Verzeichnis). Code-Basis: `main` @ `1f9e397`.
+Reference: `requirements.md` (same directory). Code base: `main` @ `1f9e397`.
 
-## Designentscheidungen (die offenen Punkte aus requirements aufgelöst)
+## Design decisions (resolving the open points from requirements)
 
-| Frage | Entscheidung | Begründung |
+| Question | Decision | Rationale |
 |---|---|---|
-| iAim entfernen oder verdrahten? | **Entfernen** | Kein Binding/Button vorhanden; Backlog nennt Direct-Look als Zielparadigma. Totes Feature. |
-| Slingshot-Drag entfernen oder behalten? | **Entfernen, `cancelSlingshotDrag` als Reset-Hook ggf. in `resetAimState` umbenennen** | Direct-Look ist aktiv; Drag-Zweig ist toter Pfad. Reset-Semantik evtl. noch nötig. |
-| Ziel-wechseln: `T` oder `Tab`? | **`Tab` entfernen, `T` behalten** | `Tab` kollidiert mit Browser-Fokuswechsel/A11y; `T` ist konfliktfrei. Menü-Button bleibt. |
-| Pitch-/Power-Slider? | **Als Touch-/Assist-Control behalten, aber als sekundär dokumentieren** | Auf Touch-Geräten ohne Maus sind sie der einzige Feinjustage-Weg; sie spiegeln nur `game.pitchDeg`/Power, erzeugen keinen zweiten Wahrheitszustand. Entfernen würde Mobile verschlechtern. |
+| Remove or wire iAim? | **Remove** | No binding/button present; backlog names Direct Look as the target paradigm. Dead feature. |
+| Remove or keep slingshot drag? | **Remove, possibly rename `cancelSlingshotDrag` to `resetAimState`** | Direct Look is active; the drag branch is a dead path. Reset semantics may still be needed. |
+| Target cycling: `T` or `Tab`? | **Remove `Tab`, keep `T`** | `Tab` collides with browser focus switch / a11y; `T` is conflict-free. Menu button stays. |
+| Pitch/power sliders? | **Keep as touch/assist control, but document as secondary** | On touch devices without a mouse they are the only fine-tuning path; they only mirror `game.pitchDeg`/power and create no second source of truth. Removing them would degrade mobile. |
 
-> Hinweis: Slider-Entscheidung ist die einzige, bei der „behalten" statt „entfernen"
-> gewählt wurde — bewusst, weil sie Mobile-Funktionalität sind, kein Alt-Code.
+> Note: the slider decision is the only one where "keep" was chosen over "remove" —
+> deliberately, because they are mobile functionality, not legacy code.
 
-## Betroffene Dateien
+## Affected files
 
-- `src/levels.ts` — Unlock-Logik (Req 1).
-- `src/game.ts` — `toggleAutoAim`/`autoAim`-State entfernen (Req 2); Slingshot-Drag
-  bereinigen (Req 3).
-- `src/main.ts` — Keyboard-Handler: `Tab`-Binding fürs Ziel-wechseln entfernen
-  (Req 4); keine iAim-Verdrahtung hinzufügen.
-- `src/i18n.ts` — `iAimOn`/`iAimOff` in allen Sprachen entfernen (Req 2); Keymap-Strings
-  mit aktiven Bindings synchronisieren (Req 4).
-- `README.md` — Keymap-Tabelle korrigieren (Req 2 + 4).
-- `index.html` — nur falls iAim-Button-Markup existiert (prüfen; Slider bleiben).
-- `tests/faltality.spec.ts` — Test „Tab / T target cycling" anpassen: nur noch `T`
-  erwartet; Boss-/Folding-Tests bleiben als Regressionsschutz.
+- `src/levels.ts` — unlock logic (Req 1).
+- `src/game.ts` — remove `toggleAutoAim`/`autoAim` state (Req 2); clean up
+  slingshot drag (Req 3).
+- `src/main.ts` — keyboard handler: remove the `Tab` binding for target cycling
+  (Req 4); do not add iAim wiring.
+- `src/i18n.ts` — remove `iAimOn`/`iAimOff` in all languages (Req 2); sync keymap
+  strings with active bindings (Req 4).
+- `README.md` — fix the keymap table (Req 2 + 4).
+- `index.html` — only if iAim button markup exists (check; sliders stay).
+- `tests/faltality.spec.ts` — adjust the "Tab / T target cycling" test: expect only
+  `T`; boss/folding tests stay as regression protection.
 
-## Design Req 1 — Unlock-Logik
+## Design Req 1 — unlock logic
 
-Statt `const nextLevelId = levelId + 1;` das nächste nicht-WIP Level suchen,
-sobald WIP-Gating aktiv ist:
+Instead of `const nextLevelId = levelId + 1;`, find the next non-WIP level once WIP
+gating is active:
 
 ```ts
 const isLocal = isLocalEnvironment();
-// nächstes freischaltbares Level: überspringe WIP-Level, wenn nicht lokal
+// next unlockable level: skip WIP levels when not local
 const nextLvl = CAMPAIGN_LEVELS
   .filter(l => l.id > levelId && (isLocal || !l.isWip))
   .sort((a, b) => a.id - b.id)[0];
@@ -46,36 +46,35 @@ if (earnedStars >= 1 && nextLvl && progress[nextLvl.id] && !progress[nextLvl.id]
 }
 ```
 
-- `isLocal` → nächstes Level ist immer `levelId+1` (nichts gefiltert) → unverändert.
-- `!isLocal` → WIP-Level 2 wird übersprungen, Level 1 schaltet Level 3 frei.
-- `loadProgress()` bleibt unverändert (sperrt WIP schon beim Laden).
+- `isLocal` → next level is always `levelId+1` (nothing filtered) → unchanged.
+- `!isLocal` → WIP Level 2 is skipped, Level 1 unlocks Level 3.
+- `loadProgress()` stays unchanged (already locks WIP on load).
 
-## Design Req 2 — iAim entfernen
-- `toggleAutoAim()` und das `autoAim`-Feld samt Lese-/Schreibstellen entfernen.
-- Lock-On-/Reticle-Logik, die NICHT an `autoAim` hängt, bleibt (Target-Cycling via `T`).
-- `iAimOn`/`iAimOff` aus jedem Sprachblock in `src/i18n.ts` löschen; Interface-Typ
-  (`AppStrings` o.ä.) entsprechend anpassen, damit `tsc` grün bleibt.
+## Design Req 2 — remove iAim
+- Remove `toggleAutoAim()` and the `autoAim` field plus its read/write sites.
+- Lock-on / reticle logic that does NOT depend on `autoAim` stays (target cycling via
+  `T`).
+- Delete `iAimOn`/`iAimOff` from every language block in `src/i18n.ts`; adjust the
+  strings interface type (`AppStrings` or similar) so `tsc` stays green.
 
-## Design Req 3 — Slingshot-Drag
-- Drag-Zweig in `startChargingShot()` entfernen; Funktion auf den Direct-Look-/
-  Charge-Pfad reduzieren.
-- `isSlingshotDragging` entfernen; `cancelSlingshotDrag()` → prüfen, ob Aufrufer
-  (`game.ts:586`, `:745`) nur State zurücksetzen; falls ja, in `resetAimState()`
-  umbenennen und Inhalt auf das Nötige reduzieren.
+## Design Req 3 — slingshot drag
+- Remove the drag branch in `startChargingShot()`; reduce the function to the
+  Direct-Look/charge path.
+- Remove `isSlingshotDragging`; check whether callers of `cancelSlingshotDrag()`
+  (`game.ts:586`, `:745`) only reset state; if so, rename to `resetAimState()` and
+  reduce its body to the minimum.
 
-## Design Req 4 — Doppelbindung & Doku
-- Im Keydown-Handler (`src/main.ts`) den `Tab`-Case fürs Ziel-wechseln entfernen,
-  `T` behalten. `preventDefault` für `Tab` nur entfernen, wenn es ausschließlich fürs
-  Cycling da war.
-- README-Keymap: Zeilen für `A` (iAim) streichen; aktive Keys (`F` falten,
-  `Space` zielen/werfen, `T` nächstes Ziel, `C` Kamera-Reset, `U` Material, Pfeiltasten
-  Feinjustage) auflisten — gegen tatsächliche Bindings in `main.ts` abgleichen,
-  **nicht** aus dem Gedächtnis.
+## Design Req 4 — duplicate binding & docs
+- In the keydown handler (`src/main.ts`), remove the `Tab` case for target cycling,
+  keep `T`. Only remove `preventDefault` for `Tab` if it existed solely for cycling.
+- README keymap: drop the `A` (iAim) line; list active keys (`F` fold, `Space`
+  aim/throw, `T` next target, `C` camera reset, `U` material, arrow keys fine-tune) —
+  reconcile against the actual bindings in `main.ts`, **not** from memory.
 
-## Risiken / Edge Cases
-- Bereits in localStorage gespeicherter Fortschritt mit „Level 2 unlocked=true" aus
-  Local-Spiel: `loadProgress()` setzt WIP live auf `false` zurück → unkritisch.
-- `Tab`-Entfernung darf die normale Browser-Tab-Navigation im Menü nicht brechen
-  (vorher nur im Spielkontext abgefangen prüfen).
-- i18n-Typänderung muss in ALLEN Sprachobjekten konsistent sein, sonst `tsc`-Fehler —
-  gewünschter Compiler-Schutz.
+## Risks / edge cases
+- Progress already stored in localStorage with "Level 2 unlocked=true" from local
+  play: `loadProgress()` resets WIP to `false` live → non-critical.
+- Removing `Tab` must not break normal browser tab navigation in the menu (verify it
+  was only intercepted in the game context before).
+- The i18n type change must be consistent across ALL language objects, otherwise
+  `tsc` errors — the intended compiler safety net.

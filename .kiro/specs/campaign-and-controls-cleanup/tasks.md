@@ -1,54 +1,64 @@
 # Tasks: Campaign & Controls Cleanup
 
-Bezug: `requirements.md`, `design.md`. Branch: `spec/campaign-and-controls-cleanup`.
-Jede Task endet mit grünem `make build` + `make test`.
+Reference: `requirements.md`, `design.md`. Branch: `spec/campaign-and-controls-cleanup`.
+Each task ends with green `make build` + `make test`, and is committed on completion
+using Conventional Commits (one commit per finished task).
 
-- [ ] 1. Unlock-Logik auf „nächstes nicht-WIP Level" umstellen
-  - `saveLevelCompletion()` in `src/levels.ts` nach design.md anpassen
-  - `newlyUnlockedLevel` liefert die tatsächlich freigeschaltete Id
+- [ ] 1. Switch unlock logic to "next non-WIP level"
+  - Adjust `saveLevelCompletion()` in `src/levels.ts` per design.md
+  - `newlyUnlockedLevel` returns the level id actually unlocked
+  - Commit: `fix: unlock next non-WIP campaign level`
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-- [ ] 2. E2E-Test für den Unlock-Fix ergänzen
-  - Test: Level 1 abschließen bei aktivem WIP-Gating → Level 3 unlocked, Level 2 locked
-  - Local-Pfad: unverändert (Level 2 unlocked)
+- [ ] 2. Add an E2E test for the unlock fix
+  - Test: completing Level 1 with WIP gating active → Level 3 unlocked, Level 2 locked
+  - Local path: unchanged (Level 2 unlocked)
+  - Commit: `test: cover WIP-skipping campaign unlock`
   - _Requirements: 1.3, 1.5_
 
-- [ ] 3. Toten iAim-Code entfernen
-  - `toggleAutoAim()` + `autoAim`-State aus `src/game.ts` entfernen
-  - sicherstellen, dass Target-Cycling/Reticle davon unabhängig weiterläuft
+- [ ] 3. Remove dead iAim code
+  - Remove `toggleAutoAim()` + `autoAim` state from `src/game.ts`
+  - Ensure target cycling/reticle keeps working independently
+  - Commit: `refactor: remove dead iAim auto-lock`
   - _Requirements: 2.1, 2.3_
 
-- [ ] 4. iAim-i18n-Strings entfernen & Typ anpassen
-  - `iAimOn`/`iAimOff` in allen Sprachen in `src/i18n.ts` löschen
-  - Strings-Interface anpassen → `tsc` grün
+- [ ] 4. Remove iAim i18n strings & adjust type
+  - Delete `iAimOn`/`iAimOff` in all languages in `src/i18n.ts`
+  - Adjust strings interface → `tsc` green
+  - Commit: `refactor: drop iAim i18n strings`
   - _Requirements: 2.2, 2.3_
 
-- [ ] 5. Slingshot-Drag-Reste bereinigen
-  - Drag-Zweig in `startChargingShot()` entfernen; `isSlingshotDragging` entfernen
-  - `cancelSlingshotDrag()` prüfen → ggf. zu `resetAimState()` reduzieren/umbenennen
+- [ ] 5. Clean up slingshot-drag leftovers
+  - Remove the drag branch in `startChargingShot()`; remove `isSlingshotDragging`
+  - Review `cancelSlingshotDrag()` → reduce/rename to `resetAimState()` if applicable
+  - Commit: `refactor: remove legacy slingshot-drag path`
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 6. Ziel-wechseln-Doppelbindung auflösen (`Tab` raus, `T` bleibt)
-  - `Tab`-Case im Keydown-Handler in `src/main.ts` entfernen
-  - Menü-Button bleibt funktional
+- [ ] 6. Resolve target-cycling duplicate binding (`Tab` out, `T` stays)
+  - Remove the `Tab` case in the keydown handler in `src/main.ts`
+  - Menu button stays functional
+  - Commit: `fix: de-duplicate target-cycling key binding`
   - _Requirements: 4.1_
 
-- [ ] 7. Bestehenden Target-Cycling-E2E-Test anpassen
-  - `tests/faltality.spec.ts` „Tab / T target cycling": nur noch `T` erwarten
+- [ ] 7. Adjust the existing target-cycling E2E test
+  - `tests/faltality.spec.ts` "Tab / T target cycling": expect only `T`
+  - Commit: `test: expect single target-cycling key`
   - _Requirements: 4.1_
 
-- [ ] 8. Pitch-/Power-Slider-Entscheidung dokumentieren (behalten als Assist)
-  - keine Code-Entfernung; nur bestätigen, dass Slider nur `game`-Werte spiegeln
-  - Kommentar/Doku-Hinweis, dass sie sekundäres Touch-Assist sind
+- [ ] 8. Document the pitch/power slider decision (keep as assist)
+  - No code removal; just confirm the sliders only mirror `game` values
+  - Comment/doc note that they are secondary touch assist
+  - Commit: `docs: document pitch/power sliders as touch assist`
   - _Requirements: 4.2_
 
-- [ ] 9. README-Keymap & i18n-Keymap gegen aktive Bindings synchronisieren
-  - `README.md`: `A`-Zeile raus; aktive Keys gegen `main.ts` abgeglichen auflisten
-  - `keymapTitle`/`cycleTarget` etc. in `src/i18n.ts` passend
+- [ ] 9. Sync README keymap & i18n keymap with active bindings
+  - `README.md`: drop the `A` line; list active keys reconciled against `main.ts`
+  - `keymapTitle`/`cycleTarget` etc. in `src/i18n.ts` consistent
+  - Commit: `docs: sync keymap with active bindings`
   - _Requirements: 2.2, 4.3, 4.4_
 
-- [ ] 10. Abschluss-Gate & PR
-  - `make build` + `make test` grün
-  - manuelle Smoke: Level 1 → Level 3 Freischaltung lokal simuliert
-  - PR `spec/campaign-and-controls-cleanup` → `main` öffnen (Body via --body-file)
-  - _Requirements: alle_
+- [ ] 10. Final gate & PR
+  - `make build` + `make test` green
+  - Manual smoke: Level 1 → Level 3 unlock simulated locally
+  - Open PR `spec/campaign-and-controls-cleanup` → `main` (body via --body-file)
+  - _Requirements: all_
