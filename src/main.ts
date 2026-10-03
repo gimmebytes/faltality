@@ -135,8 +135,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const actionBtnIcon = document.getElementById('action-btn-icon')!;
   const actionMainText = document.getElementById('action-main-text')!;
   const actionKbd = document.getElementById('action-kbd');
-  const newSheetBtn = document.getElementById('new-sheet-btn')!;
-  const newSheetText = document.getElementById('new-sheet-text')!;
+  // #new-sheet-btn / #cam-reset-btn / #material-btn were removed from the HUD
+  // (Point 5 declutter). Their actions remain on the keyboard (R / C / U). These
+  // lookups are null-guarded so the removed on-screen buttons simply bind nothing.
+  const newSheetBtn = document.getElementById('new-sheet-btn');
+  const newSheetText = document.getElementById('new-sheet-text');
   const camResetBtn = document.getElementById('cam-reset-btn');
   const camResetText = document.getElementById('cam-reset-text');
   const keymapDescC = document.getElementById('keymap-desc-c');
@@ -156,6 +159,11 @@ window.addEventListener('DOMContentLoaded', () => {
   // Origami Archetype Card in Fold Tower
   const archetypeBadge = document.getElementById('archetype-badge');
   const archetypeIcon = document.getElementById('archetype-icon');
+  // Fold-O-Meter collapse/expand (Point 1): the rail is a narrow collapsible side
+  // panel. Collapsed (default) shows only the big fold number + current tier icon.
+  const foldTower = document.getElementById('fold-tower');
+  const towerToggleBtn = document.getElementById('tower-toggle-btn');
+  const towerCollapsedIcon = document.getElementById('tower-collapsed-icon');
   const archetypeBadgeLabel = document.getElementById('archetype-badge-label');
   const archetypeTitle = document.getElementById('archetype-title');
   const statGlideLabel = document.getElementById('stat-glide-label');
@@ -270,9 +278,12 @@ window.addEventListener('DOMContentLoaded', () => {
     introActive = false;
     sound.playRetroStart();
     introScreen.classList.add('hidden');
-    // Hide the in-game title bar (#logo-title + #logo-badge) during play; they stay
-    // on the intro screen. CSS keys off body.in-game (design.md Req 5).
+    // Point 3: the in-game top-left retro logo (#logo-title + #logo-badge) is now
+    // SHOWN during play (body.in-game no longer hides it). The first campaign level
+    // was started in the game constructor (before onGameModeChange was wired), so
+    // flash the bonus hints here as the player actually enters gameplay (Point 5).
     document.body.classList.add('in-game');
+    revealCampaignHints();
   };
 
   const replayIntro = () => {
@@ -733,6 +744,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (archetypeBadge) {
       archetypeBadge.className = `archetype-badge archetype-${stats.archetype}`;
       if (archetypeIcon) archetypeIcon.textContent = stats.archetypeIcon;
+      // Keep the collapsed-rail mini icon (Point 1) in sync with the current tier.
+      if (towerCollapsedIcon) towerCollapsedIcon.textContent = stats.archetypeIcon;
       if (archetypeBadgeLabel) archetypeBadgeLabel.textContent = t.archetypeBadgeLabel;
 
       let localizedArchetypeName = stats.archetypeName;
@@ -799,7 +812,7 @@ window.addEventListener('DOMContentLoaded', () => {
     labelPower.textContent = t.powerLabel;
     if (slingDragTipText) slingDragTipText.textContent = t.slingDragTip;
     if (slingInstructionHint) slingInstructionHint.textContent = t.slingDragRelease;
-    newSheetText.textContent = game.gameMode === 'campaign' ? t.btnRetryLevel : t.btnReset;
+    if (newSheetText) newSheetText.textContent = game.gameMode === 'campaign' ? t.btnRetryLevel : t.btnReset;
     if (camResetText) camResetText.textContent = t.btnFocusPaper;
     if (camResetBtn) camResetBtn.title = t.btnFocusPaperTitle;
     if (keymapDescC) keymapDescC.innerHTML = t.keymapC;
@@ -1315,8 +1328,23 @@ window.addEventListener('DOMContentLoaded', () => {
     openLevelResult(level, 0, 0, false);
   };
 
+  // Bonus hints (#campaign-stars-hint, #campaign-bonus-targets-hint) must NOT be
+  // permanently visible (Point 5). They are hidden by default (CSS) and revealed
+  // only briefly at the start of each level, then fade out after ~5s.
+  let campaignHintTimer: number | null = null;
+  const revealCampaignHints = () => {
+    const hints = [campaignStarsHint, campaignBonusTargetsHint];
+    for (const h of hints) h?.classList.add('hint-visible');
+    if (campaignHintTimer) clearTimeout(campaignHintTimer);
+    campaignHintTimer = window.setTimeout(() => {
+      for (const h of hints) h?.classList.remove('hint-visible');
+    }, 5000);
+  };
+
   game.onGameModeChange = () => {
     updateUI();
+    // A (re)entered campaign level is a level start — flash the bonus hints once.
+    revealCampaignHints();
   };
 
   game.onSlingshotDrag = (data) => {
@@ -1421,6 +1449,17 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   // Button Listeners
+
+  // Fold-O-Meter collapse/expand toggle (Point 1). Default is collapsed (the
+  // 'collapsed' class ships on #fold-tower in index.html). Toggling flips the class;
+  // CSS hides the tier list / archetype / FALT-PEDIA while collapsed. aria-expanded
+  // is kept in sync for accessibility.
+  towerToggleBtn?.addEventListener('click', () => {
+    if (!foldTower) return;
+    const nowCollapsed = foldTower.classList.toggle('collapsed');
+    towerToggleBtn.setAttribute('aria-expanded', nowCollapsed ? 'false' : 'true');
+  });
+
   foldBtn.addEventListener('click', () => {
     if (game.phase === 'flying') {
       game.fastResetFlight();
@@ -1448,7 +1487,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  newSheetBtn.addEventListener('click', () => {
+  newSheetBtn?.addEventListener('click', () => {
     if (game.phase === 'flying') {
       game.fastResetFlight();
       updateUI();

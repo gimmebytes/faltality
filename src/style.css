@@ -2340,10 +2340,8 @@ kbd {
 }
 
 /* Hide the in-game title bar during active gameplay (kept on the intro screen). */
-body.in-game #logo-title,
-body.in-game #logo-badge {
-  display: none;
-}
+/* Point 3: the in-game top-left brand is now SHOWN during gameplay with the retro
+   80s arcade look (see .logo-group-retro below). It is no longer hidden in-game. */
 
 /* iAim gag flash: appears briefly when the player presses A (iAim can never be turned off) */
 .iaim-gag-flash {
@@ -2369,4 +2367,196 @@ body.in-game #logo-badge {
 .iaim-gag-flash.visible {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
+}
+
+
+/* ===================================================
+   HUD REWORK (hud-ux spec)
+   Point 1: collapsible Fold-O-Meter rail
+   Point 3: in-game retro 80s arcade logo + top-left declutter
+   Point 5: campaign bonus hints are timed, not permanent
+   =================================================== */
+
+/* ---- Point 3: fix the clipped "...RELEASE TO LAUNCH!" artifact ----
+   #slingshot-drag-indicator ships with class "hidden" and main.ts toggles that
+   class, but no rule actually hid it, so the ring + hint sat clipped at the
+   top-left corner (translate(-50%,-50%) of top:0/left:0). Hide it properly. */
+.slingshot-drag-indicator.hidden {
+  display: none !important;
+}
+
+/* ---- Point 3: in-game 80s retro arcade logo (matches intro #intro-title) ---- */
+.logo-group-retro {
+  /* Sit flush at the very top-left of the left column; transparent so only the
+     chrome lettering reads (no card chrome competing with the retro look). */
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  padding: 2px 4px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.logo-title-retro {
+  font-family: var(--font-retro);
+  /* Compact HUD-corner size (the intro uses clamp(3.2rem..6.4rem) which is far too
+     big for an in-game corner). */
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  line-height: 1.02;
+  background: linear-gradient(180deg,
+    #ffffff 0%,
+    #dff2ff 32%,
+    #4a7b9d 49%,
+    #ffffff 51%,
+    #ffd000 62%,
+    #ff4500 82%,
+    #880033 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 0 #000000) drop-shadow(0 0 10px rgba(255, 0, 128, 0.7)) drop-shadow(0 0 22px rgba(0, 240, 255, 0.45));
+  transform: skewX(-5deg);
+  animation: titleGlow 4s infinite alternate;
+}
+
+.logo-badge-retro {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #ff007f 0%, #ff7700 100%);
+  color: #ffffff;
+  border: 1px solid #ffd000;
+  box-shadow: 0 0 8px rgba(255, 0, 128, 0.5);
+  padding: 2px 6px;
+  border-radius: 6px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* ---- Point 1: Fold-O-Meter collapse/expand ---- */
+.tower-toggle-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff8eb;
+  color: #d35400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  transition: background 0.2s ease, transform 0.2s ease;
+  z-index: 2;
+}
+
+.tower-toggle-btn:hover {
+  background: #ff7700;
+  color: #ffffff;
+}
+
+.tower-toggle-chevron {
+  display: inline-block;
+  /* Expanded (default of the chevron) points left (collapse); rotate when collapsed. */
+  transform: rotate(180deg);
+  transition: transform 0.25s ease;
+}
+
+/* Collapsed = DEFAULT. Narrow rail: only the big fold number + current tier icon. */
+.fold-tower.collapsed {
+  width: 92px;
+  padding: 12px 8px;
+  gap: 6px;
+  align-items: center;
+}
+
+.fold-tower.collapsed .tower-toggle-chevron {
+  transform: rotate(0deg); /* points right -> "expand" */
+}
+
+/* Hide the heavy content while collapsed (elements kept in DOM, only visually hidden
+   so every ID other code reads still resolves). */
+.fold-tower.collapsed .tower-tag,
+.fold-tower.collapsed .tower-sub-stats,
+.fold-tower.collapsed .archetype-badge,
+.fold-tower.collapsed .tower-tiers,
+.fold-tower.collapsed .tower-footer {
+  display: none;
+}
+
+.fold-tower.collapsed .tower-header {
+  border-bottom: none;
+  padding-bottom: 0;
+  gap: 2px;
+}
+
+.fold-tower.collapsed .tower-num-group {
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.fold-tower.collapsed .tower-huge-number {
+  font-size: 2.2rem;
+}
+
+.fold-tower.collapsed .tower-unit {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+/* The collapsed-only current-tier mini icon. */
+.tower-collapsed-icon {
+  display: none;
+  font-size: 1.9rem;
+  line-height: 1;
+  margin-top: 2px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+.fold-tower.collapsed .tower-collapsed-icon {
+  display: block;
+}
+
+/* ---- Point 5: campaign bonus hints are hidden by default, revealed briefly on
+   level start (main.ts adds .hint-visible for ~5s then removes it -> fade out). ---- */
+.campaign-stars-hint,
+.campaign-bonus-targets-hint {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.4s ease, max-height 0.4s ease, padding 0.4s ease;
+}
+
+.campaign-stars-hint.hint-visible,
+.campaign-bonus-targets-hint.hint-visible {
+  opacity: 1;
+  max-height: 60px;
+  pointer-events: auto;
+}
+
+.campaign-stars-hint.hint-visible {
+  padding: 3px 8px;
+}
+
+.campaign-bonus-targets-hint.hint-visible {
+  padding: 2px 8px;
 }

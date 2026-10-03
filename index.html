@@ -70,9 +70,12 @@
 
       <!-- Top Header: Clean Logo, Scoreboard & Hamburger Menu -->
       <header class="top-header">
-        <div class="logo-group">
-          <h1 id="logo-title" class="logo-title">FALTALITY</h1>
-          <span id="logo-badge" class="logo-badge">iFold Edition</span>
+        <!-- In-game top-left brand: 80s retro arcade look matching the intro
+             #intro-title (.retro-arcade-title), scaled down for the HUD corner.
+             IDs (#logo-title / #logo-badge) are preserved for other code. -->
+        <div class="logo-group logo-group-retro">
+          <h1 id="logo-title" class="logo-title logo-title-retro">FALTALITY</h1>
+          <span id="logo-badge" class="logo-badge logo-badge-retro">iFold Edition</span>
         </div>
 
         <div class="header-right ui-interactive">
@@ -211,7 +214,14 @@
       <div id="loot-shower-container" class="loot-shower-container"></div>
 
       <!-- Left Sidebar: Large Fold Tower Indicator (FALT-O-METER) -->
-      <aside class="fold-tower ui-interactive" id="fold-tower" title="Aktuelle Faltungsstufe und Wucht">
+      <aside class="fold-tower ui-interactive collapsed" id="fold-tower" title="Aktuelle Faltungsstufe und Wucht">
+        <!-- Collapse/expand handle. Collapsed is the DEFAULT (class "collapsed" above);
+             collapsed view keeps only the big fold number + current tier icon, the full
+             tier list / archetype stats / FALT-PEDIA are hidden via CSS (not removed, so
+             every element ID other code reads still exists). Wired in main.ts. -->
+        <button id="tower-toggle-btn" class="tower-toggle-btn" type="button" aria-expanded="false" title="Falt-O-Meter ein-/ausklappen">
+          <span class="tower-toggle-chevron" aria-hidden="true">›</span>
+        </button>
         <div class="tower-header">
           <span id="tower-tag" class="tower-tag">EXPONENTIAL-FALTMETER</span>
           <div class="tower-num-group">
@@ -222,6 +232,10 @@
             <span id="tower-layers-val" class="tower-pill">1 Lage</span>
             <span id="tower-thickness-val" class="tower-pill">0.1 mm</span>
           </div>
+          <!-- Collapsed-only: mirrors the current tier icon so the rail still shows the
+               fold level at a glance. main.ts keeps #tower-collapsed-icon in sync with
+               the active tier icon. -->
+          <span id="tower-collapsed-icon" class="tower-collapsed-icon" aria-hidden="true">📄</span>
         </div>
 
         <!-- Origami Flight Archetype Card -->
@@ -362,7 +376,14 @@
             <div id="crease-rating" class="crease-rating hidden"></div>
           </div>
 
-          <!-- Main Action Buttons (Cupertino Minimal Pill Style) -->
+          <!-- Main Action Buttons (Cupertino Minimal Pill Style).
+               Point 5 declutter: only the two PRIMARY verbs stay on-screen for
+               discoverability — Fold [F] and Aim/Launch [Space]. The secondary
+               actions Material [U], Focus [C] and New-Sheet/Retry [R] were removed
+               as on-screen buttons; they remain fully available via their keyboard
+               shortcuts (key handlers in main.ts are untouched — only the removed
+               buttons' click listeners go away). The Faltzenmeister crease meter
+               (#active-crease-hud, FALT-TIMING) above is intentionally KEPT. -->
           <div class="button-group">
             <button id="fold-btn" class="btn btn-fold" title="Blatt falten [F]">
               <span class="btn-icon">📄</span>
@@ -374,24 +395,6 @@
               <span id="action-btn-icon" class="btn-icon">🎯</span>
               <span id="action-main-text" class="btn-main-text">Zielen</span>
               <kbd id="action-kbd" class="btn-kbd">Space</kbd>
-            </button>
-
-            <button id="material-btn" class="btn btn-secondary btn-foil foil-locked" title="🔒 Alufolie ab 500 Punkten freischaltbar">
-              <span id="material-icon" class="btn-icon">🔒</span>
-              <span id="material-text" class="btn-main-text">Alufolie (ab 500)</span>
-              <kbd class="btn-kbd">U</kbd>
-            </button>
-
-            <button id="cam-reset-btn" class="btn btn-secondary" title="Sicht auf Papier zurücksetzen [C]">
-              <span class="btn-icon">👁️</span>
-              <span id="cam-reset-text" class="btn-main-text">Fokus</span>
-              <kbd class="btn-kbd">C</kbd>
-            </button>
-
-            <button id="new-sheet-btn" class="btn btn-secondary" title="Frisches Blatt nehmen [R]">
-              <span class="btn-icon">🔄</span>
-              <span id="new-sheet-text" class="btn-main-text">Reset</span>
-              <kbd class="btn-kbd">R</kbd>
             </button>
           </div>
         </div>

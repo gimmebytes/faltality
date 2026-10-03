@@ -179,7 +179,21 @@ export class FaltalityGame {
     this.scene.background = new THREE.Color(GOOSE_PALETTE.sky);
     this.scene.fog = new THREE.Fog(GOOSE_PALETTE.fog, 65, 260);
 
-    this.camera = new THREE.PerspectiveCamera(68, window.innerWidth / window.innerHeight, 0.1, 600);
+    // Point 4 (scene framing): narrowed FOV from 68 -> 56 so the table/paper and the
+    // sky birds fill much more of the viewport. WHY narrow the FOV instead of moving
+    // the camera or scaling objects:
+    //   - A narrower FOV is a pure optical zoom: it changes NOTHING in world space.
+    //     Fold-thickness physics, launch trajectory, bird spawns and all collision/hit
+    //     positions are tied to world coordinates, so they stay byte-for-byte identical.
+    //   - Dollying the camera forward would zoom in too, but this is a wide-angle lens;
+    //     pushing in makes the already-noticeable edge/perspective distortion worse and
+    //     shifts composition.
+    //   - Scaling the table/paper geometry up would break physics and the hit positions
+    //     (which are computed from the real mesh positions/sizes).
+    // 56 was tuned from the HUD screenshots: table fills the frame in fold mode while the
+    // sky still frames the birds in aim mode. foldCamPos/aimCamPos were left unchanged —
+    // the tighter FOV already centres the composition well.
+    this.camera = new THREE.PerspectiveCamera(56, window.innerWidth / window.innerHeight, 0.1, 600);
     this.camera.position.copy(this.foldCamPos);
     this.targetCamPos.copy(this.foldCamPos);
     this.targetCamLookAt.copy(this.foldCamTarget);
