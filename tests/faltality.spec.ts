@@ -62,7 +62,7 @@ test.describe('Faltality - Core Gameplay & Vivaldi Compatibility', () => {
     await expect(canvas).toBeVisible();
   });
 
-  test('supports Tab / T target cycling including special targets (cat, car, sheep, grill)', async ({ page }) => {
+  test('supports T target cycling including special targets (cat, car, sheep, grill)', async ({ page }) => {
     await page.goto('/');
     await page.locator('#intro-start-btn').click();
 
@@ -86,10 +86,10 @@ test.describe('Faltality - Core Gameplay & Vivaldi Compatibility', () => {
     await page.keyboard.press('Space');
     await page.waitForTimeout(300);
 
-    // Press Tab multiple times and verify targets cycle
+    // Press T multiple times and verify targets cycle (Tab binding removed)
     const cycledTargetNames: string[] = [];
     for (let i = 0; i < 8; i++) {
-      await page.keyboard.press('Tab');
+      await page.keyboard.press('KeyT');
       await page.waitForTimeout(100);
 
       const targetName = await page.evaluate(() => {
