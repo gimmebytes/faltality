@@ -1556,12 +1556,6 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (e.code === 'Tab') {
-      e.preventDefault();
-      cycleTarget(e.shiftKey ? -1 : 1);
-      return;
-    }
-
     if (e.code === 'KeyT') {
       e.preventDefault();
       cycleTarget(1);
