@@ -5,7 +5,7 @@ export
 SCW_REGION ?= fr-par
 DOCKER_PLATFORM ?= linux/amd64
 
-.PHONY: help install dev build preview docker-build docker-run deploy
+.PHONY: help install dev build preview test docker-build docker-run deploy
 
 help: ## Show available make targets
 	@echo "Faltality Build & Automation:"
@@ -22,6 +22,9 @@ build: ## Type-check and build production bundle
 
 preview: ## Preview production build locally
 	npm run preview
+
+test: ## Run Playwright end-to-end tests
+	npx playwright test
 
 docker-build: ## Build local Docker image
 	docker build -t faltality:latest .

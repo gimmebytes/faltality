@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+test-results/
+playwright-report/
+
+# KiroCrew runtime artifacts (keep project config, drop runtime locks)
+.kiro/settings/*.lock
 
 # Environment & Secrets
 .env
