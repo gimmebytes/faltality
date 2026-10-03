@@ -88,6 +88,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const introHintSpace = document.getElementById('intro-hint-space')!;
   const introHintT = document.getElementById('intro-hint-t')!;
   const introHintArrows = document.getElementById('intro-hint-arrows')!;
+  const introControlsTitle = document.getElementById('intro-controls-title');
 
   // Left Fold Tower (FALT-O-METER)
   const towerTag = document.getElementById('tower-tag')!;
@@ -197,6 +198,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const keymapDescPitch = document.getElementById('keymap-desc-pitch');
   const keymapDescYaw = document.getElementById('keymap-desc-yaw');
   const keymapDescA = document.getElementById('keymap-desc-a');
+  const keymapDescM = document.getElementById('keymap-desc-m');
+  const keymapDescB = document.getElementById('keymap-desc-b');
   const keymapDescK = document.getElementById('keymap-desc-k');
   const keymapDescR = document.getElementById('keymap-desc-r');
   const keymapDescEsc = document.getElementById('keymap-desc-esc');
@@ -649,6 +652,7 @@ window.addEventListener('DOMContentLoaded', () => {
     introHintSpace.innerHTML = t.introHintSpace;
     introHintT.innerHTML = t.introHintT;
     introHintArrows.innerHTML = t.introHintArrows;
+    if (introControlsTitle) introControlsTitle.textContent = t.introControlsTitle;
 
     // Hamburger Menu Translations & State
     menuTitle.textContent = t.menuTitle;
@@ -658,7 +662,7 @@ window.addEventListener('DOMContentLoaded', () => {
     menuPediaLabel.textContent = t.menuFaltpediaBtn;
     menuAimLabel.textContent = t.menuAimLabel;
     const currentTargetName = game.getTargetName();
-    menuCycleTargetBtn.textContent = currentTargetName ? `🎯 ${currentTargetName} [Tab/T]` : t.menuCycleTargetBtn;
+    menuCycleTargetBtn.textContent = currentTargetName ? `🎯 ${currentTargetName} [T]` : t.menuCycleTargetBtn;
     menuSoundBtn.textContent = sound.enabled ? t.menuSoundOn : t.menuSoundOff;
     menuKeymapBtn.textContent = t.menuKeymapBtn;
     menuReplayIntroBtn.textContent = t.menuReplayIntroBtn;
@@ -968,7 +972,11 @@ window.addEventListener('DOMContentLoaded', () => {
     if (keymapDescPitch) keymapDescPitch.innerHTML = t.keymapArrowsPitch;
     if (keymapDescYaw) keymapDescYaw.innerHTML = t.keymapArrowsYaw;
     if (keymapDescA) keymapDescA.innerHTML = t.keymapA;
+    if (keymapDescM) keymapDescM.innerHTML = t.keymapM;
     if (keymapDescK) keymapDescK.innerHTML = t.keymapK;
+    if (keymapDescC) keymapDescC.innerHTML = t.keymapC;
+    if (keymapDescU) keymapDescU.innerHTML = t.keymapU;
+    if (keymapDescB) keymapDescB.innerHTML = t.keymapB;
     if (keymapDescR) keymapDescR.innerHTML = t.keymapR;
     if (keymapDescEsc) keymapDescEsc.innerHTML = t.keymapEsc;
     if (keymapOkBtn) keymapOkBtn.textContent = t.keymapOk;
