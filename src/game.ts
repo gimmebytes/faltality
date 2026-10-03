@@ -595,6 +595,9 @@ export class FaltalityGame {
     if (this.onStatsChanged) this.onStatsChanged();
   }
 
+  // Intentional no-op gag: iAim can't be turned off (Apple satire). The KeyA
+  // handler in main.ts flashes "iAim: OFF" and then snaps back to "ON" — but
+  // autoAim always stays true, so there is never a real manual-aim mode.
   public toggleAutoAim(): boolean {
     this.autoAim = true;
     return true;

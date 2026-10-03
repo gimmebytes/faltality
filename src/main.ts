@@ -1474,6 +1474,30 @@ window.addEventListener('DOMContentLoaded', () => {
     game.paper.updateTrajectory(game.pitchDeg, game.yawDeg, game.powerPercent, game.targetedBird !== null);
   });
 
+  // iAim gag flash: show "iAim: OFF" briefly, then snap back to "ON". A tongue-in-cheek
+  // Apple-satire bit — iAim can never actually be turned off (game.toggleAutoAim is a no-op).
+  let iAimGagTimer: number | undefined;
+  const flashIAimGag = () => {
+    let el = document.getElementById('iaim-gag-flash');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'iaim-gag-flash';
+      el.className = 'iaim-gag-flash';
+      document.body.appendChild(el);
+    }
+    const t = translations[currentLang];
+    el.textContent = t.iAimOff;
+    el.classList.add('visible');
+    if (iAimGagTimer !== undefined) window.clearTimeout(iAimGagTimer);
+    iAimGagTimer = window.setTimeout(() => {
+      el!.textContent = t.iAimOn;
+      iAimGagTimer = window.setTimeout(() => {
+        el!.classList.remove('visible');
+        iAimGagTimer = undefined;
+      }, 500);
+    }, 600);
+  };
+
   // Keyboard Shortcuts:
   window.addEventListener('keydown', (e: KeyboardEvent) => {
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
@@ -1526,6 +1550,16 @@ window.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       game.summonBoss();
       updateUI();
+      return;
+    }
+
+    if (e.code === 'KeyA') {
+      e.preventDefault();
+      if (introActive) return;
+      // iAim gag: pretend to turn iAim off, then snap it right back to ON.
+      // autoAim never actually changes (see FaltalityGame.toggleAutoAim).
+      game.toggleAutoAim();
+      flashIAimGag();
       return;
     }
 
