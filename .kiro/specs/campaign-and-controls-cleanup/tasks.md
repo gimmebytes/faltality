@@ -16,17 +16,19 @@ using Conventional Commits (one commit per finished task).
   - Commit: `test: cover WIP-skipping campaign unlock`
   - _Requirements: 1.3, 1.5_
 
-- [ ] 3. Remove dead iAim code
-  - Remove `toggleAutoAim()` + `autoAim` state from `src/game.ts`
-  - Ensure target cycling/reticle keeps working independently
-  - Commit: `refactor: remove dead iAim auto-lock`
+- [ ] 3. Remove the unreachable `!autoAim` manual branch (keep iAim always on)
+  - Remove the dead `!autoAim` branch in `src/game.ts:804` and the `!game.autoAim`
+    guard in `src/main.ts:1372`; do NOT touch `pitchDeg`/`yawDeg`/`updateTrajectory`
+  - Keep `autoAim = true` and locked-on throw behavior unchanged
+  - Commit: `refactor: remove unreachable manual-aim branch`
   - _Requirements: 2.1, 2.3_
 
-- [ ] 4. Remove iAim i18n strings & adjust type
-  - Delete `iAimOn`/`iAimOff` in all languages in `src/i18n.ts`
-  - Adjust strings interface → `tsc` green
-  - Commit: `refactor: drop iAim i18n strings`
-  - _Requirements: 2.2, 2.3_
+- [ ] 4. Keep iAim as a gag: comment the no-op and wire `KeyA` flash
+  - Add a clear comment on `toggleAutoAim()` marking it a deliberate no-op gag
+  - Wire `KeyA` in `src/main.ts` → brief "iAim: OFF" flash that snaps back to "ON"
+    (`iAimOn`/`iAimOff` both kept)
+  - Commit: `feat: make iAim always-on gag playable via A key`
+  - _Requirements: 2.2, 2.4, 2.5, 2.6_
 
 - [ ] 5. Clean up slingshot-drag leftovers
   - Remove the drag branch in `startChargingShot()`; remove `isSlingshotDragging`
@@ -52,10 +54,10 @@ using Conventional Commits (one commit per finished task).
   - _Requirements: 4.2_
 
 - [ ] 9. Sync README keymap & i18n keymap with active bindings
-  - `README.md`: drop the `A` line; list active keys reconciled against `main.ts`
-  - `keymapTitle`/`cycleTarget` etc. in `src/i18n.ts` consistent
+  - `README.md`: re-describe `A` as the iAim gag; list active keys reconciled against `main.ts`
+  - `keymapTitle`/`cycleTarget`/`keymapA` etc. in `src/i18n.ts` consistent
   - Commit: `docs: sync keymap with active bindings`
-  - _Requirements: 2.2, 4.3, 4.4_
+  - _Requirements: 2.4, 4.3, 4.4_
 
 - [ ] 10. Final gate & PR
   - `make build` + `make test` green

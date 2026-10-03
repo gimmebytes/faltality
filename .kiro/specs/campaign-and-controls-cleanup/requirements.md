@@ -42,26 +42,40 @@ it does not surface locally.
 
 ---
 
-## Requirement 2 — Remove dead iAim auto-lock
+## Requirement 2 — iAim is always on (keep as a gag), remove the unreachable manual path
 
-**User Story:** As a developer I want no code or UI strings for a feature that is not
-reachable, so that the control concept is honest.
+**User Story:** As a player I want aiming to just work by default (iAim always on),
+because free-hand aiming on a laptop is too fiddly; and as a developer I want the
+code to be honest about the fact that iAim cannot be turned off.
 
-**Current state:** `game.toggleAutoAim()` (`src/game.ts:598`) exists, but **no**
-`KeyA` binding and **no** button in `src/main.ts` calls it. The i18n strings
-`iAimOn`/`iAimOff` and the README doc for key `A` describe a dead function.
+**Current state (verified):** `autoAim` defaults to `true` (`src/game.ts:48`) and
+`toggleAutoAim()` (`src/game.ts:598`) is a no-op: it sets `autoAim = true` and returns
+`true` — it never actually toggles off. iAim is the **core aiming mechanic**, not dead
+code: when a target is locked (`autoAim && targetedBird`) a throw starts at
+`basePower = 80` and skips manual aiming (`src/game.ts:798`, `:804`). Because
+`autoAim` is never `false`, the `!autoAim` branches (`src/game.ts:804`,
+`src/main.ts:1372`) are **unreachable** manual-aiming code. There is no `KeyA` binding
+and no button; the README documents key `A` for a toggle that does not exist.
+
+**Design intent:** iAim stays always on and is the default. The non-toggling
+`toggleAutoAim()` is kept intentionally as an Apple-satire gag ("you can't turn iAim
+off"). A real manual aiming mode is a possible LATER feature, not part of this spec.
 
 ### Acceptance Criteria
-1. WHEN the decision "remove iAim" holds, THEN `toggleAutoAim` and the related
-   `autoAim` state logic are removed OR deliberately wired to a real control —
-   **not** half of both.
-2. WHEN iAim is removed, THEN `iAimOn`/`iAimOff` are removed from every language in
-   `src/i18n.ts` and the README keymap is updated.
-3. No dead reference remains (grep for `iAim`, `autoAim`, `toggleAutoAim` empty, or
-   only at deliberately kept locations).
-
-**Design default (see design.md):** iAim is **removed**, since it has no control and
-the project backlog names "Direct Look + Hold-to-Charge" as the target paradigm.
+1. `autoAim` stays `true` by default and iAim remains the active aiming mechanic (no
+   behavioral change to a locked-on throw).
+2. `toggleAutoAim()` is kept as an intentional gag, but clearly commented as a
+   deliberate no-op so it is not mistaken for a bug.
+3. The unreachable `!autoAim` manual-aiming branches (`src/game.ts:804`,
+   `src/main.ts:1372`) are removed or simplified, WITHOUT touching the shared
+   `pitchDeg`/`yawDeg`/trajectory system that iAim itself uses.
+4. The README keymap is corrected: either wire `KeyA` so the gag is playable (press A
+   → brief "iAim: OFF" flash that snaps back to "ON"), or drop the `A` line entirely.
+   Decision recorded in design.md.
+5. i18n `iAimOn`/`iAimOff`: keep both only if the gag flash in 4 is implemented;
+   otherwise remove `iAimOff` as unreachable. Decision recorded in design.md.
+6. A possible future "manual aiming mode" is noted in design.md as a Could-item, so the
+   intent behind the removed branch is not lost.
 
 ---
 
