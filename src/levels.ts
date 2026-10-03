@@ -4,6 +4,10 @@ import { safeLocalStorage } from './i18n';
 
 export const isLocalEnvironment = (): boolean => {
   if (typeof window === 'undefined') return false;
+  // Test seam: E2E tests force WIP gating on by setting this to false, since the
+  // Playwright dev server would otherwise always count as local (DEV + 127.0.0.1).
+  const override = (window as unknown as { __faltality_forceLocal?: boolean }).__faltality_forceLocal;
+  if (typeof override === 'boolean') return override;
   const host = window.location.hostname;
   return host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local') || Boolean((import.meta as any).env?.DEV);
 };

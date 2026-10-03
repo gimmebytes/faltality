@@ -105,6 +105,57 @@ test.describe('Faltality - Core Gameplay & Vivaldi Compatibility', () => {
     expect(cycledTargetNames.length).toBeGreaterThanOrEqual(2);
   });
 
+  test('campaign unlock skips WIP levels when gating is active (Level 1 -> Level 3)', async ({ page }) => {
+    // Force WIP gating ON (as on the live site). Must run before the module loads
+    // so isLocalEnvironment() picks it up.
+    await page.addInitScript(() => {
+      (window as any).__faltality_forceLocal = false;
+    });
+    await page.goto('/');
+    await page.locator('#intro-start-btn').click();
+
+    const result = await page.evaluate(() => {
+      const CPM = (window as any).__faltality_progress;
+      CPM.resetProgress();
+      // Complete Level 1 with 1 star.
+      const { newlyUnlockedLevel } = CPM.saveLevelCompletion(1, 1, 1000);
+      const progress = CPM.loadProgress();
+      return {
+        newlyUnlockedLevel,
+        level2Unlocked: progress[2].unlocked,
+        level3Unlocked: progress[3].unlocked,
+      };
+    });
+
+    // Level 2 (Coast) is isWip -> skipped. Level 3 unlocks instead.
+    expect(result.newlyUnlockedLevel).toBe(3);
+    expect(result.level2Unlocked).toBe(false);
+    expect(result.level3Unlocked).toBe(true);
+  });
+
+  test('campaign unlock on local keeps sequential +1 (Level 1 -> Level 2)', async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as any).__faltality_forceLocal = true;
+    });
+    await page.goto('/');
+    await page.locator('#intro-start-btn').click();
+
+    const result = await page.evaluate(() => {
+      const CPM = (window as any).__faltality_progress;
+      CPM.resetProgress();
+      const { newlyUnlockedLevel } = CPM.saveLevelCompletion(1, 1, 1000);
+      const progress = CPM.loadProgress();
+      return {
+        newlyUnlockedLevel,
+        level2Unlocked: progress[2].unlocked,
+      };
+    });
+
+    // Local: nothing filtered, next level is simply Level 2.
+    expect(result.newlyUnlockedLevel).toBe(2);
+    expect(result.level2Unlocked).toBe(true);
+  });
+
   test('trajectory aim line and beads are disabled for 90s arcade style', async ({ page }) => {
     await page.goto('/');
     await page.locator('#intro-start-btn').click();

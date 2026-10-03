@@ -22,6 +22,8 @@ window.addEventListener('DOMContentLoaded', () => {
   try {
     game = new FaltalityGame(container);
     (window as any).__faltality_game = game;
+    // Exposed for E2E tests (campaign unlock coverage).
+    (window as any).__faltality_progress = CampaignProgressManager;
   } catch (err) {
     console.error('Failed to initialize Three.js / WebGL:', err);
     const errorBanner = document.createElement('div');
