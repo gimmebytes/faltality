@@ -1315,8 +1315,15 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!slingshotDragIndicator) return;
     if (data.active) {
       slingshotDragIndicator.classList.remove('hidden');
-      slingshotDragIndicator.style.left = `${data.screenX}px`;
-      slingshotDragIndicator.style.top = `${data.screenY}px`;
+      // Clamp to the viewport so the ring + "RELEASE TO LAUNCH!" hint never clip at the
+      // edges (the indicator is centered via translate(-50%,-50%); design.md Req 5).
+      const marginX = 90;  // half ring width + hint pill overhang
+      const marginYTop = 60;
+      const marginYBottom = 110; // extra room for the hint pill below the ring
+      const clampedX = Math.max(marginX, Math.min(window.innerWidth - marginX, data.screenX));
+      const clampedY = Math.max(marginYTop, Math.min(window.innerHeight - marginYBottom, data.screenY));
+      slingshotDragIndicator.style.left = `${clampedX}px`;
+      slingshotDragIndicator.style.top = `${clampedY}px`;
       if (slingTensionFill) {
         slingTensionFill.style.height = `${Math.round(data.tension * 100)}%`;
       }
