@@ -870,11 +870,11 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       lastReportedProgress = progress;
 
-      // Update Mode Pill Header Text
+      // Update Mode Pill Header Text — kept slim as a level-select affordance only
+      // ("Level N"); the full title + objective live in the bottom-right mission panel,
+      // which is the single in-play level readout (design.md Req 5).
       if (modeIndicatorBtn && modePillText) {
-        const title = (t as any)[lvl.titleKey] || `Level ${lvl.id}`;
-        const cleanName = title.includes(':') ? title.split(':')[1].trim() : title;
-        modePillText.textContent = `Level ${lvl.id}: ${cleanName}`;
+        modePillText.textContent = `Level ${lvl.id}`;
         modeIndicatorBtn.classList.add('campaign-active');
       }
     }
