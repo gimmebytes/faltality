@@ -4,6 +4,10 @@ import { safeLocalStorage } from './i18n';
 
 export const isLocalEnvironment = (): boolean => {
   if (typeof window === 'undefined') return false;
+  // Test seam: E2E tests force WIP gating on by setting this to false, since the
+  // Playwright dev server would otherwise always count as local (DEV + 127.0.0.1).
+  const override = (window as unknown as { __faltality_forceLocal?: boolean }).__faltality_forceLocal;
+  if (typeof override === 'boolean') return override;
   const host = window.location.hostname;
   return host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local') || Boolean((import.meta as any).env?.DEV);
 };
@@ -247,16 +251,23 @@ export class CampaignProgressManager {
     current.highscore = Math.max(current.highscore, score);
     progress[levelId] = current;
 
-    // Unlock next level if stars >= 1 (unless it's WIP on a non-local deployment)
+    // Unlock the next *reachable* level if stars >= 1. Once WIP gating is active
+    // (!isLocal), skip WIP levels so the campaign stays completable: e.g. Level 1
+    // unlocks Level 3 because Level 2 (Coast) is isWip. On isLocal nothing is
+    // filtered, so the next level is simply levelId + 1 as before.
     let newlyUnlockedLevel: number | undefined;
-    const nextLevelId = levelId + 1;
-    const nextLvl = CAMPAIGN_LEVELS.find(l => l.id === nextLevelId);
     const isLocal = isLocalEnvironment();
-    if (earnedStars >= 1 && progress[nextLevelId] && !progress[nextLevelId].unlocked) {
-      if (!nextLvl?.isWip || isLocal) {
-        progress[nextLevelId].unlocked = true;
-        newlyUnlockedLevel = nextLevelId;
-      }
+    const nextLvl = CAMPAIGN_LEVELS
+      .filter(l => l.id > levelId && (isLocal || !l.isWip))
+      .sort((a, b) => a.id - b.id)[0];
+    if (
+      earnedStars >= 1 &&
+      nextLvl &&
+      progress[nextLvl.id] &&
+      !progress[nextLvl.id].unlocked
+    ) {
+      progress[nextLvl.id].unlocked = true;
+      newlyUnlockedLevel = nextLvl.id;
     }
 
     safeLocalStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(progress));

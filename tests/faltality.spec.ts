@@ -62,7 +62,7 @@ test.describe('Faltality - Core Gameplay & Vivaldi Compatibility', () => {
     await expect(canvas).toBeVisible();
   });
 
-  test('supports Tab / T target cycling including special targets (cat, car, sheep, grill)', async ({ page }) => {
+  test('supports T target cycling including special targets (cat, car, sheep, grill)', async ({ page }) => {
     await page.goto('/');
     await page.locator('#intro-start-btn').click();
 
@@ -86,10 +86,10 @@ test.describe('Faltality - Core Gameplay & Vivaldi Compatibility', () => {
     await page.keyboard.press('Space');
     await page.waitForTimeout(300);
 
-    // Press Tab multiple times and verify targets cycle
+    // Press T multiple times and verify targets cycle (Tab binding removed)
     const cycledTargetNames: string[] = [];
     for (let i = 0; i < 8; i++) {
-      await page.keyboard.press('Tab');
+      await page.keyboard.press('KeyT');
       await page.waitForTimeout(100);
 
       const targetName = await page.evaluate(() => {
@@ -103,6 +103,126 @@ test.describe('Faltality - Core Gameplay & Vivaldi Compatibility', () => {
 
     // Should have cycled through multiple targets
     expect(cycledTargetNames.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test('campaign unlock skips WIP levels when gating is active (Level 1 -> Level 3)', async ({ page }) => {
+    // Force WIP gating ON (as on the live site). Must run before the module loads
+    // so isLocalEnvironment() picks it up.
+    await page.addInitScript(() => {
+      (window as any).__faltality_forceLocal = false;
+    });
+    await page.goto('/');
+    await page.locator('#intro-start-btn').click();
+
+    const result = await page.evaluate(() => {
+      const CPM = (window as any).__faltality_progress;
+      CPM.resetProgress();
+      // Complete Level 1 with 1 star.
+      const { newlyUnlockedLevel } = CPM.saveLevelCompletion(1, 1, 1000);
+      const progress = CPM.loadProgress();
+      return {
+        newlyUnlockedLevel,
+        level2Unlocked: progress[2].unlocked,
+        level3Unlocked: progress[3].unlocked,
+      };
+    });
+
+    // Level 2 (Coast) is isWip -> skipped. Level 3 unlocks instead.
+    expect(result.newlyUnlockedLevel).toBe(3);
+    expect(result.level2Unlocked).toBe(false);
+    expect(result.level3Unlocked).toBe(true);
+  });
+
+  test('campaign unlock on local keeps sequential +1 (Level 1 -> Level 2)', async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as any).__faltality_forceLocal = true;
+    });
+    await page.goto('/');
+    await page.locator('#intro-start-btn').click();
+
+    const result = await page.evaluate(() => {
+      const CPM = (window as any).__faltality_progress;
+      CPM.resetProgress();
+      const { newlyUnlockedLevel } = CPM.saveLevelCompletion(1, 1, 1000);
+      const progress = CPM.loadProgress();
+      return {
+        newlyUnlockedLevel,
+        level2Unlocked: progress[2].unlocked,
+      };
+    });
+
+    // Local: nothing filtered, next level is simply Level 2.
+    expect(result.newlyUnlockedLevel).toBe(2);
+    expect(result.level2Unlocked).toBe(true);
+  });
+
+  test('mouse drag no longer free-aims (pitch/yaw unchanged while dragging)', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#intro-start-btn').click();
+
+    // Enter aiming mode deterministically and clear any locked target so the iAim
+    // tracking loop (which lerps pitch/yaw toward a moving target every frame) does
+    // not run. That isolates the mouse-drag behavior we are asserting about.
+    await page.evaluate(() => {
+      const g = (window as any).__faltality_game;
+      if (g.phase !== 'aiming') g.enterAimingMode();
+      g.targetedBird = null;
+      g.currentTarget = null;
+    });
+    await page.waitForTimeout(100);
+
+    const before = await page.evaluate(() => {
+      const g = (window as any).__faltality_game;
+      g.targetedBird = null;
+      g.currentTarget = null;
+      return { pitch: g.pitchDeg, yaw: g.yawDeg, phase: g.phase };
+    });
+    expect(before.phase).toBe('aiming');
+
+    // Dispatch raw window mouse drag events (mousedown + mousemove) — this is exactly
+    // what the removed free-aim listener in game.ts reacted to. Using synthetic window
+    // events avoids the canvas charge/throw path, isolating the aim-drag behavior.
+    await page.evaluate(() => {
+      const fire = (type: string, x: number, y: number) =>
+        window.dispatchEvent(new MouseEvent(type, { clientX: x, clientY: y, bubbles: true }));
+      fire('mousedown', 300, 300);
+      for (let i = 0; i <= 10; i++) fire('mousemove', 300 + i * 60, 300 - i * 15);
+      for (let i = 0; i <= 10; i++) fire('mousemove', 900 - i * 70, 150 + i * 45);
+      fire('mouseup', 200, 600);
+    });
+    await page.waitForTimeout(50);
+
+    const after = await page.evaluate(() => {
+      const g = (window as any).__faltality_game;
+      return { pitch: g.pitchDeg, yaw: g.yawDeg };
+    });
+
+    // Aim angle must be driven only by iAim lock-on / arrow keys, not the mouse.
+    expect(after.pitch).toBe(before.pitch);
+    expect(after.yaw).toBe(before.yaw);
+  });
+
+  test('mouse press does not start a hold-to-charge (touch-only; Space throws)', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#intro-start-btn').click();
+    await page.evaluate(() => {
+      const g = (window as any).__faltality_game;
+      if (g.phase !== 'aiming') g.enterAimingMode();
+    });
+    await page.waitForTimeout(100);
+
+    // A real left mouse press on the canvas used to open the charge/power indicator.
+    const canvas = page.locator('#game-canvas');
+    await canvas.dispatchEvent('pointerdown', { button: 0, pointerType: 'mouse', clientX: 400, clientY: 300 });
+    await page.waitForTimeout(50);
+
+    const charging = await page.evaluate(() => (window as any).__faltality_game.isCharging);
+    const indicatorHidden = await page.locator('#slingshot-drag-indicator').evaluate(
+      (el) => el.classList.contains('hidden')
+    );
+
+    expect(charging).toBe(false);
+    expect(indicatorHidden).toBe(true);
   });
 
   test('trajectory aim line and beads are disabled for 90s arcade style', async ({ page }) => {

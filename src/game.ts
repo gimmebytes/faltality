@@ -164,7 +164,6 @@ export class FaltalityGame {
   public onCarHit?: (points: number) => void;
 
   // Slingshot State & Listeners
-  public isSlingshotDragging: boolean = false;
   public slingshotTension: number = 0; // 0.0 to 1.0
   public onSlingshotDrag?: (data: { active: boolean; tension: number; power: number; pitch: number; yaw: number; screenX: number; screenY: number }) => void;
   public flightDuration: number = 0;
@@ -274,12 +273,14 @@ export class FaltalityGame {
   }
 
   private setupAimingControls() {
-    let isDragging = false;
+    // Tap-to-lock only. Free-hand drag aiming was removed with the always-on iAim
+    // cleanup (spec campaign-and-controls-cleanup, Req 2/3): the mouse must NOT move
+    // pitch/yaw. A short tap on a bird still locks onto it; aim angle is driven by
+    // iAim lock-on and the arrow keys, nothing else.
     let startX = 0;
     let startY = 0;
-    let initialYaw = this.yawDeg;
-    let initialPitch = this.pitchDeg;
     let pointerDownTime = 0;
+    let pointerIsDown = false;
 
     const onPointerDown = (e: MouseEvent | TouchEvent) => {
       if (this.phase !== 'aiming') return;
@@ -289,49 +290,31 @@ export class FaltalityGame {
       const target = e.target as HTMLElement;
       if (target.closest('.ui-interactive')) return;
 
-      isDragging = true;
+      pointerIsDown = true;
       startX = clientX;
       startY = clientY;
-      initialYaw = this.yawDeg;
-      initialPitch = this.pitchDeg;
       pointerDownTime = performance.now();
     };
 
-    const onPointerMove = (e: MouseEvent | TouchEvent) => {
-      if (!isDragging || this.phase !== 'aiming') return;
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-
-      const deltaX = clientX - startX;
-      const deltaY = clientY - startY;
-
-      // Generous yaw range to easily look left at the sheep or right at the neighbor's house!
-      this.yawDeg = Math.max(-75, Math.min(75, initialYaw - deltaX * 0.25));
-      this.pitchDeg = Math.max(12, Math.min(80, initialPitch + deltaY * 0.28));
-
-      this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
-      if (this.onStatsChanged) this.onStatsChanged();
-    };
-
     const onPointerUp = (e: MouseEvent | TouchEvent) => {
-      if (!isDragging) return;
-      isDragging = false;
+      if (!pointerIsDown) return;
+      pointerIsDown = false;
 
-      // Tap on a bird / satellite in the sky
+      // A short, near-stationary tap on a bird / satellite locks onto it. This is a
+      // targeting shortcut, not free aiming — it never changes pitch/yaw directly.
       const clickDuration = performance.now() - pointerDownTime;
-      if (clickDuration < 250) {
-        const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : (e as MouseEvent).clientX;
-        const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : (e as MouseEvent).clientY;
+      const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : (e as MouseEvent).clientX;
+      const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : (e as MouseEvent).clientY;
+      const moved = Math.abs(clientX - startX) + Math.abs(clientY - startY);
+      if (clickDuration < 250 && moved < 12) {
         this.checkRaycastTarget(clientX, clientY);
       }
     };
 
     window.addEventListener('mousedown', onPointerDown);
-    window.addEventListener('mousemove', onPointerMove);
     window.addEventListener('mouseup', onPointerUp);
 
     window.addEventListener('touchstart', onPointerDown, { passive: false });
-    window.addEventListener('touchmove', onPointerMove, { passive: false });
     window.addEventListener('touchend', onPointerUp);
   }
 
@@ -583,7 +566,7 @@ export class FaltalityGame {
 
   public enterFoldingMode() {
     if (this.phase === 'flying') return;
-    this.cancelSlingshotDrag();
+    this.resetAimState();
     this.isChaosSpectating = false;
     this.phase = 'folding';
     this.paper.setSlingshotVisible(false);
@@ -595,6 +578,9 @@ export class FaltalityGame {
     if (this.onStatsChanged) this.onStatsChanged();
   }
 
+  // Intentional no-op gag: iAim can't be turned off (Apple satire). The KeyA
+  // handler in main.ts flashes "iAim: OFF" and then snaps back to "ON" — but
+  // autoAim always stays true, so there is never a real manual-aim mode.
   public toggleAutoAim(): boolean {
     this.autoAim = true;
     return true;
@@ -742,7 +728,7 @@ export class FaltalityGame {
       return;
     }
 
-    this.cancelSlingshotDrag();
+    this.resetAimState();
     this.hitTargetThisFlight = false;
     this.isChaosSpectating = false;
     this.phase = 'flying';
@@ -761,30 +747,6 @@ export class FaltalityGame {
     if (this.onStatsChanged) this.onStatsChanged();
   }
 
-  // Direct Look: Move trackpad/mouse freely to point crosshair/camera at sky
-  public updateAimPointer(clientX: number, clientY: number) {
-    if (this.phase !== 'aiming' || this.isChaosSpectating) return;
-
-    // Viewport-normalized coordinates: X in [-1, 1], Y in [-1, 1]
-    const normX = (clientX / window.innerWidth) * 2 - 1;
-    const normY = (clientY / window.innerHeight) * 2 - 1;
-
-    // Pitch: higher on screen = aim higher (up to 78 deg), lower = aim lower (down to 14 deg)
-    const targetPitch = 42 - normY * 34;
-    this.pitchDeg = Math.max(12, Math.min(80, Math.round(targetPitch)));
-
-    // Yaw: center is 0 deg, left (normX = -1) turns left (+58 deg), right turns right (-58 deg)
-    const targetYaw = -normX * 58;
-    this.yawDeg = Math.max(-75, Math.min(75, Math.round(targetYaw)));
-
-    this.isManualAiming = true;
-    this.chargeScreenX = clientX;
-    this.chargeScreenY = clientY;
-
-    this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
-    if (this.onStatsChanged) this.onStatsChanged();
-  }
-
   // Hold-to-Charge: Press & hold pointer or Spacebar to charge shot power from 20% to 100%!
   public startChargingShot(screenX: number, screenY: number): boolean {
     if (this.paper.isFlying || this.paper.isFolding) return false;
@@ -794,14 +756,14 @@ export class FaltalityGame {
     }
 
     this.isCharging = true;
-    this.isSlingshotDragging = true;
     const basePower = (this.autoAim && this.targetedBird) ? 80 : 20;
     this.chargePower = basePower;
     this.chargeScreenX = screenX;
     this.chargeScreenY = screenY;
     this.powerPercent = basePower;
     this.slingshotTension = Math.max(0.05, (basePower - 20) / 80);
-    if (!this.autoAim || !this.targetedBird) {
+    // iAim is always on, so a lock-on only fails to exist when there is no target.
+    if (!this.targetedBird) {
       this.isManualAiming = true;
       this.lockOnReticle.visible = false;
     }
@@ -827,9 +789,8 @@ export class FaltalityGame {
 
   // Release charged shot: Fires immediately with crisp audio and high precision
   public releaseChargeShot(): boolean {
-    if (!this.isCharging && !this.isSlingshotDragging) return false;
+    if (!this.isCharging) return false;
     this.isCharging = false;
-    this.isSlingshotDragging = false;
 
     sound.playSlingRelease();
     this.paper.setSlingshotPull(null, 0);
@@ -853,7 +814,6 @@ export class FaltalityGame {
   // Cancel charging safely
   public cancelChargingShot() {
     this.isCharging = false;
-    this.isSlingshotDragging = false;
     this.slingshotTension = 0;
     this.paper.setSlingshotPull(null, 0);
     this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
@@ -871,22 +831,8 @@ export class FaltalityGame {
     }
   }
 
-  // Slingshot alias methods for backwards compatibility
-  public startSlingshotDrag(screenX: number, screenY: number): boolean {
-    return this.startChargingShot(screenX, screenY);
-  }
-
-  public updateSlingshotDrag(screenX: number, screenY: number) {
-    this.chargeScreenX = screenX;
-    this.chargeScreenY = screenY;
-    this.updateAimPointer(screenX, screenY);
-  }
-
-  public releaseSlingshotDrag(): boolean {
-    return this.releaseChargeShot();
-  }
-
-  public cancelSlingshotDrag() {
+  // Reset the charge/aim state between throws and on mode changes.
+  public resetAimState() {
     this.cancelChargingShot();
   }
 

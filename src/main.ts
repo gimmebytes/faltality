@@ -22,6 +22,8 @@ window.addEventListener('DOMContentLoaded', () => {
   try {
     game = new FaltalityGame(container);
     (window as any).__faltality_game = game;
+    // Exposed for E2E tests (campaign unlock coverage).
+    (window as any).__faltality_progress = CampaignProgressManager;
   } catch (err) {
     console.error('Failed to initialize Three.js / WebGL:', err);
     const errorBanner = document.createElement('div');
@@ -86,6 +88,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const introHintSpace = document.getElementById('intro-hint-space')!;
   const introHintT = document.getElementById('intro-hint-t')!;
   const introHintArrows = document.getElementById('intro-hint-arrows')!;
+  const introControlsTitle = document.getElementById('intro-controls-title');
 
   // Left Fold Tower (FALT-O-METER)
   const towerTag = document.getElementById('tower-tag')!;
@@ -195,6 +198,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const keymapDescPitch = document.getElementById('keymap-desc-pitch');
   const keymapDescYaw = document.getElementById('keymap-desc-yaw');
   const keymapDescA = document.getElementById('keymap-desc-a');
+  const keymapDescM = document.getElementById('keymap-desc-m');
+  const keymapDescB = document.getElementById('keymap-desc-b');
   const keymapDescK = document.getElementById('keymap-desc-k');
   const keymapDescR = document.getElementById('keymap-desc-r');
   const keymapDescEsc = document.getElementById('keymap-desc-esc');
@@ -265,11 +270,15 @@ window.addEventListener('DOMContentLoaded', () => {
     introActive = false;
     sound.playRetroStart();
     introScreen.classList.add('hidden');
+    // Hide the in-game title bar (#logo-title + #logo-badge) during play; they stay
+    // on the intro screen. CSS keys off body.in-game (design.md Req 5).
+    document.body.classList.add('in-game');
   };
 
   const replayIntro = () => {
     introActive = true;
     introScreen.classList.remove('hidden');
+    document.body.classList.remove('in-game');
     closeMenu();
   };
 
@@ -643,6 +652,7 @@ window.addEventListener('DOMContentLoaded', () => {
     introHintSpace.innerHTML = t.introHintSpace;
     introHintT.innerHTML = t.introHintT;
     introHintArrows.innerHTML = t.introHintArrows;
+    if (introControlsTitle) introControlsTitle.textContent = t.introControlsTitle;
 
     // Hamburger Menu Translations & State
     menuTitle.textContent = t.menuTitle;
@@ -652,7 +662,7 @@ window.addEventListener('DOMContentLoaded', () => {
     menuPediaLabel.textContent = t.menuFaltpediaBtn;
     menuAimLabel.textContent = t.menuAimLabel;
     const currentTargetName = game.getTargetName();
-    menuCycleTargetBtn.textContent = currentTargetName ? `🎯 ${currentTargetName} [Tab/T]` : t.menuCycleTargetBtn;
+    menuCycleTargetBtn.textContent = currentTargetName ? `🎯 ${currentTargetName} [T]` : t.menuCycleTargetBtn;
     menuSoundBtn.textContent = sound.enabled ? t.menuSoundOn : t.menuSoundOff;
     menuKeymapBtn.textContent = t.menuKeymapBtn;
     menuReplayIntroBtn.textContent = t.menuReplayIntroBtn;
@@ -868,11 +878,11 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       lastReportedProgress = progress;
 
-      // Update Mode Pill Header Text
+      // Update Mode Pill Header Text — kept slim as a level-select affordance only
+      // ("Level N"); the full title + objective live in the bottom-right mission panel,
+      // which is the single in-play level readout (design.md Req 5).
       if (modeIndicatorBtn && modePillText) {
-        const title = (t as any)[lvl.titleKey] || `Level ${lvl.id}`;
-        const cleanName = title.includes(':') ? title.split(':')[1].trim() : title;
-        modePillText.textContent = `Level ${lvl.id}: ${cleanName}`;
+        modePillText.textContent = `Level ${lvl.id}`;
         modeIndicatorBtn.classList.add('campaign-active');
       }
     }
@@ -962,7 +972,11 @@ window.addEventListener('DOMContentLoaded', () => {
     if (keymapDescPitch) keymapDescPitch.innerHTML = t.keymapArrowsPitch;
     if (keymapDescYaw) keymapDescYaw.innerHTML = t.keymapArrowsYaw;
     if (keymapDescA) keymapDescA.innerHTML = t.keymapA;
+    if (keymapDescM) keymapDescM.innerHTML = t.keymapM;
     if (keymapDescK) keymapDescK.innerHTML = t.keymapK;
+    if (keymapDescC) keymapDescC.innerHTML = t.keymapC;
+    if (keymapDescU) keymapDescU.innerHTML = t.keymapU;
+    if (keymapDescB) keymapDescB.innerHTML = t.keymapB;
     if (keymapDescR) keymapDescR.innerHTML = t.keymapR;
     if (keymapDescEsc) keymapDescEsc.innerHTML = t.keymapEsc;
     if (keymapOkBtn) keymapOkBtn.textContent = t.keymapOk;
@@ -1309,8 +1323,15 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!slingshotDragIndicator) return;
     if (data.active) {
       slingshotDragIndicator.classList.remove('hidden');
-      slingshotDragIndicator.style.left = `${data.screenX}px`;
-      slingshotDragIndicator.style.top = `${data.screenY}px`;
+      // Clamp to the viewport so the ring + "RELEASE TO LAUNCH!" hint never clip at the
+      // edges (the indicator is centered via translate(-50%,-50%); design.md Req 5).
+      const marginX = 90;  // half ring width + hint pill overhang
+      const marginYTop = 60;
+      const marginYBottom = 110; // extra room for the hint pill below the ring
+      const clampedX = Math.max(marginX, Math.min(window.innerWidth - marginX, data.screenX));
+      const clampedY = Math.max(marginYTop, Math.min(window.innerHeight - marginYBottom, data.screenY));
+      slingshotDragIndicator.style.left = `${clampedX}px`;
+      slingshotDragIndicator.style.top = `${clampedY}px`;
       if (slingTensionFill) {
         slingTensionFill.style.height = `${Math.round(data.tension * 100)}%`;
       }
@@ -1357,6 +1378,11 @@ window.addEventListener('DOMContentLoaded', () => {
     if (isModalOpen) return;
 
     if (game.phase === 'aiming' || game.phase === 'folding') {
+      // Hold-to-Charge is a TOUCH-only control. On a laptop the mouse/trackpad must
+      // not start a charge — throwing is driven by the Space bar (spec
+      // campaign-and-controls-cleanup: single aiming paradigm, mouse free-aim removed).
+      // Touch charge is kept but unverified; needs dedicated iPad testing.
+      if (e.pointerType === 'mouse') return;
       const started = game.startChargingShot(e.clientX, e.clientY);
       if (started) {
         try {
@@ -1367,15 +1393,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Direct Look: Moving pointer freely aims crosshair/camera in real-time only if autoAim is off OR actively dragging
-  canvas.addEventListener('pointermove', (e: PointerEvent) => {
-    if (game.phase === 'aiming' && (!game.autoAim || game.isSlingshotDragging)) {
-      game.updateAimPointer(e.clientX, e.clientY);
-    }
-  });
-
   const handlePointerUp = (e: PointerEvent) => {
-    if (game.isCharging || game.isSlingshotDragging) {
+    if (game.isCharging) {
       try {
         canvas.releasePointerCapture(e.pointerId);
       } catch {}
@@ -1386,7 +1405,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   canvas.addEventListener('pointerup', handlePointerUp);
   canvas.addEventListener('pointercancel', (e: PointerEvent) => {
-    if (game.isCharging || game.isSlingshotDragging) {
+    if (game.isCharging) {
       try {
         canvas.releasePointerCapture(e.pointerId);
       } catch {}
@@ -1460,6 +1479,12 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   // Slider Listeners
+  //
+  // Secondary touch/assist control (kept by design — see design.md Req 4): on touch
+  // devices without a mouse these sliders are the only fine-tuning path. They are NOT
+  // a second source of truth — they only mirror and write back game.pitchDeg /
+  // game.powerPercent (the same values the mouse Direct-Look/charge and the arrow keys
+  // drive) and keep the trajectory preview in sync. Removing them would degrade mobile.
   pitchSlider.addEventListener('input', () => {
     game.pitchDeg = parseFloat(pitchSlider.value);
     pitchVal.textContent = Math.round(game.pitchDeg).toString();
@@ -1471,6 +1496,30 @@ window.addEventListener('DOMContentLoaded', () => {
     powerVal.textContent = Math.round(game.powerPercent).toString();
     game.paper.updateTrajectory(game.pitchDeg, game.yawDeg, game.powerPercent, game.targetedBird !== null);
   });
+
+  // iAim gag flash: show "iAim: OFF" briefly, then snap back to "ON". A tongue-in-cheek
+  // Apple-satire bit — iAim can never actually be turned off (game.toggleAutoAim is a no-op).
+  let iAimGagTimer: number | undefined;
+  const flashIAimGag = () => {
+    let el = document.getElementById('iaim-gag-flash');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'iaim-gag-flash';
+      el.className = 'iaim-gag-flash';
+      document.body.appendChild(el);
+    }
+    const t = translations[currentLang];
+    el.textContent = t.iAimOff;
+    el.classList.add('visible');
+    if (iAimGagTimer !== undefined) window.clearTimeout(iAimGagTimer);
+    iAimGagTimer = window.setTimeout(() => {
+      el!.textContent = t.iAimOn;
+      iAimGagTimer = window.setTimeout(() => {
+        el!.classList.remove('visible');
+        iAimGagTimer = undefined;
+      }, 500);
+    }, 600);
+  };
 
   // Keyboard Shortcuts:
   window.addEventListener('keydown', (e: KeyboardEvent) => {
@@ -1527,9 +1576,13 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (e.code === 'Tab') {
+    if (e.code === 'KeyA') {
       e.preventDefault();
-      cycleTarget(e.shiftKey ? -1 : 1);
+      if (introActive) return;
+      // iAim gag: pretend to turn iAim off, then snap it right back to ON.
+      // autoAim never actually changes (see FaltalityGame.toggleAutoAim).
+      game.toggleAutoAim();
+      flashIAimGag();
       return;
     }
 
@@ -1545,8 +1598,8 @@ window.addEventListener('DOMContentLoaded', () => {
         updateUI();
         return;
       }
-      if (game.isSlingshotDragging) {
-        game.cancelSlingshotDrag();
+      if (game.isCharging) {
+        game.resetAimState();
         updateUI();
         return;
       }

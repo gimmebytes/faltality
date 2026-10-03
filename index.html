@@ -49,7 +49,7 @@
 
           <!-- Quick Controls Hint on First Start -->
           <div class="intro-controls-card">
-            <div class="intro-controls-title">⌨️ SCHNELLSTART-STEUERUNG (CONTROLS)</div>
+            <div class="intro-controls-title" id="intro-controls-title">⌨️ Schnellstart-Steuerung</div>
             <div class="intro-controls-grid">
               <div class="intro-control-item" id="intro-hint-f">
                 <kbd>F</kbd> Papier falten (Dicke & Weite verdoppeln)
@@ -58,7 +58,7 @@
                 <kbd>Leertaste</kbd> Zielen & Werfen
               </div>
               <div class="intro-control-item" id="intro-hint-t">
-                <kbd>Tab</kbd> / <kbd>T</kbd> 90s Arcade Lock-On Zielwechsel
+                <kbd>T</kbd> 90s Arcade Lock-On Zielwechsel
               </div>
               <div class="intro-control-item" id="intro-hint-arrows">
                 <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> Kamera & Flugwinkel steuern
@@ -102,7 +102,7 @@
               <span id="activity-ring-icon" class="activity-ring-icon">🕊️</span>
             </div>
             <div class="mode-pill-info">
-              <span id="mode-pill-text" class="mode-pill-text">Level 1: Garten</span>
+              <span id="mode-pill-text" class="mode-pill-text">Level 1</span>
               <span id="activity-ring-percent" class="activity-ring-percent">0%</span>
             </div>
           </button>
@@ -312,6 +312,8 @@
             <div id="slingshot-drag-tip" class="slingshot-drag-tip">
               <span>🏹 <strong id="sling-drag-tip-text">Schleuder:</strong> Ziehen zum Spannen!</span>
             </div>
+            <!-- Secondary touch/assist control: pitch & power sliders mirror the
+                 mouse/keyboard aim values for fine-tuning on touch devices (design.md Req 4). -->
             <div class="slider-group">
               <label for="pitch-slider"><span id="label-pitch">Steigung [↑/↓]:</span> <span id="pitch-val">38</span>°</label>
               <input type="range" id="pitch-slider" min="15" max="80" value="38" />
@@ -434,7 +436,7 @@
                 <div id="keymap-desc-space" class="desc"><strong>Zielmodus aktivieren</strong> bzw. <strong>Papier abschiessen</strong></div>
               </div>
               <div class="keymap-row">
-                <div class="keys"><kbd>Tab</kbd> / <kbd>T</kbd></div>
+                <div class="keys"><kbd>T</kbd></div>
                 <div id="keymap-desc-t" class="desc"><strong>90s Arcade Lock-On</strong> (Schaltet durch Vögel, Möwen, Flugzeuge & Tim Cook Satellit)</div>
               </div>
               <div class="keymap-row">
@@ -444,6 +446,10 @@
               <div class="keymap-row">
                 <div class="keys"><kbd>←</kbd> <kbd>→</kbd></div>
                 <div id="keymap-desc-yaw" class="desc"><strong>Richtung (Yaw)</strong> nach links / rechts steuern</div>
+              </div>
+              <div class="keymap-row">
+                <div class="keys"><kbd>A</kbd></div>
+                <div id="keymap-desc-a" class="desc"><strong>iAim-Gag</strong>: blinkt kurz „AUS" und springt zurück auf „AN"</div>
               </div>
               <div class="keymap-row">
                 <div class="keys"><kbd>M</kbd></div>

@@ -46,7 +46,8 @@ In **FALTALITY** startest du mit einem frischen Blatt Papier auf einem gemütlic
 | <kbd>C</kbd> | Kamera-Fokus auf Papier auf dem Tisch zentrieren |
 | <kbd>↑</kbd> <kbd>↓</kbd> | Steigung (Pitch) erhöhen / senken |
 | <kbd>←</kbd> <kbd>→</kbd> | Richtung (Yaw) links / rechts steuern |
-| <kbd>A</kbd> | Apple iAim Auto-Lock umschalten |
+| <kbd>A</kbd> | iAim-Gag: blinkt kurz „iAim: AUS" und springt sofort zurück auf „AN" (lässt sich nie wirklich abschalten) |
+| <kbd>M</kbd> | Menü ein-/ausblenden |
 | <kbd>K</kbd> | Tastenbelegung Overlay (Key Map) ein-/ausblenden |
 | <kbd>R</kbd> | Frisches Blatt Papier nehmen |
 | <kbd>Esc</kbd> | Menüs und Overlays schließen |

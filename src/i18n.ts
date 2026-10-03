@@ -75,6 +75,7 @@ export interface Translations {
   introSubtitle: string;
   introPressEnter: string;
   introStartBtn: string;
+  introControlsTitle: string;
   introHintF: string;
   introHintSpace: string;
   introHintT: string;
@@ -102,9 +103,11 @@ export interface Translations {
   keymapArrowsPitch: string;
   keymapArrowsYaw: string;
   keymapA: string;
+  keymapM: string;
   keymapK: string;
   keymapC: string;
   keymapU: string;
+  keymapB: string;
   keymapR: string;
   keymapEsc: string;
   keymapOk: string;
@@ -293,9 +296,10 @@ export const translations: Record<SupportedLang, Translations> = {
     introSubtitle: '★ DAS EXPONENTIELLE PAPIERFALT-SPEKTAKEL ★',
     introPressEnter: '▶ DRÜCKE [ENTER] ODER [LEERTASTE] ZUM STARTEN ◀',
     introStartBtn: 'SPIEL STARTEN',
+    introControlsTitle: '⌨️ Schnellstart-Steuerung',
     introHintF: '<kbd>F</kbd> Papier falten (Verdoppeln)',
     introHintSpace: '<kbd>Leertaste</kbd> Zielen & Werfen',
-    introHintT: '<kbd>Tab</kbd> / <kbd>T</kbd> 90s Arcade Lock-On',
+    introHintT: '<kbd>T</kbd> 90s Arcade Lock-On',
     introHintArrows: '<kbd>Pfeiltasten</kbd> Kamera & Winkel',
 
     menuTitle: 'MENÜ',
@@ -303,7 +307,7 @@ export const translations: Record<SupportedLang, Translations> = {
     menuLangLabel: '🌐 Sprache wechseln / Language:',
     menuFaltpediaBtn: '📖 FALT-PEDIA Enzyklopädie öffnen',
     menuAimLabel: '🎯 90s Arcade Zielsystem:',
-    menuCycleTargetBtn: '🎯 Ziel wechseln [Tab / T]',
+    menuCycleTargetBtn: '🎯 Ziel wechseln [T]',
     menuSoundLabel: '🔊 Sound & Musik:',
     menuSoundOn: '🔊 Ton: AN',
     menuSoundOff: '🔇 Ton: AUS',
@@ -317,10 +321,12 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapT: '<strong>90s Arcade Lock-On</strong> (Schaltet durch Vögel, Katze, Auto, Schafe & Grill)',
     keymapArrowsPitch: '<strong>Steigung (Pitch)</strong> erhöhen / senken',
     keymapArrowsYaw: '<strong>Richtung (Yaw)</strong> nach links / rechts steuern',
-    keymapA: '<strong>Apple iAim</strong> Auto-Lock an-/ausschalten',
+    keymapA: '<strong>iAim-Gag</strong>: blinkt kurz „AUS" und springt sofort zurück auf „AN" (iAim ist immer an)',
+    keymapM: '<strong>Menü</strong> öffnen / schließen',
     keymapK: 'Dieses <strong>Tastenbelegungs-Fenster</strong> öffnen / schließen',
     keymapC: '<strong>Blick auf Papier zentrieren</strong> (Kamera-Reset zurück zum Tisch)',
     keymapU: '<strong>Material wechseln</strong> (Papier / Alufolie ab 500 Punkten freischaltbar)',
+    keymapB: '<strong>iPhone Duo Boss beschwören</strong> (Sofortiger Endgegner-Kampf!)',
     keymapR: '<strong>Frisches Blatt Papier</strong> auf den Tisch legen (Reset)',
     keymapEsc: 'Fenster & Overlays schließen',
     keymapOk: 'Verstanden, weiterspielen!',
@@ -569,9 +575,10 @@ export const translations: Record<SupportedLang, Translations> = {
     introSubtitle: '★ THE EXPONENTIAL PAPER FOLDING EXPERIENCE ★',
     introPressEnter: '▶ PRESS [ENTER] OR [SPACE] TO START ◀',
     introStartBtn: 'START GAME',
+    introControlsTitle: '⌨️ Quick-Start Controls',
     introHintF: '<kbd>F</kbd> Fold Paper (Double)',
     introHintSpace: '<kbd>Space</kbd> Aim & Launch',
-    introHintT: '<kbd>Tab</kbd> / <kbd>T</kbd> 90s Arcade Lock-On',
+    introHintT: '<kbd>T</kbd> 90s Arcade Lock-On',
     introHintArrows: '<kbd>← → ↑ ↓</kbd> Pan View & Aim',
 
     menuTitle: 'MENU',
@@ -579,7 +586,7 @@ export const translations: Record<SupportedLang, Translations> = {
     menuLangLabel: '🌐 Switch Language / Sprache:',
     menuFaltpediaBtn: '📖 Open FALT-PEDIA Encyclopedia',
     menuAimLabel: '🎯 90s Arcade Targeting:',
-    menuCycleTargetBtn: '🎯 Cycle Target [Tab / T]',
+    menuCycleTargetBtn: '🎯 Cycle Target [T]',
     menuSoundLabel: '🔊 Sound & Music:',
     menuSoundOn: '🔊 Sound: ON',
     menuSoundOff: '🔇 Sound: OFF',
@@ -593,10 +600,12 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapT: '<strong>90s Arcade Lock-On</strong> (Cycles through birds, cat, car, sheep & grill)',
     keymapArrowsPitch: '<strong>Adjust Pitch</strong> up / down',
     keymapArrowsYaw: '<strong>Adjust Yaw</strong> left / right',
-    keymapA: 'Toggle <strong>Apple iAim</strong> Auto-Lock',
+    keymapA: '<strong>iAim gag</strong>: briefly flashes "OFF" then snaps back to "ON" (iAim is always on)',
+    keymapM: 'Open / close the <strong>Menu</strong>',
     keymapK: 'Open / close this <strong>Controls Modal</strong>',
     keymapC: '<strong>Center view on paper</strong> (Camera reset back to table)',
     keymapU: '<strong>Toggle Material</strong> (Paper / Tin Foil unlockable at 500 points)',
+    keymapB: '<strong>Summon the iPhone Duo Boss</strong> (Instant boss fight!)',
     keymapR: 'Place a <strong>Fresh Sheet of Paper</strong> on table (Reset)',
     keymapEsc: 'Close dialogs & overlays',
     keymapOk: 'Got it, let’s fold!',
