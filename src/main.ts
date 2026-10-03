@@ -1369,9 +1369,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Direct Look: Moving pointer freely aims crosshair/camera in real-time only if autoAim is off OR actively dragging
+  // Direct Look: Moving pointer freely aims crosshair/camera in real-time while actively dragging
   canvas.addEventListener('pointermove', (e: PointerEvent) => {
-    if (game.phase === 'aiming' && (!game.autoAim || game.isSlingshotDragging)) {
+    if (game.phase === 'aiming' && game.isSlingshotDragging) {
       game.updateAimPointer(e.clientX, e.clientY);
     }
   });

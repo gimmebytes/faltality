@@ -801,7 +801,8 @@ export class FaltalityGame {
     this.chargeScreenY = screenY;
     this.powerPercent = basePower;
     this.slingshotTension = Math.max(0.05, (basePower - 20) / 80);
-    if (!this.autoAim || !this.targetedBird) {
+    // iAim is always on, so a lock-on only fails to exist when there is no target.
+    if (!this.targetedBird) {
       this.isManualAiming = true;
       this.lockOnReticle.visible = false;
     }
