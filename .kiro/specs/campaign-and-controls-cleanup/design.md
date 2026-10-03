@@ -30,7 +30,9 @@ Reference: `requirements.md` (same directory). Code base: `main` @ `1f9e397`.
 - `src/i18n.ts` — keep `iAimOn`/`iAimOff` (used by the gag flash); fix the `keymapA`
   doc string to describe the gag; sync keymap strings with active bindings (Req 4).
 - `README.md` — fix the keymap table: `A` = iAim gag (can't be turned off) (Req 2 + 4).
-- `index.html` — only if iAim button markup exists (check; sliders stay).
+- `index.html` — check iAim button markup (sliders stay); HUD declutter (Req 5):
+  slim `#mode-pill-text`, hide `#logo-title`/`#logo-badge` in game, fix clipped
+  launch/drag element, route `#keymap-modal` text through i18n.
 - `tests/faltality.spec.ts` — adjust the "Tab / T target cycling" test: expect only
   `T`; boss/folding tests stay as regression protection.
 
@@ -90,6 +92,21 @@ if (earnedStars >= 1 && nextLvl && progress[nextLvl.id] && !progress[nextLvl.id]
   list active keys (`F` fold, `Space` aim/throw, `T` next target, `A` iAim gag,
   `C` camera reset, `U` material, arrow keys fine-tune) — reconcile against the actual
   bindings in `main.ts`, **not** from memory.
+
+## Design Req 5 — HUD declutter
+- **Duplicate level readout:** keep the bottom-right mission panel
+  (`#campaign-mission-objective`, with Goal/Bonus detail) as the single source during
+  play; reduce the top-right mode pill (`#mode-pill-text`) to level-select affordance
+  only (icon + "Level N" without the full title + percent), or hide its text while the
+  mission panel is visible. Decision: keep mission panel, slim the pill.
+- **In-game title bar:** hide `#logo-title` + `#logo-badge` once gameplay starts
+  (toggle a class on game start / intro-dismiss). They remain on the intro screen.
+- **Clipped launch/drag element:** if it is `#slingshot-drag-indicator`, it is removed
+  by Req 3; otherwise reposition so it stays within the viewport bounds.
+- **Language mix:** route the keymap modal (`#keymap-modal`, hard-coded German in
+  `index.html`) and the intro keymap box title through i18n keys so they follow the
+  active language. Add/standardize keys in `src/i18n.ts`.
+- No change to the Fold-O-Meter panel (out of scope).
 
 ## Risks / edge cases
 - Progress already stored in localStorage with "Level 2 unlocked=true" from local

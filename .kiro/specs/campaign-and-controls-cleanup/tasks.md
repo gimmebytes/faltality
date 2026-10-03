@@ -59,8 +59,29 @@ using Conventional Commits (one commit per finished task).
   - Commit: `docs: sync keymap with active bindings`
   - _Requirements: 2.4, 4.3, 4.4_
 
-- [ ] 10. Final gate & PR
+- [ ] 10. HUD declutter: remove the duplicate level readout
+  - Slim `#mode-pill-text` to level-select affordance; keep the bottom-right mission
+    panel as the single in-play level readout
+  - Commit: `fix: remove duplicate in-game level readout`
+  - _Requirements: 5.1, 5.5_
+
+- [ ] 11. HUD declutter: hide in-game title bar
+  - Hide `#logo-title` + `#logo-badge` once gameplay starts; keep them on the intro
+  - Commit: `fix: hide in-game title bar during play`
+  - _Requirements: 5.2_
+
+- [ ] 12. HUD declutter: fix clipped launch/drag element
+  - Removed with Req 3 if it is `#slingshot-drag-indicator`; else reposition in-viewport
+  - Commit: `fix: keep launch indicator within viewport`
+  - _Requirements: 5.3_
+
+- [ ] 13. HUD declutter: route keymap modal + intro keymap through i18n
+  - Replace hard-coded German in `#keymap-modal` and the intro keymap box with i18n keys
+  - Commit: `fix: localize keymap modal and intro controls`
+  - _Requirements: 5.4_
+
+- [ ] 14. Final gate & PR
   - `make build` + `make test` green
-  - Manual smoke: Level 1 → Level 3 unlock simulated locally
+  - Manual smoke: Level 1 → Level 3 unlock simulated locally; HUD visually checked
   - Open PR `spec/campaign-and-controls-cleanup` → `main` (body via --body-file)
   - _Requirements: all_

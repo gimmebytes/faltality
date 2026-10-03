@@ -122,11 +122,47 @@ keymap display and reality match.
 
 ---
 
+## Requirement 5 — HUD declutter: redundancy & consistency
+
+**User Story:** As a player I want an uncluttered, consistent in-game HUD so that the
+screen is readable and does not show the same information twice or in two languages.
+
+**Current state (verified via live screenshot at `localhost:5173`, Level 1):**
+- The level is shown **twice at once**: the top-right mode pill (`#mode-pill-text`,
+  "Level 1: The Garden Fence 0%") and a bottom-right mission panel
+  (`#campaign-mission-objective`, "LEVEL 1: THE GARDEN FENCE · Goal 0/2 · Bonus…").
+- The game title bar (`#logo-title` "FALTALITY" + `#logo-badge` "iFold Edition")
+  stays visible during play, where it is redundant with the intro screen.
+- A clipped element ("…o launch!") protrudes at the top-left of the viewport —
+  likely the `#slingshot-drag-indicator` or a launch hint (ties into Req 3).
+- Language is mixed: the intro keymap box reads "SCHNELLSTART-STEUERUNG (CONTROLS)"
+  and the keymap modal (`#keymap-modal`, lines ~420-454 in `index.html`) is
+  hard-coded German text instead of going through i18n.
+
+### Acceptance Criteria
+1. The current level is shown in **one** place during play; the duplicate is removed or
+   repurposed (decision in design.md). Both must not show the same level text at once.
+2. The in-game title bar (`#logo-title` + `#logo-badge`) is hidden during active
+   gameplay (it may stay on the intro screen).
+3. The clipped top-left launch/drag element no longer protrudes; if it is the
+   slingshot-drag indicator it is removed with Req 3, otherwise it is repositioned to
+   stay inside the viewport.
+4. The keymap modal (`#keymap-modal`) and the intro keymap box no longer mix languages;
+   their text flows through i18n and matches the active UI language.
+5. No regression to score/combo/objective readouts or the Fold-O-Meter panel (the
+   latter is explicitly out of scope here — see Non-Goals).
+
+---
+
 ## Non-Goals (Out of Scope)
 - No new level theming (MIT campus, airport) — separate spec `pre-boss-levels`.
 - No boss arena / 3-phase fight — separate spec `boss-finale`.
 - No reactivation of Level 2 (Coast) as a design decision — only the unlock mechanism
   is corrected.
+- **No Fold-O-Meter redesign.** The large left-hand FOLD-O-METER / tier-list panel
+  (1-2 City Pigeon … 11+ Tim Cook Sat) takes ~25% of screen width, but reworking it
+  (collapsible/compact layout) is UX redesign, not cleanup — deferred to a future
+  dedicated `hud-ux` spec.
 
 ## Verification Gate
 A sub-task counts as done only when `make build` and `make test` are green.
