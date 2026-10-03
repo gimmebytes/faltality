@@ -1455,6 +1455,12 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   // Slider Listeners
+  //
+  // Secondary touch/assist control (kept by design — see design.md Req 4): on touch
+  // devices without a mouse these sliders are the only fine-tuning path. They are NOT
+  // a second source of truth — they only mirror and write back game.pitchDeg /
+  // game.powerPercent (the same values the mouse Direct-Look/charge and the arrow keys
+  // drive) and keep the trajectory preview in sync. Removing them would degrade mobile.
   pitchSlider.addEventListener('input', () => {
     game.pitchDeg = parseFloat(pitchSlider.value);
     pitchVal.textContent = Math.round(game.pitchDeg).toString();
