@@ -267,11 +267,15 @@ window.addEventListener('DOMContentLoaded', () => {
     introActive = false;
     sound.playRetroStart();
     introScreen.classList.add('hidden');
+    // Hide the in-game title bar (#logo-title + #logo-badge) during play; they stay
+    // on the intro screen. CSS keys off body.in-game (design.md Req 5).
+    document.body.classList.add('in-game');
   };
 
   const replayIntro = () => {
     introActive = true;
     introScreen.classList.remove('hidden');
+    document.body.classList.remove('in-game');
     closeMenu();
   };
 

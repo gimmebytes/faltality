@@ -2339,6 +2339,12 @@ kbd {
   -webkit-user-select: none;
 }
 
+/* Hide the in-game title bar during active gameplay (kept on the intro screen). */
+body.in-game #logo-title,
+body.in-game #logo-badge {
+  display: none;
+}
+
 /* iAim gag flash: appears briefly when the player presses A (iAim can never be turned off) */
 .iaim-gag-flash {
   position: fixed;
