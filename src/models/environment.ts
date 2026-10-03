@@ -831,6 +831,27 @@ export class Environment {
     return 2.5;
   }
 
+  // Neighbor Sheep flock collision & accessors
+  public getSheepWorldPosition(index: number = 0): THREE.Vector3 {
+    if (this.sheepFlock && this.sheepFlock[index]) {
+      const wp = new THREE.Vector3();
+      this.sheepFlock[index].group.getWorldPosition(wp);
+      wp.y += 0.45;
+      return wp;
+    }
+    return new THREE.Vector3(13.5, 0.45, -24.0);
+  }
+
+  public getSheepBoundingRadius(): number {
+    return 1.4;
+  }
+
+  public hitSheep(_index: number = 0): boolean {
+    this.triggerFaintingSheep();
+    sound.playSheepBaa(true);
+    return true;
+  }
+
   // Build Sneaky Neighbor Cat stalking the garden fence
   private buildSneakyCat() {
     const catGroup = new THREE.Group();

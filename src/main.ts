@@ -1,10 +1,10 @@
 import './style.css';
 import { FaltalityGame } from './game';
 import type { BirdData } from './models/birds';
-import { translations, detectLanguage } from './i18n';
+import { translations, detectLanguage, safeLocalStorage } from './i18n';
 import type { SupportedLang } from './i18n';
 import { sound } from './sound';
-import { CAMPAIGN_LEVELS, CampaignProgressManager } from './levels';
+import { CAMPAIGN_LEVELS, CampaignProgressManager, isLocalEnvironment } from './levels';
 import type { CampaignLevel } from './levels';
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -18,7 +18,24 @@ window.addEventListener('DOMContentLoaded', () => {
     console.error('Canvas container not found!');
     return;
   }
-  const game = new FaltalityGame(container);
+  let game: FaltalityGame;
+  try {
+    game = new FaltalityGame(container);
+    (window as any).__faltality_game = game;
+  } catch (err) {
+    console.error('Failed to initialize Three.js / WebGL:', err);
+    const errorBanner = document.createElement('div');
+    errorBanner.className = 'webgl-error-banner';
+    errorBanner.innerHTML = `
+      <div style="background: rgba(231, 76, 60, 0.95); color: white; padding: 22px 28px; border-radius: 12px; max-width: 520px; text-align: center; margin: 30px auto; border: 2px solid #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.5); font-family: system-ui, -apple-system, sans-serif;">
+        <h2 style="margin-top: 0; font-size: 1.35rem; letter-spacing: 0.04em;">⚠️ 3D / WebGL nicht verfügbar</h2>
+        <p style="font-size: 0.95rem; line-height: 1.5; margin-bottom: 0;">Das Spiel benötigt WebGL-Hardwarebeschleunigung. Bitte aktiviere in den Browser-Einstellungen (z.&nbsp;B. Vivaldi &rarr; Einstellungen &rarr; System &rarr; „Hardwarebeschleunigung verwenden“) die Beschleunigung und lade die Seite neu.</p>
+      </div>
+    `;
+    const introCard = document.querySelector('.intro-content') || document.body;
+    introCard.prepend(errorBanner);
+    return;
+  }
 
   // UI Element References
   const metaPageTitle = document.getElementById('meta-page-title');
@@ -44,15 +61,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const drawerPediaBtn = document.getElementById('drawer-pedia-btn')!;
   const menuPediaLabel = document.getElementById('menu-pedia-label')!;
   const menuAimLabel = document.getElementById('menu-aim-label')!;
-  const menuIaimBtn = document.getElementById('menu-iaim-btn')!;
   const menuCycleTargetBtn = document.getElementById('menu-cycle-target-btn')!;
   const menuSkyLabel = document.getElementById('menu-sky-label')!;
   const menuSkyText = document.getElementById('menu-sky-text')!;
   const menuSoundBtn = document.getElementById('menu-sound-btn')!;
   const menuKeymapBtn = document.getElementById('menu-keymap-btn')!;
   const menuReplayIntroBtn = document.getElementById('menu-replay-intro-btn')!;
-  const menuSummonBossBtn = document.getElementById('menu-summon-boss-btn');
-  const menuBossLabel = document.getElementById('menu-boss-label');
 
   // 📱 Boss HUD Elements
   const bossHud = document.getElementById('boss-hud')!;
@@ -194,8 +208,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Mode Indicator Pill (Top Header)
   const modeIndicatorBtn = document.getElementById('mode-indicator-btn');
-  const modePillIcon = document.getElementById('mode-pill-icon');
   const modePillText = document.getElementById('mode-pill-text');
+  const activityRingWrap = document.getElementById('activity-ring-wrap');
+  const activityRingFill = document.getElementById('activity-ring-fill');
+  const activityRingIcon = document.getElementById('activity-ring-icon');
+  const activityRingPercent = document.getElementById('activity-ring-percent');
+  const campaignRingWrap = document.getElementById('campaign-ring-wrap');
+  const campaignRingFill = document.getElementById('campaign-ring-fill');
+  const campaignRingIcon = document.getElementById('campaign-ring-icon');
+  let lastReportedProgress: number = -1;
 
   // Drawer Menu Level Select button
   const drawerLevelSelectBtn = document.getElementById('drawer-level-select-btn');
@@ -206,14 +227,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const campaignMissionName = document.getElementById('campaign-mission-name')!;
   const campaignMissionObjective = document.getElementById('campaign-mission-objective')!;
   const campaignAmmoIcons = document.getElementById('campaign-ammo-icons')!;
+  const campaignStarsHint = document.getElementById('campaign-stars-hint');
+  const campaignBonusTargetsHint = document.getElementById('campaign-bonus-targets-hint');
 
   // Level Select Modal
   const levelSelectModal = document.getElementById('level-select-modal')!;
   const levelSelectTitle = document.getElementById('level-select-title')!;
   const levelSelectSubtitle = document.getElementById('level-select-subtitle')!;
   const levelSelectCloseBtn = document.getElementById('level-select-close-btn')!;
-  const tabSandboxBtn = document.getElementById('tab-sandbox-btn')!;
-  const tabCampaignBtn = document.getElementById('tab-campaign-btn')!;
   const levelCardsGrid = document.getElementById('level-cards-grid')!;
   const unlockAllCheatBtn = document.getElementById('unlock-all-cheat-btn');
   const resetCampaignProgressBtn = document.getElementById('reset-campaign-progress-btn');
@@ -232,7 +253,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const resultNextBtn = document.getElementById('result-next-btn')!;
   const resultRetryBtn = document.getElementById('result-retry-btn')!;
   const resultSelectBtn = document.getElementById('result-select-btn')!;
-  const resultSandboxBtn = document.getElementById('result-sandbox-btn')!;
 
   let bannerTimeout: number | null = null;
   let lastFoldsCount = -1;
@@ -260,7 +280,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // ===================================================
   const setLanguage = (lang: SupportedLang) => {
     currentLang = lang;
-    localStorage.setItem('faltality_lang', lang);
+    safeLocalStorage.setItem('faltality_lang', lang);
     updateUI();
   };
 
@@ -365,14 +385,6 @@ window.addEventListener('DOMContentLoaded', () => {
   // ===================================================
   // 🎯 TARGETING & SOUND ACTIONS
   // ===================================================
-  const toggleAim = () => {
-    const active = game.toggleAutoAim();
-    const t = translations[currentLang];
-    menuIaimBtn.textContent = active ? t.iAimOn : t.iAimOff;
-  };
-
-  menuIaimBtn.addEventListener('click', toggleAim);
-
   const cycleTarget = (direction: number = 1) => {
     if (game.phase === 'folding') {
       game.enterAimingMode();
@@ -435,86 +447,61 @@ window.addEventListener('DOMContentLoaded', () => {
     const t = translations[currentLang];
     levelCardsGrid.innerHTML = '';
 
-    if (tabSandboxBtn.classList.contains('active')) {
-      // Render Sandbox Biomes (Level 1 Garden & Level 2 Baltic Coast)
-      const biomes = [
-        {
-          id: 1,
-          icon: '🏡',
-          title: currentLang === 'de' ? 'Level 1: Schrebergarten' : 'Level 1: Allotment Garden',
-          desc: currentLang === 'de' ? 'Rasen, Blumen, Grill, Nachbarskatze & geparkte Limousine' : 'Lawn, flowerbeds, BBQ grill, neighbor cat & parked sedan',
-          unlocked: true,
-          badge: currentLang === 'de' ? 'Basis-Spielwiese' : 'Base Sandbox'
-        },
-        {
-          id: 2,
-          icon: '🏖️',
-          title: currentLang === 'de' ? 'Level 2: Ostsee-Küste' : 'Level 2: Baltic Coast',
-          desc: currentLang === 'de' ? 'Holzsteg am Meer, Wellengang, Strandkörbe, Leuchtturm, Krabbenkutter & Pommes' : 'Wooden beach pier, ocean waves, strandkörbe, lighthouse, fishing boat & fries',
-          unlocked: game.level2Unlocked || game.state.score >= 3000,
-          badge: (game.level2Unlocked || game.state.score >= 3000)
-            ? (currentLang === 'de' ? 'Freigeschaltet ✓' : 'Unlocked ✓')
-            : (currentLang === 'de' ? `Ziel: 3.000 Pkt. (${game.state.score.toLocaleString()}/3.000)` : `Goal: 3,000 pts (${game.state.score.toLocaleString()}/3,000)`)
-        }
-      ];
-
-      biomes.forEach((biome) => {
-        const isActive = game.gameMode === 'sandbox' && game.currentLevelId === biome.id;
-        const card = document.createElement('div');
-        card.className = `level-card ${biome.unlocked ? '' : 'locked'} ${isActive ? 'active-level' : ''}`;
-
-        card.innerHTML = `
-          <div class="level-card-header">
-            <span class="level-icon">${biome.icon}</span>
-            <span class="level-stars">${biome.badge}</span>
-          </div>
-          <div class="level-card-title">${biome.title}</div>
-          <div class="level-card-desc">${biome.desc}</div>
-          <div class="level-card-footer">
-            <span class="level-highscore">${isActive ? '▶ AKTIV' : ''}</span>
-            <button class="level-play-btn">${biome.unlocked ? (isActive ? (currentLang === 'de' ? 'Ausgewählt' : 'Selected') : (currentLang === 'de' ? 'Erkunden ▶' : 'Explore ▶')) : '🔒 3.000 Pkt'}</button>
-          </div>
-        `;
-
-        if (biome.unlocked) {
-          card.addEventListener('click', () => {
-            game.startSandboxMode();
-            game.switchLevel(biome.id);
-            closeLevelSelect();
-            updateUI();
-          });
-        }
-
-        levelCardsGrid.appendChild(card);
-      });
-      return;
-    }
-
     const progress = CampaignProgressManager.loadProgress();
+    const isLocal = isLocalEnvironment();
+
     CAMPAIGN_LEVELS.forEach((lvl) => {
       const p = progress[lvl.id] || { stars: 0, highscore: 0, unlocked: lvl.id === 1 };
+      const isWip = Boolean(lvl.isWip);
+      const isWipLocked = isWip && !isLocal;
+      const isPlayable = (p.unlocked || (isWip && isLocal)) && !isWipLocked;
       const card = document.createElement('div');
-      card.className = `level-card ${p.unlocked ? '' : 'locked'} ${game.gameMode === 'campaign' && game.currentLevel?.id === lvl.id ? 'active-level' : ''}`;
+      card.className = `level-card ${isPlayable ? '' : 'locked'} ${game.currentLevel?.id === lvl.id ? 'active-level' : ''} ${isWip ? 'wip-level' : ''}`;
 
       const icon = lvl.id === 1 ? '🕊️' : (lvl.id === 2 ? '🦢' : (lvl.id === 3 ? '💥' : (lvl.id === 4 ? '✈️' : '📱')));
       const title = (t as any)[lvl.titleKey] || `Level ${lvl.id}`;
       const objective = (t as any)[lvl.objectiveKey] || '';
       const starsStr = '★'.repeat(p.stars) + '☆'.repeat(3 - p.stars);
 
+      let badgeStr = '';
+      if (isWip) {
+        badgeStr = isLocal ? '🚧 WIP (Lokal)' : (currentLang === 'de' ? '🚧 In Arbeit' : '🚧 Coming Soon');
+      } else if (isPlayable) {
+        badgeStr = starsStr;
+      } else {
+        badgeStr = '🔒';
+      }
+
+      let statusDesc = '';
+      if (isWipLocked) {
+        statusDesc = currentLang === 'de' ? 'Level 2 befindet sich im Bau! Demnächst verfügbar.' : 'Level 2 is under construction! Coming soon.';
+      } else if (isPlayable) {
+        statusDesc = objective + (isWip ? (currentLang === 'de' ? ' (WIP - Testversion)' : ' (WIP - Preview)') : '');
+      } else {
+        statusDesc = currentLang === 'de' ? 'Gesperrt – Schließe vorherige Level ab!' : 'Locked – Complete previous levels!';
+      }
+
+      let btnLabel = '';
+      if (isPlayable) {
+        btnLabel = isWip ? (currentLang === 'de' ? 'WIP Testen ▶' : 'Test WIP ▶') : (currentLang === 'de' ? 'Starten ▶' : 'Play ▶');
+      } else {
+        btnLabel = isWipLocked ? 'WIP' : '🔒';
+      }
+
       card.innerHTML = `
         <div class="level-card-header">
-          <span class="level-icon">${p.unlocked ? icon : '🔒'}</span>
-          <span class="level-stars">${p.unlocked ? starsStr : '🔒'}</span>
+          <span class="level-icon">${isPlayable ? icon : (isWipLocked ? '🚧' : '🔒')}</span>
+          <span class="level-stars">${badgeStr}</span>
         </div>
         <div class="level-card-title">${title}</div>
-        <div class="level-card-desc">${p.unlocked ? objective : (currentLang === 'de' ? 'Gesperrt – Schließe vorherige Level ab!' : 'Locked – Complete previous levels!')}</div>
+        <div class="level-card-desc">${statusDesc}</div>
         <div class="level-card-footer">
           <span class="level-highscore">${p.highscore > 0 ? t.highScorePill(p.highscore) : ''}</span>
-          <button class="level-play-btn">${p.unlocked ? (currentLang === 'de' ? 'Starten ▶' : 'Play ▶') : '🔒'}</button>
+          <button class="level-play-btn">${btnLabel}</button>
         </div>
       `;
 
-      if (p.unlocked) {
+      if (isPlayable) {
         card.addEventListener('click', () => {
           game.startCampaignLevel(lvl.id);
           closeLevelSelect();
@@ -531,19 +518,8 @@ window.addEventListener('DOMContentLoaded', () => {
     renderLevelCards();
     levelSelectTitle.textContent = translations[currentLang].levelSelectTitle;
     levelSelectSubtitle.textContent = translations[currentLang].levelSelectSubtitle;
-    tabSandboxBtn.textContent = translations[currentLang].btnSandbox;
-    tabCampaignBtn.textContent = translations[currentLang].modeCampaign;
     if (unlockAllCheatBtn) unlockAllCheatBtn.textContent = translations[currentLang].levelUnlockAllBtn;
     if (resetCampaignProgressBtn) resetCampaignProgressBtn.textContent = translations[currentLang].levelResetProgressBtn;
-
-    if (game.gameMode === 'sandbox') {
-      tabSandboxBtn.classList.add('active');
-      tabCampaignBtn.classList.remove('active');
-    } else {
-      tabCampaignBtn.classList.add('active');
-      tabSandboxBtn.classList.remove('active');
-    }
-
     levelSelectModal.classList.remove('hidden');
   };
 
@@ -585,7 +561,6 @@ window.addEventListener('DOMContentLoaded', () => {
     resultNextBtn.textContent = t.btnNextLevel;
     resultRetryBtn.textContent = t.btnRetryLevel;
     resultSelectBtn.textContent = t.btnReturnToSelect;
-    resultSandboxBtn.textContent = t.btnBackToSandbox;
 
     // Show/hide next level button
     const hasNextLevel = isVictory && Boolean(CAMPAIGN_LEVELS.find(l => l.id === level.id + 1));
@@ -597,33 +572,6 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   modeIndicatorBtn?.addEventListener('click', () => {
-    if (game.gameMode === 'sandbox') {
-      if (game.level2Unlocked || game.state.score >= 3000) {
-        const nextLvl = game.currentLevelId === 1 ? 2 : 1;
-        game.switchLevel(nextLvl);
-        faltalityTitle.textContent = nextLvl === 2 ? '🏖️ LEVEL 2: OSTSEE-KÜSTE' : '🏡 LEVEL 1: GARTEN';
-        faltalitySubtitle.innerHTML = nextLvl === 2
-          ? (currentLang === 'de' ? 'Meeresrauschen, Möwen, Leuchtturm & Krabbenkutter!' : 'Ocean waves, seagulls, lighthouse & fishing boat!')
-          : (currentLang === 'de' ? 'Zurück im Schrebergarten mit Grill & Katze' : 'Back in the garden with BBQ and cat');
-        faltalityPoints.textContent = 'LEVEL SWITCH';
-        faltalityBanner.classList.remove('hidden');
-        if (bannerTimeout) clearTimeout(bannerTimeout);
-        bannerTimeout = window.setTimeout(() => faltalityBanner.classList.add('hidden'), 3200);
-        updateUI();
-        return;
-      } else {
-        const remaining = Math.max(0, 3000 - game.state.score);
-        faltalityTitle.textContent = '🔒 LEVEL 2 GESPERRT';
-        faltalitySubtitle.innerHTML = currentLang === 'de'
-          ? `Erreiche <b>3.000 Punkte</b>, um Level 2 freizuschalten!<br>(Aktuell: <b>${game.state.score.toLocaleString()}</b> / 3.000 Pkt. – noch ${remaining.toLocaleString()} Pkt.)`
-          : `Reach <b>3,000 points</b> to unlock Level 2!<br>(Current: <b>${game.state.score.toLocaleString()}</b> / 3,000 pts – ${remaining.toLocaleString()} pts remaining)`;
-        faltalityPoints.textContent = 'GOAL: 3,000 PTS';
-        faltalityBanner.classList.remove('hidden');
-        if (bannerTimeout) clearTimeout(bannerTimeout);
-        bannerTimeout = window.setTimeout(() => faltalityBanner.classList.add('hidden'), 3500);
-        return;
-      }
-    }
     openLevelSelect();
   });
 
@@ -632,18 +580,6 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   levelSelectCloseBtn.addEventListener('click', closeLevelSelect);
-
-  tabSandboxBtn.addEventListener('click', () => {
-    tabSandboxBtn.classList.add('active');
-    tabCampaignBtn.classList.remove('active');
-    renderLevelCards();
-  });
-
-  tabCampaignBtn.addEventListener('click', () => {
-    tabCampaignBtn.classList.add('active');
-    tabSandboxBtn.classList.remove('active');
-    renderLevelCards();
-  });
 
   unlockAllCheatBtn?.addEventListener('click', () => {
     CampaignProgressManager.unlockAll();
@@ -673,12 +609,6 @@ window.addEventListener('DOMContentLoaded', () => {
   resultSelectBtn.addEventListener('click', () => {
     closeLevelResult();
     openLevelSelect();
-  });
-
-  resultSandboxBtn.addEventListener('click', () => {
-    closeLevelResult();
-    game.startSandboxMode();
-    updateUI();
   });
 
   // ===================================================
@@ -721,8 +651,8 @@ window.addEventListener('DOMContentLoaded', () => {
     langBtnEn.classList.toggle('active', currentLang === 'en');
     menuPediaLabel.textContent = t.menuFaltpediaBtn;
     menuAimLabel.textContent = t.menuAimLabel;
-    menuIaimBtn.textContent = game.autoAim ? t.iAimOn : t.iAimOff;
-    menuCycleTargetBtn.textContent = game.targetedBird ? `🎯 ${game.targetedBird.title} [T]` : t.menuCycleTargetBtn;
+    const currentTargetName = game.getTargetName();
+    menuCycleTargetBtn.textContent = currentTargetName ? `🎯 ${currentTargetName} [Tab/T]` : t.menuCycleTargetBtn;
     menuSoundBtn.textContent = sound.enabled ? t.menuSoundOn : t.menuSoundOff;
     menuKeymapBtn.textContent = t.menuKeymapBtn;
     menuReplayIntroBtn.textContent = t.menuReplayIntroBtn;
@@ -744,24 +674,23 @@ window.addEventListener('DOMContentLoaded', () => {
       menuSkyText.textContent = `${geese} Kraniche, ${pigeons} Tauben, ${seagulls} Möwen${drones > 0 ? ', 1 Stealth Dart' : ''}${airliners > 0 ? `, ✈️ ${airliners} Airliner` : ''}${satellites > 0 ? `, 🛰️ ${satellites} Tim Cook Satellit` : ''}${bosses > 0 ? ', 📱 1 iPhone Duo' : ''}`;
     }
 
-    if (menuBossLabel) {
-      menuBossLabel.textContent = t.menuSummonBoss;
-    }
-
     // Update Boss HUD if active
     const activeBoss = livingBirds.find((b: BirdData) => b.type === 'iphone_duo');
     if (activeBoss) {
       bossHud.classList.remove('hidden');
       bossName.textContent = t.bossName;
-      if (activeBoss.bossPhase === 'unfolded') {
+      if (activeBoss.health === 1) {
         bossPhaseBadge.textContent = t.bossPhaseOpen;
+        bossPhaseBadge.style.color = '#ff375f';
+      } else if (activeBoss.health === 2) {
+        bossPhaseBadge.textContent = t.bossPhaseUnfolding;
         bossPhaseBadge.style.color = '#ffd60a';
       } else {
         bossPhaseBadge.textContent = t.bossPhaseClosed;
-        bossPhaseBadge.style.color = '#ff375f';
+        bossPhaseBadge.style.color = '#ff9500';
       }
-      const curHp = activeBoss.health ?? 4;
-      const maxHp = activeBoss.maxHealth ?? 4;
+      const curHp = activeBoss.health ?? 3;
+      const maxHp = activeBoss.maxHealth ?? 3;
       const pct = Math.max(0, Math.round((curHp / maxHp) * 100));
       bossHpFill.style.width = `${pct}%`;
     }
@@ -866,22 +795,84 @@ window.addEventListener('DOMContentLoaded', () => {
     if (keymapDescC) keymapDescC.innerHTML = t.keymapC;
 
     // Mode indicator in Top Header
-    if (modeIndicatorBtn && modePillIcon && modePillText) {
-      if (game.gameMode === 'sandbox') {
-        if (game.currentLevelId === 2) {
-          modePillIcon.textContent = '🏖️';
-          modePillText.textContent = currentLang === 'de' ? 'Level 2: Ostsee' : 'Level 2: Coast';
-          modeIndicatorBtn.classList.add('campaign-active');
+    // Update Apple Activity Ring for Level Objective
+    if (game.currentLevel) {
+      const lvl = game.currentLevel;
+      let cur = game.levelTargetsHit;
+      let req = lvl.requiredTargetCount;
+
+      if (lvl.targetAction === 'defeat_boss') {
+        const activeBoss = game.birdManager.birds.find((b: BirdData) => b.type === 'iphone_duo');
+        const hp = activeBoss ? (activeBoss.health ?? 3) : 3;
+        cur = Math.max(0, 3 - hp);
+        req = 3;
+      }
+
+      const progress = Math.min(1.0, req > 0 ? cur / req : 0);
+      const percent = Math.round(progress * 100);
+
+      // Determine target emoji icon
+      let targetIcon = '🎯';
+      if (lvl.id === 1) targetIcon = '🕊️';
+      else if (lvl.id === 2) targetIcon = '🦤';
+      else if (lvl.id === 3) targetIcon = '🚗';
+      else if (lvl.id === 4) targetIcon = '✈️';
+      else if (lvl.id === 5) targetIcon = '📱';
+
+      if (activityRingIcon) activityRingIcon.textContent = targetIcon;
+      if (campaignRingIcon) campaignRingIcon.textContent = targetIcon;
+
+      // Update ring progress arcs
+      // Header ring: r=13 -> circumference = 81.68
+      if (activityRingFill) {
+        const offset1 = Math.max(0, 81.68 - (81.68 * progress));
+        activityRingFill.style.strokeDashoffset = `${offset1}px`;
+        activityRingFill.style.stroke = progress >= 1.0 ? '#30d158' : (progress >= 0.5 ? '#ff2d55' : '#ff9500');
+      }
+
+      // Campaign HUD ring: r=15 -> circumference = 94.25
+      if (campaignRingFill) {
+        const offset2 = Math.max(0, 94.25 - (94.25 * progress));
+        campaignRingFill.style.strokeDashoffset = `${offset2}px`;
+        campaignRingFill.style.stroke = progress >= 1.0 ? '#30d158' : (progress >= 0.5 ? '#ff2d55' : '#ff9500');
+      }
+
+      if (activityRingPercent) {
+        activityRingPercent.textContent = `${percent}%`;
+        activityRingPercent.style.color = progress >= 1.0 ? '#30d158' : (progress >= 0.5 ? '#ff2d55' : '#ff5e3a');
+      }
+
+      if (activityRingWrap) {
+        if (progress >= 1.0) {
+          activityRingWrap.classList.add('ring-complete');
         } else {
-          modePillIcon.textContent = '🏡';
-          const score = game.state.score;
-          const status = (game.level2Unlocked || score >= 3000) ? ' ✓' : ` (${score.toLocaleString()}/3.000)`;
-          modePillText.textContent = (currentLang === 'de' ? 'Lvl 1: Garten' : 'Lvl 1: Garden') + status;
-          modeIndicatorBtn.classList.remove('campaign-active');
+          activityRingWrap.classList.remove('ring-complete');
         }
-      } else if (game.currentLevel) {
-        modePillIcon.textContent = '🎯';
-        modePillText.textContent = `Level ${game.currentLevel.id}`;
+      }
+
+      if (campaignRingWrap) {
+        if (progress >= 1.0) {
+          campaignRingWrap.classList.add('ring-complete');
+        } else {
+          campaignRingWrap.classList.remove('ring-complete');
+        }
+      }
+
+      // Pulse animation when progress increases
+      if (lastReportedProgress !== -1 && progress > lastReportedProgress) {
+        activityRingWrap?.classList.remove('ring-pulse');
+        campaignRingWrap?.classList.remove('ring-pulse');
+        void activityRingWrap?.offsetWidth;
+        activityRingWrap?.classList.add('ring-pulse');
+        campaignRingWrap?.classList.add('ring-pulse');
+      }
+      lastReportedProgress = progress;
+
+      // Update Mode Pill Header Text
+      if (modeIndicatorBtn && modePillText) {
+        const title = (t as any)[lvl.titleKey] || `Level ${lvl.id}`;
+        const cleanName = title.includes(':') ? title.split(':')[1].trim() : title;
+        modePillText.textContent = `Level ${lvl.id}: ${cleanName}`;
         modeIndicatorBtn.classList.add('campaign-active');
       }
     }
@@ -898,13 +889,34 @@ window.addEventListener('DOMContentLoaded', () => {
           campaignMissionName.textContent = (t as any)[game.currentLevel.titleKey] || `Level ${game.currentLevel.id}`;
         }
         if (campaignMissionObjective) {
-          campaignMissionObjective.textContent = t.levelObjectivePill(game.levelTargetsHit, game.currentLevel.requiredTargetCount);
+          if (game.currentLevel.targetAction === 'defeat_boss') {
+            const activeBoss = game.birdManager.birds.find((b: BirdData) => b.type === 'iphone_duo');
+            const hp = activeBoss?.health ?? 3;
+            campaignMissionObjective.textContent = currentLang === 'de'
+              ? `Boss: ${3 - hp}/3 kritische Treffer`
+              : `Boss: ${3 - hp}/3 critical hits`;
+          } else {
+            campaignMissionObjective.textContent = t.levelObjectivePill(game.levelTargetsHit, game.currentLevel.requiredTargetCount);
+          }
         }
         if (campaignAmmoIcons) {
           const rem = Math.max(0, game.levelSheetsRemaining);
           const used = Math.min(game.currentLevel.maxSheets, game.levelSheetsUsed);
           campaignAmmoIcons.textContent = '📄'.repeat(rem) + (rem === 0 && used > 0 ? '❌' : '');
           campaignAmmoIcons.title = t.levelSheetsAmmoLabel(rem, game.currentLevel.maxSheets);
+        }
+        if (campaignStarsHint && game.currentLevel.stars) {
+          const s2 = ((t as any)[game.currentLevel.stars.star2DescKey] || '').replace(/^★\s*/, '');
+          const s3 = ((t as any)[game.currentLevel.stars.star3DescKey] || '').replace(/^★\s*/, '');
+          campaignStarsHint.textContent = `${t.levelStarsBonusPrefix} ${s2} · ${s3}`;
+        }
+        if (campaignBonusTargetsHint) {
+          if (game.currentLevel.id === 1) {
+            campaignBonusTargetsHint.textContent = t.levelSpecialTargetsBonus;
+            campaignBonusTargetsHint.style.display = 'block';
+          } else {
+            campaignBonusTargetsHint.style.display = 'none';
+          }
         }
       } else {
         campaignHud.classList.add('hidden');
@@ -1067,27 +1079,38 @@ window.addEventListener('DOMContentLoaded', () => {
     const pct = Math.max(0, Math.round((hp / maxHp) * 100));
     bossHpFill.style.width = `${pct}%`;
 
-    if (hp <= 2) {
-      bossPhaseBadge.textContent = t.bossPhaseOpen;
+    if (hp === 2) {
+      bossPhaseBadge.textContent = t.bossPhaseUnfolding;
       bossPhaseBadge.style.color = '#ffd60a';
+      faltalityTitle.textContent = currentLang === 'de' ? '💥 KRITISCHER HIT 1/3: UNFOLD!' : '💥 CRITICAL HIT 1/3: UNFOLD!';
+      faltalitySubtitle.innerHTML = currentLang === 'de'
+        ? 'Ceramic Shield geknackt! iPhone Duo entfaltet sich (BSOD Crash)!'
+        : 'Ceramic Shield breached! iPhone Duo unfolds (BSOD Crash)!';
+      faltalityPoints.textContent = 'STAGE 2: UNFOLDED DUAL-SCREEN';
+    } else if (hp === 1) {
+      bossPhaseBadge.textContent = t.bossPhaseOpen;
+      bossPhaseBadge.style.color = '#ff375f';
+      faltalityTitle.textContent = currentLang === 'de' ? '💥 KRITISCHER HIT 2/3: ZICK-ZACK!' : '💥 CRITICAL HIT 2/3: ZIG-ZAG!';
+      faltalitySubtitle.innerHTML = currentLang === 'de'
+        ? 'Tim Cook ruft an! Boss wechselt in Frantic-Fluchtmodus!'
+        : 'Tim Cook calling! Boss enters Frantic Zig-Zag Mode!';
+      faltalityPoints.textContent = 'STAGE 3: FRANTIC MODE (1% AKKU)';
+    } else {
+      faltalityTitle.textContent = isCritical ? '💥 KRITISCHER TREFFER!' : '⚡ DIREKT-TREFFER!';
+      faltalitySubtitle.innerHTML = currentLang === 'de' ? 'Schaden verursacht!' : 'Damage dealt!';
+      faltalityPoints.textContent = 'DIRECT HIT';
     }
 
     bossHud.classList.remove('hidden');
     bossHud.classList.add('shake');
     setTimeout(() => bossHud.classList.remove('shake'), 400);
 
-    // Punchy instant damage notification
-    faltalityTitle.textContent = isCritical ? '💥 KRITISCH: -2 HP!' : '⚡ TREFFER: -1 HP!';
-    faltalitySubtitle.innerHTML = isCritical
-      ? (currentLang === 'de' ? 'Ceramic Shield durchschlagen!' : 'Ceramic Shield shattered!')
-      : (currentLang === 'de' ? 'Titan-Gehäuse beschädigt!' : 'Titanium chassis damaged!');
-    faltalityPoints.textContent = isCritical ? '2x DAMAGE (5+ FOLDS)' : 'DIRECT HIT';
     faltalityBanner.classList.remove('hidden');
 
     if (bannerTimeout) clearTimeout(bannerTimeout);
     bannerTimeout = window.setTimeout(() => {
       faltalityBanner.classList.add('hidden');
-    }, 1800);
+    }, 2200);
   };
 
   game.onBossDefeat = (_boss: BirdData) => {
@@ -1436,12 +1459,6 @@ window.addEventListener('DOMContentLoaded', () => {
     updateUI();
   });
 
-  menuSummonBossBtn?.addEventListener('click', () => {
-    game.summonBoss();
-    closeMenu();
-    updateUI();
-  });
-
   // Slider Listeners
   pitchSlider.addEventListener('input', () => {
     game.pitchDeg = parseFloat(pitchSlider.value);
@@ -1597,9 +1614,6 @@ window.addEventListener('DOMContentLoaded', () => {
         game.resetNewSheet();
       }
       updateUI();
-    } else if (e.code === 'KeyA') {
-      e.preventDefault();
-      toggleAim();
     }
   });
 

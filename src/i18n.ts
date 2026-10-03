@@ -179,6 +179,8 @@ export interface Translations {
   levelResultVictory: string;
   levelResultFailed: string;
   levelResultFailedReason: string;
+  levelStarsBonusPrefix: string;
+  levelSpecialTargetsBonus: string;
   btnNextLevel: string;
   btnRetryLevel: string;
   btnReturnToSelect: string;
@@ -241,7 +243,7 @@ export const translations: Record<SupportedLang, Translations> = {
     skyBirdsDefault: '🕊️ Tauben, 🦤 Kraniche, 🦆 Enten',
     skyLocked: (targetName: string) => `🎯 Ziel erfasst: ${targetName}`,
     score: 'PUNKTE',
-    birdsHit: 'GETROFFEN',
+    birdsHit: 'TREFFER',
     combo: 'COMBO',
     iAimOn: '🎯 iAim: AN',
     iAimOff: '🎯 iAim: AUS',
@@ -300,7 +302,7 @@ export const translations: Record<SupportedLang, Translations> = {
     menuClose: '✕',
     menuLangLabel: '🌐 Sprache wechseln / Language:',
     menuFaltpediaBtn: '📖 FALT-PEDIA Enzyklopädie öffnen',
-    menuAimLabel: '🎯 Apple iAim Auto-Targeting:',
+    menuAimLabel: '🎯 90s Arcade Zielsystem:',
     menuCycleTargetBtn: '🎯 Ziel wechseln [Tab / T]',
     menuSoundLabel: '🔊 Sound & Musik:',
     menuSoundOn: '🔊 Ton: AN',
@@ -312,7 +314,7 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapModalHeader: '⌨️ Tastenbelegung (Key Map)',
     keymapF: '<strong>Papier falten</strong> (Dicke & Reichweite verdoppeln) / Zurück zum Tisch',
     keymapSpace: '<strong>Zielmodus aktivieren</strong> bzw. <strong>Papier abschiessen</strong>',
-    keymapT: '<strong>90s Arcade Lock-On</strong> (Schaltet durch Vögel, Möwen, Jets & Tim Cook Satellit)',
+    keymapT: '<strong>90s Arcade Lock-On</strong> (Schaltet durch Vögel, Katze, Auto, Schafe & Grill)',
     keymapArrowsPitch: '<strong>Steigung (Pitch)</strong> erhöhen / senken',
     keymapArrowsYaw: '<strong>Richtung (Yaw)</strong> nach links / rechts steuern',
     keymapA: '<strong>Apple iAim</strong> Auto-Lock an-/ausschalten',
@@ -413,8 +415,8 @@ export const translations: Record<SupportedLang, Translations> = {
 
     bossName: '📱 Apple iPhone Duo (Titanium Hinge)',
     bossPhaseClosed: 'Phase 1: Geschlossen (Pocket Mode)',
-    bossPhaseUnfolding: 'Phase 2: Entfaltung...',
-    bossPhaseOpen: 'Phase 3: Aufgeklappt (Dual-Screen)',
+    bossPhaseUnfolding: 'Phase 2: Aufgeklappt (BSOD Crash)',
+    bossPhaseOpen: 'Phase 3: Frantic Zick-Zack (1% Akku)',
     bossShieldDeflect: '🛡️ CERAMIC SHIELD ZU STARK! Mindestens 5 Faltungen oder Alufolie nötig!',
     bossSpawnBanner: '★ ONE MORE THING... ★',
     bossSpawnSub: 'Der finale Falt-Boss: iPhone Duo nähert sich aus dem Orbit!',
@@ -460,6 +462,8 @@ export const translations: Record<SupportedLang, Translations> = {
     levelResultVictory: '★ MISSION ERFÜLLT! ★',
     levelResultFailed: 'MISSION GESCHEITERT',
     levelResultFailedReason: 'Keine Papierbögen mehr übrig!',
+    levelStarsBonusPrefix: '⭐ Bonus:',
+    levelSpecialTargetsBonus: '💡 Sonderziele (Katze, Auto, Schaf, Grill) geben +1 Blatt!',
     btnNextLevel: 'Nächstes Level ▶',
     btnRetryLevel: 'Erneut versuchen 🔄',
     btnReturnToSelect: 'Level-Auswahl 📋',
@@ -502,7 +506,7 @@ export const translations: Record<SupportedLang, Translations> = {
     lvl5Title: 'Level 5: Apple Keynote Orbit',
     lvl5Subtitle: 'Der finale Falt-Boss: iPhone Duo',
     lvl5Desc: 'Das gigantische 14m-Titanium iPhone Duo schwebt majestätisch im Orbit! Knacke das Ceramic-Shield-Scharnier!',
-    lvl5Objective: 'Zerstöre das iPhone Duo (4 Treffer, max. 6 Blätter).',
+    lvl5Objective: 'Zerstöre das iPhone Duo (3 kritische Treffer mit 5+ Faltungen / Alufolie, max. 6 Blätter).',
     lvl5Star1: '★ iPhone Duo Scharnier pulverisiert',
     lvl5Star2: '★ Mit maximal 4 Blättern besiegt',
     lvl5Star3: '★ Mindestens 2 perfekte Kanten erzielt'
@@ -574,7 +578,7 @@ export const translations: Record<SupportedLang, Translations> = {
     menuClose: '✕',
     menuLangLabel: '🌐 Switch Language / Sprache:',
     menuFaltpediaBtn: '📖 Open FALT-PEDIA Encyclopedia',
-    menuAimLabel: '🎯 Apple iAim Auto-Targeting:',
+    menuAimLabel: '🎯 90s Arcade Targeting:',
     menuCycleTargetBtn: '🎯 Cycle Target [Tab / T]',
     menuSoundLabel: '🔊 Sound & Music:',
     menuSoundOn: '🔊 Sound: ON',
@@ -586,7 +590,7 @@ export const translations: Record<SupportedLang, Translations> = {
     keymapModalHeader: '⌨️ Controls & Key Map',
     keymapF: '<strong>Fold Paper</strong> (Double thickness & range) / Return to table',
     keymapSpace: '<strong>Toggle Aim Mode</strong> or <strong>Launch Paper</strong>',
-    keymapT: '<strong>90s Arcade Lock-On</strong> (Cycles through Pigeons, Seagulls, Airliners & Satellites)',
+    keymapT: '<strong>90s Arcade Lock-On</strong> (Cycles through birds, cat, car, sheep & grill)',
     keymapArrowsPitch: '<strong>Adjust Pitch</strong> up / down',
     keymapArrowsYaw: '<strong>Adjust Yaw</strong> left / right',
     keymapA: 'Toggle <strong>Apple iAim</strong> Auto-Lock',
@@ -687,8 +691,8 @@ export const translations: Record<SupportedLang, Translations> = {
 
     bossName: '📱 Apple iPhone Duo (Titanium Hinge)',
     bossPhaseClosed: 'Phase 1: Closed (Pocket Mode)',
-    bossPhaseUnfolding: 'Phase 2: Unfolding...',
-    bossPhaseOpen: 'Phase 3: Unfolded (Dual-Screen)',
+    bossPhaseUnfolding: 'Phase 2: Unfolded (BSOD Crash)',
+    bossPhaseOpen: 'Phase 3: Frantic Zig-Zag (1% Battery)',
     bossShieldDeflect: '🛡️ CERAMIC SHIELD TOO STRONG! Requires 5+ folds or Aluminum Foil!',
     bossSpawnBanner: '★ ONE MORE THING... ★',
     bossSpawnSub: 'The Ultimate Folding Boss: iPhone Duo approaches from orbit!',
@@ -734,6 +738,8 @@ export const translations: Record<SupportedLang, Translations> = {
     levelResultVictory: '★ MISSION COMPLETE! ★',
     levelResultFailed: 'MISSION FAILED',
     levelResultFailedReason: 'Out of paper sheets!',
+    levelStarsBonusPrefix: '⭐ Bonus:',
+    levelSpecialTargetsBonus: '💡 Special targets (cat, car, sheep, grill) grant +1 sheet!',
     btnNextLevel: 'Next Level ▶',
     btnRetryLevel: 'Try Again 🔄',
     btnReturnToSelect: 'Level Select 📋',
@@ -776,10 +782,47 @@ export const translations: Record<SupportedLang, Translations> = {
     lvl5Title: 'Level 5: Keynote Orbit',
     lvl5Subtitle: 'Final Boss: iPhone Duo',
     lvl5Desc: 'The gargantuan 14m titanium iPhone Duo hovers in orbit! Shatter the Ceramic Shield hinge!',
-    lvl5Objective: 'Destroy the iPhone Duo (4 hits, max 6 sheets).',
+    lvl5Objective: 'Destroy the iPhone Duo (3 critical hits with 5+ folds / foil, max 6 sheets).',
     lvl5Star1: '★ iPhone Duo hinge pulverized',
     lvl5Star2: '★ Defeated with max 4 sheets',
     lvl5Star3: '★ At least 2 perfect creases scored'
+  }
+};
+
+const memoryStorage = new Map<string, string>();
+
+export const safeLocalStorage = {
+  getItem(key: string): string | null {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem(key);
+      }
+    } catch {
+      // Storage access blocked or restricted (e.g. Vivaldi private window / web panels)
+    }
+    return memoryStorage.get(key) ?? null;
+  },
+  setItem(key: string, value: string): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, value);
+        return;
+      }
+    } catch {
+      // Storage access blocked
+    }
+    memoryStorage.set(key, value);
+  },
+  removeItem(key: string): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(key);
+        return;
+      }
+    } catch {
+      // Storage access blocked
+    }
+    memoryStorage.delete(key);
   }
 };
 
@@ -790,12 +833,12 @@ export function detectLanguage(): SupportedLang {
   const urlParams = new URLSearchParams(window.location.search);
   const paramLang = urlParams.get('lang')?.toLowerCase();
   if (paramLang === 'en' || paramLang === 'de') {
-    localStorage.setItem('faltality_lang', paramLang);
+    safeLocalStorage.setItem('faltality_lang', paramLang);
     return paramLang;
   }
 
-  // 2. Saved user preference in localStorage
-  const saved = localStorage.getItem('faltality_lang') as SupportedLang;
+  // 2. Saved user preference in safe localStorage
+  const saved = safeLocalStorage.getItem('faltality_lang') as SupportedLang;
   if (saved === 'en' || saved === 'de') {
     return saved;
   }

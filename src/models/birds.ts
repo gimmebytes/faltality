@@ -229,8 +229,8 @@ export class BirdManager {
       speed = 3.6; // Majestic, menacing cruise
       scoreValue = 25000;
       title = '📱 Apple iPhone Duo (Titanium Hinge)';
-      health = 4;
-      maxHealth = 4;
+      health = 3;
+      maxHealth = 3;
       bossPhase = 'closed';
     } else {
       // High-End Origami Drone / Stealth Dart
@@ -251,7 +251,11 @@ export class BirdManager {
     group.position.set(x, altitude, z);
 
     const dir = (startX !== undefined ? 1 : (x < 0 ? 1 : -1));
-    group.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+    if (type === 'iphone_duo') {
+      group.rotation.set(0.38, 0, 0); // Face player camera with slight downward tilt towards garden
+    } else {
+      group.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+    }
 
     this.scene.add(group);
 
@@ -892,26 +896,46 @@ export class BirdManager {
     if (!bird.alive) return false;
 
     if (bird.type === 'iphone_duo') {
-      const currentHp = bird.health ?? 4;
-      if (currentHp > damage) {
-        bird.health = currentHp - damage;
+      const isCritical = damage >= 2;
+      if (!isCritical) {
+        // Non-critical throw deflected by Ceramic Shield!
         bird.iphoneDuoModel?.triggerDamageFlash();
-        sound.playAppleErrorAlert();
+        sound.playFoilClang();
+        return false;
+      }
 
-        // When health drops to 2 or below (<= 50%), trigger THE UNFOLDING!
-        if (bird.health <= 2 && bird.bossPhase !== 'unfolded') {
+      // Critical Hit!
+      const currentHp = bird.health ?? 3;
+      if (currentHp > 1) {
+        bird.health = currentHp - 1;
+        bird.iphoneDuoModel?.triggerDamageFlash();
+
+        if (bird.health === 2) {
+          // Hit 1: TRIGGER THE UNFOLD MODE! Hinge opens to flat 180° dual-screen!
           bird.bossPhase = 'unfolded';
           if (bird.iphoneDuoModel) {
-            bird.iphoneDuoModel.targetFoldAngle = 0; // Unfold to gigantic flat 180° dual-screen!
+            bird.iphoneDuoModel.targetFoldAngle = 0; // FULL 180° UNFOLD!
+            bird.iphoneDuoModel.triggerCrashScreen();
           }
           sound.playHingeMechanical();
+          sound.playAppleErrorAlert();
+        } else if (bird.health === 1) {
+          // Hit 2: Frantic Mode! Boss accelerates into Zick-Zack with Tim Cook calling
+          bird.bossPhase = 'unfolded';
+          if (bird.iphoneDuoModel) {
+            bird.iphoneDuoModel.targetFoldAngle = 0;
+            bird.iphoneDuoModel.triggerPanicScreen();
+          }
+          bird.speed = (bird.speed > 0 ? 1 : -1) * 5.4;
+          sound.playHingeMechanical();
+          sound.playMacStartupChime();
         }
 
         this.spawnPaperExplosion(bird.mesh.position, bird.type);
-        return false; // Still alive, multi-phase boss!
+        return false; // Multi-phase boss still alive
       }
 
-      // Final fatal hit!
+      // Final fatal 3rd critical hit!
       bird.health = 0;
       bird.alive = false;
       bird.bossPhase = 'defeated';
@@ -997,19 +1021,31 @@ export class BirdManager {
           // Update 3D foldable model animation
           bird.iphoneDuoModel?.update(delta);
 
-          // Majestic boss cruise across the sky
-          bird.mesh.position.y = bird.baseAltitude + Math.sin(bird.mesh.position.x * 0.12) * 0.8;
-          bird.mesh.rotation.z = Math.sin(bird.mesh.position.x * 0.06) * 0.1;
+          if (bird.health === 1) {
+            // ⚡ Hit 2 reached: Frantic Zick-Zack Mode!
+            // Fast sinusoidal wave in Y and subtle wave in Z with playful banking
+            bird.mesh.position.y = bird.baseAltitude + Math.sin(bird.mesh.position.x * 0.28) * 1.7;
+            bird.mesh.position.z = -16.0 + Math.cos(bird.mesh.position.x * 0.22) * 2.2;
+            bird.mesh.rotation.z = Math.sin(bird.mesh.position.x * 0.28) * 0.22;
+          } else {
+            // Normal cruise across the sky
+            bird.mesh.position.y = bird.baseAltitude + Math.sin(bird.mesh.position.x * 0.12) * 0.8;
+            bird.mesh.position.z = -16.0;
+            bird.mesh.rotation.z = Math.sin(bird.mesh.position.x * 0.06) * 0.1;
+          }
+
+          // Tilt down towards player on ground so displays are in direct line of sight!
+          bird.mesh.rotation.x = 0.38;
+          // Gentle banking in cruise direction (sleek subtle tilt instead of 90 degrees)
+          bird.mesh.rotation.y = (bird.speed > 0 ? 0.08 : -0.08);
 
           // Cruise back and forth smoothly across center sky between -20 and +20
           if (bird.mesh.position.x > 20) {
             bird.mesh.position.x = 20;
             bird.speed = -Math.abs(bird.speed);
-            bird.mesh.rotation.y = -Math.PI / 2;
           } else if (bird.mesh.position.x < -20) {
             bird.mesh.position.x = -20;
             bird.speed = Math.abs(bird.speed);
-            bird.mesh.rotation.y = Math.PI / 2;
           }
         } else if (bird.type === 'airplane') {
           // Airliner gentle bank and cloud cruising

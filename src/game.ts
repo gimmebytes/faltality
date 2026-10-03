@@ -12,6 +12,17 @@ import type { CampaignLevel } from './levels';
 
 export type GamePhase = 'folding' | 'aiming' | 'flying';
 
+export type TargetKind = 'bird' | 'cat' | 'car' | 'sheep' | 'grill' | 'boat';
+
+export interface TargetItem {
+  id: string;
+  kind: TargetKind;
+  name: string;
+  position: THREE.Vector3;
+  speed: number;
+  bird?: BirdData;
+}
+
 export interface GameState {
   score: number;
   birdsHitCount: number;
@@ -36,6 +47,7 @@ export class FaltalityGame {
   // 90s Arcade Auto-Aim & Fast Reaction Lock (Default ON for fast-paced arcade action!)
   public autoAim: boolean = true;
   public targetedBird: BirdData | null = null;
+  public currentTarget: TargetItem | null = null;
   private lockOnReticle: THREE.Group;
   private reticleMat: THREE.MeshBasicMaterial;
 
@@ -127,7 +139,7 @@ export class FaltalityGame {
   public onCreaseResult?: (quality: CreaseQuality, perfectCount: number) => void;
 
   // Campaign Mode State & Progression
-  public gameMode: 'sandbox' | 'campaign' = 'sandbox';
+  public gameMode: 'campaign' = 'campaign';
   public currentLevel: CampaignLevel | null = null;
   public levelSheetsRemaining: number = 0;
   public levelSheetsUsed: number = 0;
@@ -204,6 +216,7 @@ export class FaltalityGame {
 
     window.addEventListener('resize', this.onWindowResize.bind(this));
     this.setupAimingControls();
+    this.startCampaignLevel(1);
 
     this.lastTime = performance.now();
     requestAnimationFrame(this.animate.bind(this));
@@ -394,52 +407,119 @@ export class FaltalityGame {
     // Directly enter aiming mode and lock onto boss in the sky!
     this.phase = 'aiming';
     this.foldYawOffset = 0;
-    this.foldPitchOffset = 0;
-    this.isManualAiming = false;
-    this.aimAtTarget(boss);
-
     if (this.onBossSpawn) this.onBossSpawn(boss);
     if (this.onPhaseChange) this.onPhaseChange(this.phase);
     if (this.onStatsChanged) this.onStatsChanged();
     return boss;
   }
 
-  public cycleTarget(direction: number = 1) {
+  public getAllTargets(): TargetItem[] {
+    const targets: TargetItem[] = [];
+
+    // 1. Alive birds
     const aliveBirds = this.birdManager.birds.filter(b => b.alive);
-    if (aliveBirds.length === 0) return;
+    for (const b of aliveBirds) {
+      targets.push({
+        id: `bird-${b.mesh.uuid}`,
+        kind: 'bird',
+        name: b.title,
+        position: b.mesh.position,
+        speed: b.speed,
+        bird: b
+      });
+    }
 
-    const stats = this.paper.getStats();
-    const boss = aliveBirds.find(b => b.type === 'iphone_duo');
-    const satellite = aliveBirds.find(b => b.type === 'satellite');
+    // 2. Special targets depending on level
+    if (this.environment.currentLevel === 1) {
+      targets.push({
+        id: 'special-cat',
+        kind: 'cat',
+        name: '🐱 Nachbarskatze',
+        position: this.environment.getCatWorldPosition(),
+        speed: 0
+      });
 
-    if (boss && this.targetedBird !== boss && this.targetedBird === null) {
-      this.targetedBird = boss;
-    } else if (stats.folds >= 11 && satellite && this.targetedBird !== satellite && !boss) {
-      this.targetedBird = satellite;
+      targets.push({
+        id: 'special-car',
+        kind: 'car',
+        name: '🚗 Nachbars Auto',
+        position: this.environment.getCarWorldPosition(),
+        speed: 0
+      });
+
+      targets.push({
+        id: 'special-sheep',
+        kind: 'sheep',
+        name: '🐑 Ohnmachts-Schaf',
+        position: this.environment.getSheepWorldPosition(0),
+        speed: 0
+      });
+
+      targets.push({
+        id: 'special-grill',
+        kind: 'grill',
+        name: '🔥 BBQ-Kugelgrill',
+        position: this.environment.getGrillWorldPosition(),
+        speed: 0
+      });
+    } else if (this.environment.currentLevel === 2) {
+      targets.push({
+        id: 'special-boat',
+        kind: 'boat',
+        name: '🚢 Kutter Falke',
+        position: this.environment.getBoatWorldPosition(),
+        speed: 0
+      });
+    }
+
+    return targets;
+  }
+
+  public getTargetName(): string {
+    if (this.currentTarget) return this.currentTarget.name;
+    if (this.targetedBird) return this.targetedBird.title;
+    return '';
+  }
+
+  public selectTarget(target: TargetItem) {
+    this.currentTarget = target;
+    if (target.kind === 'bird' && target.bird) {
+      this.targetedBird = target.bird;
     } else {
-      const currentIndex = this.targetedBird ? aliveBirds.indexOf(this.targetedBird) : -1;
-      const nextIndex = (currentIndex + direction + aliveBirds.length) % aliveBirds.length;
-      this.targetedBird = aliveBirds[nextIndex];
+      this.targetedBird = null;
     }
 
-    if (this.targetedBird) {
-      sound.playLockOn();
-      this.aimAtTarget(this.targetedBird);
-    }
+    sound.playLockOn();
+    this.aimAtPosition(target.position, target.speed);
     if (this.onStatsChanged) this.onStatsChanged();
   }
 
-  public aimAtTarget(bird: BirdData) {
+  public cycleTarget(direction: number = 1) {
+    const targets = this.getAllTargets();
+    if (targets.length === 0) return;
+
+    let currentIndex = -1;
+    if (this.currentTarget) {
+      currentIndex = targets.findIndex(t => t.id === this.currentTarget!.id);
+    } else if (this.targetedBird) {
+      currentIndex = targets.findIndex(t => t.bird === this.targetedBird);
+    }
+
+    const nextIndex = (currentIndex + direction + targets.length) % targets.length;
+    this.selectTarget(targets[nextIndex]);
+  }
+
+  public aimAtPosition(targetPos: THREE.Vector3, speed: number = 0) {
     const paperPos = this.paper.mesh.position;
     const stats = this.paper.getStats();
-    const dist = paperPos.distanceTo(bird.mesh.position);
+    const dist = paperPos.distanceTo(targetPos);
     const baseSpeed = 24.0 + stats.folds * 15.0;
     const flightSpeed = baseSpeed * (this.powerPercent / 100);
     const timeToHit = Math.max(0.05, dist / flightSpeed);
 
-    const predictedX = bird.mesh.position.x + bird.speed * timeToHit * 0.98;
-    const predictedY = bird.mesh.position.y + 0.5 * 9.81 * (timeToHit * timeToHit * 0.25);
-    const predictedZ = bird.mesh.position.z;
+    const predictedX = targetPos.x + speed * timeToHit * 0.98;
+    const predictedY = targetPos.y + 0.5 * 9.81 * (timeToHit * timeToHit * 0.25);
+    const predictedZ = targetPos.z;
 
     const dx = predictedX - paperPos.x;
     const dy = predictedY - paperPos.y;
@@ -447,9 +527,13 @@ export class FaltalityGame {
     const horizontalDist = Math.sqrt(dx * dx + dz * dz);
 
     this.yawDeg = THREE.MathUtils.radToDeg(Math.atan2(-dx, -dz));
-    this.pitchDeg = Math.min(78, Math.max(18, THREE.MathUtils.radToDeg(Math.atan2(dy, horizontalDist))));
+    this.pitchDeg = Math.min(78, Math.max(12, THREE.MathUtils.radToDeg(Math.atan2(dy, horizontalDist))));
 
     this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, true);
+  }
+
+  public aimAtTarget(bird: BirdData) {
+    this.aimAtPosition(bird.mesh.position, bird.speed);
   }
 
   public enterAimingMode() {
@@ -480,21 +564,19 @@ export class FaltalityGame {
       this.birdManager.despawnSatellite();
       if (this.targetedBird?.type === 'satellite' || (this.targetedBird && !this.targetedBird.alive)) {
         this.targetedBird = null;
+        this.currentTarget = null;
       }
-      // 90s Arcade Auto-Aim: Automatically acquire nearest living target!
-      if (this.autoAim && this.targetedBird === null) {
-        const aliveBirds = this.birdManager.birds.filter(b => b.alive);
-        if (aliveBirds.length > 0) {
-          aliveBirds.sort((a, b) => Math.abs(a.mesh.position.x) - Math.abs(b.mesh.position.x));
-          this.targetedBird = aliveBirds[0];
-          sound.playLockOn();
-          this.aimAtTarget(this.targetedBird);
+      // 90s Arcade Auto-Aim: Automatically acquire nearest living target or special target!
+      if (this.currentTarget === null && this.targetedBird === null) {
+        const targets = this.getAllTargets();
+        if (targets.length > 0) {
+          this.selectTarget(targets[0]);
         }
       }
     }
 
     this.paper.setSlingshotVisible(true);
-    this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null);
+    this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, this.targetedBird !== null || this.currentTarget !== null);
     if (this.onPhaseChange) this.onPhaseChange(this.phase);
     if (this.onStatsChanged) this.onStatsChanged();
   }
@@ -504,7 +586,6 @@ export class FaltalityGame {
     this.cancelSlingshotDrag();
     this.isChaosSpectating = false;
     this.phase = 'folding';
-    this.paper.trajectoryLine.visible = false;
     this.paper.setSlingshotVisible(false);
     this.lockOnReticle.visible = false;
     this.foldYawOffset = 0;
@@ -515,15 +596,8 @@ export class FaltalityGame {
   }
 
   public toggleAutoAim(): boolean {
-    this.autoAim = !this.autoAim;
-    if (!this.autoAim) {
-      this.targetedBird = null;
-      this.lockOnReticle.visible = false;
-      if (this.phase === 'aiming') {
-        this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, false);
-      }
-    }
-    return this.autoAim;
+    this.autoAim = true;
+    return true;
   }
 
   public toggleMaterial(): "paper" | "foil" {
@@ -868,14 +942,6 @@ export class FaltalityGame {
       this.isChaosSpectating = true;
     }
 
-    // Auto-summon iPhone Duo when score >= 15,000 or after satellite is pulverized!
-    if ((this.state.score >= 15000 || bird.type === 'satellite') && !this.bossSpawnedOnce) {
-      this.bossSpawnedOnce = true;
-      setTimeout(() => {
-        this.summonBoss();
-      }, 1600);
-    }
-
     sound.playFaltality();
     confetti({
       particleCount: 80,
@@ -1072,6 +1138,28 @@ export class FaltalityGame {
     this.targetedBird = null;
 
     this.birdManager.loadLevelSpawns(lvl.spawns);
+    if (lvl.targetAction === 'defeat_boss') {
+      const boss = this.birdManager.birds.find(b => b.type === 'iphone_duo');
+      if (boss) {
+        this.targetedBird = boss;
+        this.currentTarget = {
+          id: `bird-${boss.mesh.uuid}`,
+          kind: 'bird',
+          name: boss.title,
+          position: boss.mesh.position,
+          speed: boss.speed,
+          bird: boss
+        };
+        if (this.onBossSpawn) {
+          this.onBossSpawn(boss);
+        }
+      }
+    } else if (lvl.id === 3) {
+      const carTarget = this.getAllTargets().find(t => t.id === 'special-car');
+      if (carTarget) {
+        this.selectTarget(carTarget);
+      }
+    }
     this.paper.resetNewSheet();
     this.enterFoldingMode();
 
@@ -1080,30 +1168,7 @@ export class FaltalityGame {
   }
 
   public startSandboxMode() {
-    if (this.flightResetTimer) {
-      clearTimeout(this.flightResetTimer);
-      this.flightResetTimer = null;
-    }
-
-    this.gameMode = 'sandbox';
-    this.currentLevel = null;
-    this.levelSheetsRemaining = 0;
-    this.levelSheetsUsed = 0;
-    this.levelTargetsHit = 0;
-    this.levelObjectiveMet = false;
-    this.levelMaxFoldsUsed = 0;
-    this.hitTargetThisFlight = false;
-    this.isChaosSpectating = false;
-    this.isResettingCam = false;
-    this.targetedBird = null;
-
-    this.birdManager.clearAllBirds();
-    this.birdManager.initFlocks();
-    this.paper.resetNewSheet();
-    this.enterFoldingMode();
-
-    if (this.onGameModeChange) this.onGameModeChange('sandbox', null);
-    if (this.onStatsChanged) this.onStatsChanged();
+    this.startCampaignLevel(1);
   }
 
   public retryCurrentLevel() {
@@ -1192,7 +1257,7 @@ export class FaltalityGame {
     }
 
     // Only pick a new target if we don't have one or if the current one died
-    if (!this.targetedBird || !this.targetedBird.alive) {
+    if ((!this.targetedBird || !this.targetedBird.alive) && (!this.currentTarget || this.currentTarget.kind === 'bird')) {
       const reachableBirds = this.birdManager.birds.filter((b: BirdData) => {
         if (!b.alive) return false;
         if (b.type === 'satellite' && stats.folds < 11) return false;
@@ -1261,6 +1326,51 @@ export class FaltalityGame {
 
         const targetYaw = THREE.MathUtils.radToDeg(Math.atan2(-dx, -dz));
         const targetPitch = Math.min(78, Math.max(18, THREE.MathUtils.radToDeg(Math.atan2(dy, horizontalDist))));
+
+        this.yawDeg = THREE.MathUtils.lerp(this.yawDeg, targetYaw, 0.2);
+        this.pitchDeg = THREE.MathUtils.lerp(this.pitchDeg, targetPitch, 0.2);
+
+        this.paper.updateTrajectory(this.pitchDeg, this.yawDeg, this.powerPercent, true);
+      }
+    } else if (this.currentTarget && this.currentTarget.kind !== 'bird') {
+      const special = this.currentTarget;
+      if (special.kind === 'cat') {
+        this.reticleMat.color.setHex(0xe67e22);
+        this.lockOnReticle.scale.set(1.2, 1.2, 1.2);
+      } else if (special.kind === 'car') {
+        this.reticleMat.color.setHex(0xe74c3c);
+        this.lockOnReticle.scale.set(2.4, 2.4, 2.4);
+      } else if (special.kind === 'sheep') {
+        this.reticleMat.color.setHex(0x2ecc71);
+        this.lockOnReticle.scale.set(1.4, 1.4, 1.4);
+      } else if (special.kind === 'grill') {
+        this.reticleMat.color.setHex(0xf39c12);
+        this.lockOnReticle.scale.set(1.3, 1.3, 1.3);
+      } else {
+        this.reticleMat.color.setHex(0x00d2d3);
+        this.lockOnReticle.scale.set(2.0, 2.0, 2.0);
+      }
+
+      this.lockOnReticle.visible = true;
+      this.lockOnReticle.position.copy(special.position);
+      this.lockOnReticle.lookAt(this.camera.position);
+      this.lockOnReticle.rotation.z += 2.2 * delta;
+
+      if (!this.paper.isFlying && !this.keysPressed['ArrowUp'] && !this.keysPressed['ArrowDown'] && !this.keysPressed['ArrowLeft'] && !this.keysPressed['ArrowRight']) {
+        const paperPos = this.paper.mesh.position;
+        const dist = paperPos.distanceTo(special.position);
+        const baseSpeed = 24.0 + stats.folds * 15.0;
+        const flightSpeed = baseSpeed * (this.powerPercent / 100);
+        const timeToHit = Math.max(0.05, dist / flightSpeed);
+
+        const predictedY = special.position.y + 0.5 * 9.81 * (timeToHit * timeToHit * 0.25);
+        const dx = special.position.x - paperPos.x;
+        const dy = predictedY - paperPos.y;
+        const dz = special.position.z - paperPos.z;
+        const horizontalDist = Math.sqrt(dx * dx + dz * dz);
+
+        const targetYaw = THREE.MathUtils.radToDeg(Math.atan2(-dx, -dz));
+        const targetPitch = Math.min(78, Math.max(12, THREE.MathUtils.radToDeg(Math.atan2(dy, horizontalDist))));
 
         this.yawDeg = THREE.MathUtils.lerp(this.yawDeg, targetYaw, 0.2);
         this.pitchDeg = THREE.MathUtils.lerp(this.pitchDeg, targetPitch, 0.2);
@@ -1343,7 +1453,9 @@ export class FaltalityGame {
       this.flightDuration += delta;
       const homingTarget = (this.autoAim && this.targetedBird && this.targetedBird.alive) 
         ? this.targetedBird.mesh.position 
-        : null;
+        : (this.autoAim && this.currentTarget && this.currentTarget.kind !== 'bird')
+          ? this.currentTarget.position
+          : null;
 
       let flightFinished = this.paper.updatePhysics(delta, homingTarget);
 
@@ -1386,15 +1498,23 @@ export class FaltalityGame {
               this.onBossDefeat(bird);
             }
           } else {
-            // Boss took damage but survived
-            this.screenShake = isCritical ? 0.65 : 0.35;
-            this.timeScale = 0.3;
-            this.slowMoTimer = 0.6;
-            if (isCritical) {
-              sound.playFoilClang();
-            }
-            if (this.onBossDamage) {
-              this.onBossDamage(bird, bird.health ?? 0, bird.maxHealth ?? 4, isCritical);
+            if (bird.type === 'iphone_duo' && !isCritical) {
+              // 🛡️ Ceramic Shield deflected the paper airplane!
+              this.screenShake = 0.35;
+              if (this.onShieldDeflect) {
+                this.onShieldDeflect(bird);
+              }
+            } else {
+              // Boss took critical damage but survived
+              this.screenShake = isCritical ? 0.65 : 0.35;
+              this.timeScale = 0.3;
+              this.slowMoTimer = 0.6;
+              if (isCritical) {
+                sound.playFoilClang();
+              }
+              if (this.onBossDamage) {
+                this.onBossDamage(bird, bird.health ?? 0, bird.maxHealth ?? 3, isCritical);
+              }
             }
           }
 
@@ -1415,7 +1535,7 @@ export class FaltalityGame {
         }
       }
 
-      // Backyard & Coast Chaos: Check collisions with Sneaky Cat, Neighbor Grill, Car & Krabbenkutter!
+      // Backyard & Coast Chaos: Check collisions with Sneaky Cat, Neighbor Grill, Car, Sheep & Krabbenkutter!
       if (!this.hitTargetThisFlight) {
         if (this.environment.currentLevel === 1) {
           // 1. Sneaky Cat on fence
@@ -1425,6 +1545,9 @@ export class FaltalityGame {
               this.hitTargetThisFlight = true;
               this.state.score += 500;
               this.state.currentCombo++;
+              if (this.gameMode === 'campaign' && this.currentLevel) {
+                this.levelSheetsRemaining++; // Curiosity bonus sheet!
+              }
               this.screenShake = 0.35;
               this.timeScale = 0.3;
               this.slowMoTimer = 0.7;
@@ -1449,6 +1572,9 @@ export class FaltalityGame {
               this.hitTargetThisFlight = true;
               this.state.score += 300;
               this.state.currentCombo++;
+              if (this.gameMode === 'campaign' && this.currentLevel) {
+                this.levelSheetsRemaining++; // Curiosity bonus sheet!
+              }
               this.screenShake = 0.45;
               this.timeScale = 0.3;
               this.slowMoTimer = 0.8;
@@ -1470,10 +1596,19 @@ export class FaltalityGame {
           const carPos = this.environment.getCarWorldPosition();
           if (paperPos.distanceTo(carPos) < paperRadius + this.environment.getCarBoundingRadius()) {
             this.environment.triggerCarAlarm();
+            this.environment.triggerFaintingSheep();
             this.hitTargetThisFlight = true;
             this.state.score += 250;
             this.state.currentCombo++;
-            this.screenShake = 0.45;
+            if (this.gameMode === 'campaign' && this.currentLevel) {
+              if (this.currentLevel.targetAction === 'trigger_crater') {
+                this.levelTargetsHit++;
+                this.levelObjectiveMet = true;
+              } else {
+                this.levelSheetsRemaining++; // Curiosity bonus sheet!
+              }
+            }
+            this.screenShake = 0.55;
             this.isChaosSpectating = true;
             this.paper.velocity.multiplyScalar(0.25);
             this.paper.velocity.y = 1.8;
@@ -1481,7 +1616,33 @@ export class FaltalityGame {
             this.checkLevelProgression();
             if (this.onStatsChanged) this.onStatsChanged();
           }
-        } else if (this.environment.currentLevel === 2) {
+
+          // 4. Neighbor Sheep in Pasture
+          const sheepPos = this.environment.getSheepWorldPosition(0);
+          if (paperPos.distanceTo(sheepPos) < paperRadius + this.environment.getSheepBoundingRadius()) {
+            if (this.environment.hitSheep(0)) {
+              this.hitTargetThisFlight = true;
+              this.state.score += 200;
+              this.state.currentCombo++;
+              if (this.gameMode === 'campaign' && this.currentLevel) {
+                this.levelSheetsRemaining++; // Curiosity bonus sheet!
+              }
+              this.screenShake = 0.35;
+              this.timeScale = 0.3;
+              this.slowMoTimer = 0.8;
+              this.paper.velocity.multiplyScalar(0.2);
+              this.paper.velocity.y = 1.6;
+              confetti({
+                particleCount: 40,
+                spread: 55,
+                origin: { y: 0.6 },
+                colors: ['#ffffff', '#ecf0f1', '#bdc3c7']
+              });
+              this.checkLevelProgression();
+              if (this.onStatsChanged) this.onStatsChanged();
+            }
+          }
+} else if (this.environment.currentLevel === 2) {
           // Level 2: Krabbenkutter Boat in the bay!
           const boatPos = this.environment.getBoatWorldPosition();
           if (paperPos.distanceTo(boatPos) < paperRadius + this.environment.getBoatBoundingRadius()) {

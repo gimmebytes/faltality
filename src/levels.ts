@@ -1,5 +1,12 @@
 import type { BirdType } from './models/birds';
 import type { OrigamiArchetype } from './models/paper';
+import { safeLocalStorage } from './i18n';
+
+export const isLocalEnvironment = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local') || Boolean((import.meta as any).env?.DEV);
+};
 
 export interface LevelSpawnConfig {
   type: BirdType;
@@ -38,6 +45,7 @@ export interface CampaignLevel {
   targetBirdTypes: BirdType[];
   spawns: LevelSpawnConfig[];
   stars: LevelStarCriteria;
+  isWip?: boolean;
 }
 
 export interface LevelProgress {
@@ -55,7 +63,7 @@ export const CAMPAIGN_LEVELS: CampaignLevel[] = [
     subtitleKey: 'lvl1Subtitle',
     descKey: 'lvl1Desc',
     objectiveKey: 'lvl1Objective',
-    maxSheets: 3,
+    maxSheets: 4,
     recommendedArchetype: 'glider',
     targetAction: 'hit_birds',
     requiredTargetCount: 2,
@@ -68,10 +76,10 @@ export const CAMPAIGN_LEVELS: CampaignLevel[] = [
       star1DescKey: 'lvl1Star1',
       star2DescKey: 'lvl1Star2',
       star3DescKey: 'lvl1Star3',
-      checkStars: ({ objectiveMet, sheetsUsed, maxSheets, perfectCreases }) => {
+      checkStars: ({ objectiveMet, sheetsUsed, perfectCreases }) => {
         if (!objectiveMet) return 0;
         let stars = 1;
-        if (sheetsUsed <= maxSheets - 1) stars++; // 2 or fewer sheets
+        if (sheetsUsed <= 3) stars++; // 3 or fewer sheets
         if (perfectCreases >= 1) stars++;
         return Math.min(3, stars);
       }
@@ -79,6 +87,7 @@ export const CAMPAIGN_LEVELS: CampaignLevel[] = [
   },
   {
     id: 2,
+    isWip: true,
     titleKey: 'lvl2Title',
     subtitleKey: 'lvl2Subtitle',
     descKey: 'lvl2Desc',
@@ -203,22 +212,22 @@ export class CampaignProgressManager {
       };
     }
 
-    try {
-      const stored = localStorage.getItem(CAMPAIGN_STORAGE_KEY);
-      if (stored) {
+    const isLocal = isLocalEnvironment();
+    const stored = safeLocalStorage.getItem(CAMPAIGN_STORAGE_KEY);
+    if (stored) {
+      try {
         const parsed = JSON.parse(stored);
         for (const lvl of CAMPAIGN_LEVELS) {
           if (parsed[lvl.id]) {
+            const shouldUnlock = lvl.id === 1 || Boolean(parsed[lvl.id].unlocked);
             initial[lvl.id] = {
               stars: parsed[lvl.id].stars || 0,
               highscore: parsed[lvl.id].highscore || 0,
-              unlocked: lvl.id === 1 || Boolean(parsed[lvl.id].unlocked)
+              unlocked: lvl.isWip && !isLocal ? false : shouldUnlock
             };
           }
         }
-      }
-    } catch {
-      // Ignore localStorage errors (e.g. incognito mode)
+      } catch {}
     }
 
     this.progressCache = initial;
@@ -238,40 +247,39 @@ export class CampaignProgressManager {
     current.highscore = Math.max(current.highscore, score);
     progress[levelId] = current;
 
-    // Unlock next level if stars >= 1
+    // Unlock next level if stars >= 1 (unless it's WIP on a non-local deployment)
     let newlyUnlockedLevel: number | undefined;
     const nextLevelId = levelId + 1;
+    const nextLvl = CAMPAIGN_LEVELS.find(l => l.id === nextLevelId);
+    const isLocal = isLocalEnvironment();
     if (earnedStars >= 1 && progress[nextLevelId] && !progress[nextLevelId].unlocked) {
-      progress[nextLevelId].unlocked = true;
-      newlyUnlockedLevel = nextLevelId;
+      if (!nextLvl?.isWip || isLocal) {
+        progress[nextLevelId].unlocked = true;
+        newlyUnlockedLevel = nextLevelId;
+      }
     }
 
-    try {
-      localStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(progress));
-    } catch {
-      // Ignore quota errors
-    }
+    safeLocalStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(progress));
 
     return { isNewRecord, newlyUnlockedLevel };
   }
 
   public static unlockAll(): void {
     const progress = this.loadProgress();
+    const isLocal = isLocalEnvironment();
     for (const lvl of CAMPAIGN_LEVELS) {
       if (progress[lvl.id]) {
-        progress[lvl.id].unlocked = true;
+        if (!lvl.isWip || isLocal) {
+          progress[lvl.id].unlocked = true;
+        }
       }
     }
-    try {
-      localStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(progress));
-    } catch {}
+    safeLocalStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(progress));
   }
 
   public static resetProgress(): void {
     this.progressCache = null;
-    try {
-      localStorage.removeItem(CAMPAIGN_STORAGE_KEY);
-    } catch {}
+    safeLocalStorage.removeItem(CAMPAIGN_STORAGE_KEY);
     this.loadProgress();
   }
 }

@@ -83,7 +83,7 @@
               <span id="score-val" class="score-number">0</span>
             </div>
             <div class="score-card">
-              <span id="label-birds-hit" class="score-label">VÖGEL</span>
+              <span id="label-birds-hit" class="score-label">TREFFER</span>
               <span id="birds-hit-val" class="score-number">0</span>
             </div>
             <div class="score-card">
@@ -92,10 +92,19 @@
             </div>
           </div>
 
-          <!-- Mode Indicator / Level Select Pill Button -->
-          <button id="mode-indicator-btn" class="mode-pill-btn" title="Modus wechseln / Level-Auswahl">
-            <span id="mode-pill-icon" class="mode-pill-icon">🏡</span>
-            <span id="mode-pill-text" class="mode-pill-text">Spielwiese</span>
+          <!-- Level Select Pill Button with Apple Activity Ring -->
+          <button id="mode-indicator-btn" class="mode-pill-btn" title="Level-Auswahl">
+            <div id="activity-ring-wrap" class="activity-ring-wrap">
+              <svg class="activity-ring-svg" width="34" height="34" viewBox="0 0 34 34">
+                <circle class="ring-bg" cx="17" cy="17" r="13" />
+                <circle id="activity-ring-fill" class="ring-fill" cx="17" cy="17" r="13" />
+              </svg>
+              <span id="activity-ring-icon" class="activity-ring-icon">🕊️</span>
+            </div>
+            <div class="mode-pill-info">
+              <span id="mode-pill-text" class="mode-pill-text">Level 1: Garten</span>
+              <span id="activity-ring-percent" class="activity-ring-percent">0%</span>
+            </div>
           </button>
 
           <!-- Hamburger Button (☰) -->
@@ -157,15 +166,14 @@
                 📖 <span id="menu-pedia-label">FALT-PEDIA Enzyklopädie</span>
               </button>
               <button id="drawer-level-select-btn" class="menu-highlight-btn campaign-btn">
-                🎯 <span id="menu-level-select-label">Kampagnen-Level (Angry Birds Modus)</span>
+                🎯 <span id="menu-level-select-label">Kampagnen-Level</span>
               </button>
             </div>
 
             <!-- Targeting Options -->
             <div class="menu-section">
-              <span id="menu-aim-label" class="menu-label">🎯 Apple iAim & Zielsuche:</span>
+              <span id="menu-aim-label" class="menu-label">🎯 90s Arcade Zielsystem:</span>
               <div class="menu-btn-col">
-                <button id="menu-iaim-btn" class="menu-action-btn">🎯 iAim: AN</button>
                 <button id="menu-cycle-target-btn" class="menu-action-btn">🎯 Nächstes Ziel [Taste T]</button>
               </div>
             </div>
@@ -179,7 +187,6 @@
             <!-- Audio & Keymap Controls -->
             <div class="menu-section">
               <div class="menu-btn-col">
-                <button id="menu-summon-boss-btn" class="menu-action-btn boss-btn">📱 <span id="menu-boss-label">iPhone Duo herausfordern [B]</span></button>
                 <button id="menu-sound-btn" class="menu-action-btn">🔊 Ton: AN</button>
                 <button id="menu-keymap-btn" class="menu-action-btn">⌨️ Tastenbelegung [K]</button>
                 <button id="menu-replay-intro-btn" class="menu-action-btn secondary">🎬 Intro-Animation ansehen</button>
@@ -317,13 +324,24 @@
 
           <!-- Campaign Mission & Ammo Bar (Visible during Campaign Mode) -->
           <div id="campaign-hud" class="campaign-hud hidden ui-interactive">
-            <div class="campaign-hud-info">
-              <span id="campaign-mission-name" class="campaign-mission-name">Level 1: Der Gartenzaun</span>
-              <span id="campaign-mission-objective" class="campaign-mission-objective">Ziel: 0/2 Tauben</span>
+            <div class="campaign-hud-main">
+              <div id="campaign-ring-wrap" class="activity-ring-wrap">
+                <svg class="activity-ring-svg" width="38" height="38" viewBox="0 0 38 38">
+                  <circle class="ring-bg" cx="19" cy="19" r="15" />
+                  <circle id="campaign-ring-fill" class="ring-fill" cx="19" cy="19" r="15" />
+                </svg>
+                <span id="campaign-ring-icon" class="activity-ring-icon">🕊️</span>
+              </div>
+              <div class="campaign-hud-info">
+                <span id="campaign-mission-name" class="campaign-mission-name">Level 1: Der Gartenzaun</span>
+                <span id="campaign-mission-objective" class="campaign-mission-objective">Ziel: 0/2 Tauben</span>
+              </div>
+              <div class="campaign-hud-ammo">
+                <span id="campaign-ammo-icons" class="campaign-ammo-icons" title="Verbleibende Papier-Munition">📄📄📄</span>
+              </div>
             </div>
-            <div class="campaign-hud-ammo">
-              <span id="campaign-ammo-icons" class="campaign-ammo-icons" title="Verbleibende Papier-Munition">📄📄📄</span>
-            </div>
+            <div id="campaign-stars-hint" class="campaign-stars-hint">⭐ Bonus: max 3 Bögen · 1 perfekte Kante</div>
+            <div id="campaign-bonus-targets-hint" class="campaign-bonus-targets-hint">💡 Sonderziele (Katze, Auto, Schaf, Grill) geben +1 Blatt!</div>
           </div>
 
           <!-- Active Crease Timing Minigame (Gears of War / Mario Golf style) -->
@@ -428,10 +446,6 @@
                 <div id="keymap-desc-yaw" class="desc"><strong>Richtung (Yaw)</strong> nach links / rechts steuern</div>
               </div>
               <div class="keymap-row">
-                <div class="keys"><kbd>A</kbd></div>
-                <div id="keymap-desc-a" class="desc"><strong>Apple iAim</strong> Auto-Lock an-/ausschalten</div>
-              </div>
-              <div class="keymap-row">
                 <div class="keys"><kbd>M</kbd></div>
                 <div id="keymap-desc-m" class="desc"><strong>Menü öffnen / schließen</strong></div>
               </div>
@@ -476,12 +490,6 @@
               <p id="level-select-subtitle" class="level-select-subtitle">Wähle eine Falt-Mission, erfülle das Ziel und sammle bis zu 3 Sterne!</p>
             </div>
             <button id="level-select-close-btn" class="icon-btn">✕</button>
-          </div>
-
-          <!-- Mode switch quick tabs -->
-          <div class="mode-switch-tabs">
-            <button id="tab-sandbox-btn" class="mode-tab-btn active">🏡 Freie Spielwiese (Endlos)</button>
-            <button id="tab-campaign-btn" class="mode-tab-btn">🎯 Kampagne (Level 1–5)</button>
           </div>
 
           <div class="modal-content level-select-content">
@@ -531,7 +539,6 @@
             <button id="result-next-btn" class="btn btn-primary">Nächstes Level ▶</button>
             <button id="result-retry-btn" class="btn btn-secondary">Erneut versuchen 🔄</button>
             <button id="result-select-btn" class="btn btn-secondary">Level-Auswahl 📋</button>
-            <button id="result-sandbox-btn" class="btn btn-secondary">Zur Spielwiese 🏡</button>
           </div>
         </div>
       </div>

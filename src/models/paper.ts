@@ -680,7 +680,7 @@ export class PaperSheet {
   }
 
   // Update parabolic dotted trajectory guide line matching Archetype aerodynamics
-  public updateTrajectory(pitchDeg: number, yawDeg: number, powerPercent: number, hasTargetLock: boolean = false) {
+  public updateTrajectory(pitchDeg: number, yawDeg: number, powerPercent: number, _hasTargetLock: boolean = false) {
     const stats = this.getStats();
     const foilMult = this.materialType === 'foil' ? 1.25 : 1.0;
     const perfectBonus = 1.0 + Math.min(0.35, this.perfectCreaseCount * 0.08);
@@ -740,48 +740,8 @@ export class PaperSheet {
         break;
       }
     }
-
-    this.trajectoryLine.geometry.dispose();
-    this.trajectoryLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
-
-    // Color code trajectory by Archetype, Target Lock & Perfect Crease
-    let lineColor = 0xff3b30;
-    if (hasTargetLock) {
-      lineColor = 0xff2d55; // Vibrant neon crimson lock-on
-    } else if (this.perfectCreaseCount > 0) {
-      lineColor = 0xffd700; // Shimmering Gold for perfect crease mastery
-    } else if (stats.archetype === 'glider') {
-      lineColor = 0x30d158; // Spring Green
-    } else if (stats.archetype === 'dart') {
-      lineColor = 0x0a84ff; // Cyan Dart
-    } else if (stats.archetype === 'comet') {
-      lineColor = 0xff9500; // Fiery Comet
-    }
-
-    (this.trajectoryLine.material as THREE.LineDashedMaterial).color.setHex(lineColor);
-    this.trajectoryLine.computeLineDistances();
-    this.trajectoryLine.visible = true;
-
-    // Update InstancedMesh trajectory beads: bold, chunky, highly visible 3D arcade arc!
-    const dummyMat = new THREE.Matrix4();
-    const dummyScale = new THREE.Vector3();
-    const dummyQuat = new THREE.Quaternion();
-
-    for (let i = 0; i < this.beadCount; i++) {
-      const pointIdx = Math.min(
-        points.length - 1,
-        Math.floor((i / (this.beadCount - 1)) * (points.length - 1))
-      );
-      const pt = points[pointIdx];
-      // Taper beads: starts chunky (1.0) and tapers to 0.4 near the end
-      const s = Math.max(0.35, 1.0 - (i / this.beadCount) * 0.6);
-      dummyScale.set(s, s, s);
-      dummyMat.compose(pt, dummyQuat, dummyScale);
-      this.trajectoryBeads.setMatrixAt(i, dummyMat);
-    }
-    this.trajectoryBeads.instanceMatrix.needsUpdate = true;
-    (this.trajectoryBeads.material as THREE.MeshBasicMaterial).color.setHex(lineColor);
-    this.trajectoryBeads.visible = true;
+    this.trajectoryLine.visible = false;
+    this.trajectoryBeads.visible = false;
   }
 
   private orientBand(mesh: THREE.Mesh, from: THREE.Vector3, to: THREE.Vector3, tension: number) {
